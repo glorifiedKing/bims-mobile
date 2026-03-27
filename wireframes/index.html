@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIMS Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        background: #1e1e1e;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .phone {
+        width: 360px;
+        height: 812px;
+        background: #036939;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        position: relative;
+    }
+
+    .header {
+        height: 40%;
+        padding: 15px 20px;
+        text-align: center;
+        background: linear-gradient(180deg, #036939 0%, #00331a 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    .header img {
+        width: 240px;
+        margin: 8px 0;
+    }
+
+    .header h1 {
+        margin: 5px 0 3px;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .header p {
+        font-size: 12px;
+        opacity: 0.85;
+        margin: 0;
+    }
+
+    .header > div:first-child {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .content {
+        height: 60%;
+        background: #F8F9FA;
+        padding: 20px;
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+
+    .card {
+        background: white;
+        padding: 18px;
+        border-radius: 14px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid #e5e5e5;
+    }
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .card-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .icon {
+        width: 40px;
+        height: 40px;
+        background: #f2a948;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-weight: bold;
+    }
+
+    .card h3 {
+        margin: 0;
+        font-size: 16px;
+        color: #036939;
+    }
+
+    .card p {
+        margin: 3px 0 0;
+        font-size: 12px;
+        color: #555;
+    }
+
+    .arrow {
+        font-size: 18px;
+        color: #f2a948;
+    }
+
+    .report {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 13px;
+        color: #036939;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .report:hover {
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<div class="phone">
+    <div class="header">
+        
+        <!-- Replace src with your cropped logo file -->
+        <img src="BIMS_logo_white.png" alt="NBRB Logo">
+        
+        <h3 style="color: #f2a948;">Building Industry Management System</h3>
+    </div>
+
+    <div class="content">
+
+        <div class="card" onclick="navigate('client')">
+            <div class="card-left">
+                <div class="icon">🏠</div>
+                <div>
+                    <h3>CLIENT PORTAL</h3>
+                    <p>For Citizens and Property Developers</p>
+                </div>
+            </div>
+            <div class="arrow">›</div>
+        </div>
+
+        <div class="card" onclick="navigate('bco')">
+            <div class="card-left">
+                <div class="icon">🛡</div>
+                <div>
+                    <h3>BCO PORTAL</h3>
+                    <p>For Building Control Officers & Local Authorities</p>
+                </div>
+            </div>
+            <div class="arrow">›</div>
+        </div>
+
+        <div class="card" onclick="navigate('professional')">
+            <div class="card-left">
+                <div class="icon">📐</div>
+                <div>
+                    <h3>PROFESSIONALS PORTAL</h3>
+                    <p>For Architects, Engineers & Surveyors</p>
+                </div>
+            </div>
+            <div class="arrow">›</div>
+        </div>
+
+        <div class="report" onclick="window.location.href='whistle-blow.html'">
+            <span>🔔</span> REPORT ILLEGAL CONSTRUCTION (ANONYMOUS)
+        </div>
+
+    </div>
+</div>
+
+<script>
+function navigate(portal) {
+    
+     window.location.href = '' + portal + '/' + portal + '-' + 'login.html';
+}
+</script>
+
+</body>
+</html>

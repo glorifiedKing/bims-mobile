@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS - New Submission</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-green: #036939; --accent-gold: #f2a948; --bg: #F4F7F5; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .phone { width: 375px; height: 812px; background: var(--bg); border-radius: 40px; position: relative; border: 8px solid #111; overflow: hidden; }
+        
+        .header { height: 12%; background: var(--primary-green); color: white; padding: 40px 20px 0; text-align: center; font-weight: 700; font-size: 16px; border-bottom: 4px solid var(--accent-gold);}
+        .wizard-body { display: none; }
+        .wizard-body.active { display: block; padding: 20px; height: 80%; overflow-y: auto;}
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid #f2a948;
+            background: white;
+            color: #036939;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #fff7df;
+        }
+        
+        .step-label { font-size: 10px; font-weight: 800; color: var(--accent-gold); margin-bottom: 5px; display: block; }
+        .section-title { font-size: 15px; font-weight: 700; color: var(--primary-green); margin-bottom: 20px; }
+
+        /* Application Type Selection */
+        .type-card { background: white; border: 1.5px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
+        .type-card:hover { border-color: var(--accent-gold); background: #fffdf5; }
+        .type-card.selected { border-color: var(--accent-gold); background: #fffdf5; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2); }
+        .type-icon { font-size: 20px; margin-right: 15px; }
+        .type-text { font-size: 12px; font-weight: 600; color: #444; }
+
+        /* Dropdowns */
+        .field-label { font-size: 11px; font-weight: 700; color: var(--primary-green); margin: 15px 0 5px; display: block; }
+        select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: white; outline: none; }
+
+        .footer { position: absolute; bottom: 0; width: 100%; padding: 20px; background: white; border-top: 1px solid #eee; }
+        .footer-actions {
+            position: absolute; bottom: 80px; width: 100%; padding: 20px;
+            background: white; border-top: 1px solid #eee;
+            display: flex; gap: 10px;
+        }
+        .btn-back {
+            width: 100%; padding: 15px; background: #e0e6e0;
+            color: var(--primary-green); border: none; border-radius: 10px;
+            font-weight: 700; cursor: pointer;
+        }
+        .btn-back:hover { background: #d0d6d0; }
+        .btn-continue {
+            width: 100%; padding: 15px; background: var(--primary-green);
+            color: white; border: none; border-radius: 10px;
+            font-weight: 700; cursor: pointer;
+        }
+        .btn-continue:hover { background: #003018; }
+
+        .nav-bar {
+            position: absolute; bottom: 0; width: 100%; height: 80px;
+            background: var(--white); border-top: 1px solid #eee;
+            display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px;
+        }
+        .nav-item { text-align: center; color: #999; cursor: pointer; text-decoration: none; }
+        .nav-item.active { color: var(--primary-green); }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-label { font-size: 10px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="header">NEW APPLICATION</div>
+
+        <!-- STEP 1: Application Type -->
+        <div class="wizard-body active" id="step1">
+            <span class="step-label">STEP 1 OF 5</span>
+            <h2 class="section-title">Select Application Type</h2>
+            
+            
+            <select id="applicationType" onchange="selectApplicationType(this.value)">
+                <option value="Building Permit Application">Building Permit Application</option>
+                <option value="Notice of Commencement">Notice of Commencement</option>
+                <option value="Request Routine Inspection">Request Routine Inspection</option>
+                <option value="Building Occupancy Permit">Building Occupancy Permit</option>
+                <option value="Appeal to previous decision">Appeal to previous decision</option>
+            </select>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+
+            <span class="step-label">STEP 2 OF 5</span>
+            <h2 class="section-title">Development Location</h2>
+
+            <label class="field-label">AUTHORITY TYPE</label>
+            <select id="authType" onchange="updateLocations()">
+                <option value="">Select Type</option>
+                <option value="city">City</option>
+                <option value="district">District</option>
+                <option value="municipality">Municipality</option>
+            </select>
+
+            <label class="field-label">SELECT AUTHORITY</label>
+            <select id="locationList">
+                <option>Select location...</option>
+            </select>
+        </div>
+
+        <!-- STEP 2: Applicant Particulars -->
+        <div class="wizard-body" id="step2">
+            <span class="step-label">STEP 3 OF 5</span>
+            <h2 class="section-title">Applicant Particulars</h2>
+            
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">LEGAL STATUS OF APPLICANT *</label>
+                <select id="legalStatus" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+                    <option value="individual">Individual</option>
+                    <option value="company">Company</option>
+                </select>
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">NATIONAL ID (NIN) *</label>
+                <input type="text" value="CM8702710F1WGE" style="width: 100%; padding: 12px; border: 1px solid var(--accent-gold); background: #fdfaf0; border-radius: 8px; margin-top: 5px;">
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">NAME *</label>
+                <input type="text" value="Byaruhanga Raymond" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">MOBILE PHONE *</label>
+                <input type="tel" value="256704555432" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">PHYSICAL ADDRESS *</label>
+                <textarea style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; height: 60px;"></textarea>
+            </div>
+        </div>
+
+        <!-- STEP 3: Site Details -->
+        <div class="wizard-body" id="step3">
+            <span class="step-label">STEP 4 OF 5</span>
+            <h2 class="section-title">Site Details</h2>
+            
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">SITE AREA (SQM) *</label>
+                <input type="number" placeholder="0.00" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">PLOT NUMBER *</label>
+                <input type="text" placeholder="Enter plot number" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">SITE COORDINATES (GPS)</label>
+                <div style="background: #eee; height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px;">
+                    [ Google Map Placeholder ]
+                </div>
+                <button style="width: 100%; margin-top: 10px; padding: 10px; background: var(--accent-gold); color: white; border: none; border-radius: 8px; font-size: 11px; font-weight: bold;">
+                    📍 CAPTURE SITE LOCATION
+                </button>
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">LAND TENURE *</label>
+                <select style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+                    <option value="">Select tenure type</option>
+                    <option value="freehold">Freehold</option>
+                    <option value="leasehold">Leasehold</option>
+                    <option value="mailo">Mailo</option>
+                </select>
+            </div>
+
+            <div class="field-group" style="margin-top: 15px;">
+                <label style="color: var(--primary-green); font-size: 11px; font-weight: 700;">USE CLASS *</label>
+                <select style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px;">
+                    <option value="">Select use class</option>
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="industrial">Industrial</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- STEP 4: Review -->
+        <div class="wizard-body" id="step4">
+            <span class="step-label">STEP 5 OF 5</span>
+            <h2 class="section-title">Review & Submit</h2>
+            
+            <div style="background: #fffdf5; border: 1px solid var(--accent-gold); border-radius: 8px; padding: 15px; margin-top: 15px;">
+                <p style="color: var(--primary-green); font-size: 12px; font-weight: 600; margin-bottom: 10px;">Application Summary</p>
+                <div id="summary" style="font-size: 11px; color: #666; line-height: 1.6;">
+                    <!-- Summary will be populated here -->
+                </div>
+            </div>
+
+            <div style="margin-top: 15px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                <input type="checkbox" id="agreeTerms" style="margin-right: 8px;">
+                <label for="agreeTerms" style="font-size: 11px; color: #666;">I confirm that the information provided is accurate</label>
+            </div>
+        </div>
+
+        <div class="footer-actions" id="footerActions">
+            <button class="btn-back" onclick="previousStep()" id="backBtn" style="display: none;">BACK</button>
+            <button class="btn-continue" onclick="nextStep()" id="continueBtn">CONTINUE</button>
+        </div>
+
+        <div class="nav-bar">
+            <a class="nav-item" onclick="window.location.href='client-dashboard.html'">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Home</span>
+            </a>
+            <a class="nav-item active" onclick="window.location.href='client-applications.html'">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Applications</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-invoices.html'">
+                <span class="nav-icon">💰</span>
+                <span class="nav-label">Invoices</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-profile.html'">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profile</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let selectedApplicationType = null;
+        const formData = {};
+
+        function updateLocations() {
+            const type = document.getElementById('authType').value;
+            const list = document.getElementById('locationList');
+            list.innerHTML = '';
+            
+            const data = {
+                city: ['Kampala Capital City Authority', 'Gulu City', 'Jinji City', 'Mbarara City'],
+                district: ['Wakiso District', 'Mukono District', 'Arua District'],
+                municipality: ['Entebbe Municipality', 'Makindye Ssabagabo']
+            };
+
+            if(data[type]) {
+                data[type].forEach(loc => {
+                    const op = document.createElement('option');
+                    op.value = loc; 
+                    op.innerText = loc;
+                    list.appendChild(op);
+                });
+            } else {
+                list.innerHTML = '<option>Select location...</option>';
+            }
+        }
+
+        function selectApplicationType(value) {
+            // Remove selected class from all cards
+            // document.querySelectorAll('.type-card').forEach(card => {
+            //     card.classList.remove('selected');
+            // });
+            // // Add selected class to clicked card
+            // element.classList.add('selected');
+            selectedApplicationType = value;
+            formData.applicationType = value;
+        }
+
+        function nextStep() {
+            // Validation
+            if (currentStep === 1) {
+                if (!selectedApplicationType) {
+                    alert('Please select an application type');
+                    return;
+                }
+                if (!document.getElementById('authType').value) {
+                    alert('Please select an authority type');
+                    return;
+                }
+                if (!document.getElementById('locationList').value || document.getElementById('locationList').value === 'Select location...') {
+                    alert('Please select a location');
+                    return;
+                }
+                formData.authorityType = document.getElementById('authType').value;
+                formData.location = document.getElementById('locationList').value;
+            } else if (currentStep === 2) {
+                formData.legalStatus = document.getElementById('legalStatus').value;
+                alert('Step 2 complete');
+            } else if (currentStep === 3) {
+                alert('Step 3 complete');
+            } else if (currentStep === 4) {
+                alert('Application submitted successfully!');
+                return;
+            }
+
+            // Move to next step
+            if (currentStep < 4) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                currentStep++;
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateNavigation();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                currentStep--;
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateNavigation();
+            }
+        }
+
+        function updateNavigation() {
+            // Show/hide back button
+            document.getElementById('backBtn').style.display = currentStep > 1 ? 'block' : 'none';
+            
+            // Update continue button text
+            const continueBtn = document.getElementById('continueBtn');
+            if (currentStep === 4) {
+                continueBtn.textContent = 'SUBMIT';
+            } else {
+                continueBtn.textContent = 'CONTINUE';
+            }
+
+            // Adjust footer layout for single button on step 1
+            const footerActions = document.getElementById('footerActions');
+            if (currentStep === 1) {
+                footerActions.style.gap = '0';
+            } else {
+                footerActions.style.gap = '10px';
+            }
+        }
+
+        // Initialize
+        updateNavigation();
+    </script>
+</body>
+</html>

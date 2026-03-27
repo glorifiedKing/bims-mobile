@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS Professional Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #036939; 
+            --accent-gold: #f2a948;   
+            --bg-light: #F8F9FA;      
+            --white: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+        .phone-container {
+            width: 375px; height: 812px;
+            background-color: var(--white);
+            border-radius: 40px; overflow: hidden;
+            position: relative; border: 8px solid #111;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        }
+
+        .header {
+            height: 18%; background: linear-gradient(180deg, var(--primary-green) 0%, #00331a 100%);
+            padding: 45px 25px 10px; color: var(--white); text-align: center;
+            border-bottom: 4px solid var(--accent-gold);
+        }
+        .header h1 { font-size: 16px; text-transform: uppercase; letter-spacing: 1.5px; }
+
+        .form-area { padding: 25px; height: 72%; overflow-y: auto; }
+        .input-group { margin-bottom: 18px; position: relative; }
+        label { display: block; font-size: 10px; font-weight: 800; color: var(--primary-green); margin-bottom: 6px; text-transform: uppercase; }
+        input, select {
+            width: 100%; padding: 12px; border: 1.5px solid #eef2ef; border-radius: 10px;
+            font-size: 13px; outline: none; background: #fafafa;
+        }
+        input:focus { border-color: var(--accent-gold); }
+
+        .verification-badge {
+            position: absolute; right: 12px; top: 32px; font-size: 9px;
+            font-weight: 700; color: #28a745; display: none;
+        }
+
+        .upload-box {
+            border: 2px dashed var(--accent-gold); border-radius: 12px;
+            padding: 25px; text-align: center; background: #fffdf5; cursor: pointer;
+        }
+        .upload-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+        .upload-text { font-size: 11px; font-weight: 600; color: var(--primary-green); }
+
+        .footer {
+            position: absolute; bottom: 0; width: 100%; padding: 20px 25px 35px;
+            background: white; border-top: 1px solid #eee;
+        }
+        .btn-submit {
+            width: 100%; padding: 15px; background: var(--primary-green);
+            color: white; border: none; border-radius: 12px;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="header">
+            <h1>Professional Portal</h1>
+            <p style="font-size: 10px; opacity: 0.8; margin-top: 5px;">Practicing Professional Registration</p>
+        </div>
+
+        <div class="form-area">
+            <div class="input-group">
+                <label>Professional Body</label>
+                <select>
+                    <option>Architects Registration Board (ARB)</option>
+                    <option>Engineers Registration Board (ERB)</option>
+                    <option>Surveyors Registration Board (SRB)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Registration Number</label>
+                <input type="text" placeholder="Enter License No." oninput="document.getElementById('v-badge').style.display='block'">
+                <span class="verification-badge" id="v-badge">✓ VERIFIED</span>
+            </div>
+
+            <div class="input-group">
+                <label>Professional Firm Name</label>
+                <input type="text" placeholder="e.g., Skyline Architects Ltd">
+            </div>
+
+            <div class="input-group" style="margin-top: 10px;">
+                <label>Digital Practicing Stamp</label>
+                <div class="upload-box" onclick="alert('Opening Gallery for Stamp Selection...')">
+                    <span class="upload-icon">🖋️</span>
+                    <span class="upload-text">Upload High-Res Stamp (PNG/JPG)</span>
+                </div>
+            </div>
+
+            <p style="font-size: 10px; color: #666; margin-top: 15px; line-height: 1.4;">
+                <b>Note:</b> Your registration details will be validated in real-time with the respective Board. Misrepresentation leads to immediate account suspension.
+            </p>
+            
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" placeholder="info@architects.ug">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" placeholder="*****">
+            </div>
+        </div>
+
+        <div class="footer">
+            <button class="btn-submit" onclick="alert('Validating Credentials with Regulatory Body...')">VERIFY & REGISTER</button>
+        </div>
+    </div>
+
+</body>
+</html>

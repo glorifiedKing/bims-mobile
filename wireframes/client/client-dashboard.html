@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS Client Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #036939; 
+            --accent-gold: #f2a948;   
+            --bg-light: #F4F7F5;      
+            --white: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+        .phone-container {
+            width: 375px; height: 812px;
+            background-color: var(--bg-light);
+            border-radius: 40px; overflow: hidden;
+            position: relative; border: 8px solid #222;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* HEADER SECTION */
+        .header {
+            height: 22%; background: linear-gradient(180deg, var(--primary-green) 0%, #00331a 100%);
+            padding: 50px 25px 20px; color: var(--white);
+            border-bottom: 4px solid var(--accent-gold);
+        }
+        .user-row { display: flex; justify-content: space-between; align-items: center; }
+        .greeting h1 { font-size: 20px; font-weight: 700; }
+        .greeting p { font-size: 12px; opacity: 0.8; }
+        .bell-icon { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 10px; position: relative; }
+        .bell-dot { width: 8px; height: 8px; background: var(--accent-gold); border-radius: 50%; position: absolute; top: 5px; right: 5px; }
+
+        /* SCROLLABLE CONTENT */
+        .main-content { height: 70%; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+
+        /* STATUS WIDGETS (RQ-6) */
+        .section-title { font-size: 14px; font-weight: 700; color: var(--primary-green); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .status-card {
+            background: var(--white); border-radius: 15px; padding: 15px;
+            border-left: 4px solid var(--accent-gold); margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .permit-id { font-weight: 700; font-size: 13px; color: var(--primary-green); }
+        .status-badge { font-size: 10px; font-weight: 700; background: #FFF9E6; color: var(--accent-gold); padding: 4px 8px; border-radius: 5px; }
+        .progress-bar-bg { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin: 10px 0; }
+        .progress-fill { height: 100%; background: var(--accent-gold); border-radius: 3px; width: 65%; }
+
+        /* QUICK ACTIONS GRID */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .action-item {
+            background: var(--white); border: 1px solid #eef2ef; border-radius: 15px;
+            padding: 20px; text-align: center; cursor: pointer; transition: 0.3s;
+        }
+        .action-item:active { transform: scale(0.95); background: #fdfaf0; }
+        .action-icon { font-size: 24px; margin-bottom: 8px; }
+        .action-label { font-size: 11px; font-weight: 700; color: var(--primary-green); text-transform: uppercase; }
+
+        /* BOTTOM NAVIGATION */
+        .nav-bar {
+            position: absolute; bottom: 0; width: 100%; height: 80px;
+            background: var(--white); border-top: 1px solid #eee;
+            display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px;
+        }
+        .nav-item { text-align: center; color: #999; cursor: pointer; text-decoration: none; }
+        .nav-item.active { color: var(--primary-green); }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-label { font-size: 10px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="header">
+            <div class="user-row">
+                <div class="greeting">
+                    <p>Good Evening,</p>
+                    <h1>Raymond Byaruhanga</h1>
+                </div>
+                <div class="bell-icon">
+                    🔔 <div class="bell-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content" id="dashboard">
+            <h2 class="section-title">Active Applications</h2>
+            
+            <div class="status-card">
+                <div class="card-header">
+                    <span class="permit-id">ID: KLA-2026-045</span>
+                    <span class="status-badge">REVIEW STAGE</span>
+                </div>
+                <p style="font-size: 11px; color: #666;">Residential Development - Mutungo</p>
+                <div class="progress-bar-bg">
+                    <div class="progress-fill" style="width: 75%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                    <span>Submitted: Jan 20</span>
+                    <span style="color: var(--primary-green); font-weight: bold;">Est. Completion: Mar 15</span>
+                </div>
+            </div>
+
+            <h2 class="section-title">Quick Actions</h2>
+            <div class="action-grid">
+                <div class="action-item" onclick="window.location.href='client-new-application.html'">
+                    <div class="action-icon">🏗️</div>
+                    <div class="action-label">New Application</div>
+                </div>
+                <div class="action-item" onclick="window.location.href='client-invoices.html'">
+                    <div class="action-icon">💳</div>
+                    <div class="action-label">Payments / PRN</div>
+                </div>
+                <div class="action-item" onclick="window.location.href='client-permits.html'">
+                    <div class="action-icon">📜</div>
+                    <div class="action-label">My Permits</div>
+                </div>
+                <div class="action-item" onclick="window.location.href='../whistle-blow.html'">
+                    <div class="action-icon">📢</div>
+                    <div class="action-label">Whistle Blow</div>
+                </div>
+            </div>
+
+            <h2 class="section-title">Recent Activity</h2>
+            <div style="background: white; border-radius: 15px; padding: 5px;">
+                <div style="padding: 12px; border-bottom: 1px solid #f9f9f9; display: flex; align-items: center;">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--accent-gold); margin-right: 12px;"></div>
+                    <div style="font-size: 12px; color: #444;">Reviewer added comments to <b>KLA-2026-045</b></div>
+                </div>
+                <div style="padding: 12px; display: flex; align-items: center;">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #28a745; margin-right: 12px;"></div>
+                    <div style="font-size: 12px; color: #444;">Payment of 85,000 UGX verified</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-bar">
+            <a class="nav-item active" >
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Home</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-applications.html'">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Applications</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-invoices.html'">
+                <span class="nav-icon">💰</span>
+                <span class="nav-label">Invoices</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-profile.html'">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profile</span>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

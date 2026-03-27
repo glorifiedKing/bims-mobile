@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS - Inspection Checklist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-green: #036939; --accent-gold: #f2a948; --bg: #F4F7F5; --white: #FFFFFF; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .phone { width: 375px; height: 812px; background: var(--bg); border-radius: 40px; position: relative; border: 8px solid #111; overflow: hidden; }
+        
+        .header { height: 12%; background: var(--primary-green); color: white; display: flex; align-items: center; justify-content: space-between; padding: 40px 20px 0; }
+        .header h1 { font-size: 14px; font-weight: 700; }
+
+        .list-area { padding: 15px; height: 75%; overflow-y: auto; padding-bottom: 100px; }
+        .category-title { font-size: 11px; font-weight: 800; color: #777; margin: 15px 0 10px; text-transform: uppercase; }
+
+        .check-item { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        .check-info { flex: 1; }
+        .check-info h4 { font-size: 12px; font-weight: 700; color: var(--primary-green); }
+        .check-info p { font-size: 10px; color: #999; margin-top: 2px; }
+        .ai-badge { display: inline-block; font-size: 8px; background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-top: 5px; }
+
+        .check-status { display: flex; gap: 8px; }
+        .status-btn { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+        .btn-pass { border-color: #2E7D32; color: #2E7D32; }
+        .btn-pass.active { background: #2E7D32; color: white; }
+        .btn-fail { border-color: #C62828; color: #C62828; }
+
+        .footer { position: absolute; bottom: 0; width: 100%; padding: 20px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .btn-primary { flex: 1; padding: 15px; background: var(--primary-green); color: white; border-radius: 10px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; }
+        .btn-stop { background: #CC0000; padding: 15px; border-radius: 10px; color: white; font-weight: 700; font-size: 12px; border: none; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="header">
+            <span>←</span>
+            <h1>Technical Checklist</h1>
+            <span>📸</span>
+        </div>
+
+        <div class="list-area">
+            <div class="category-title">Accessibility (AI Assisted)</div>
+            
+            <div class="check-item">
+                <div class="check-info">
+                    <h4>Ramp Slope Gradient</h4>
+                    <p>Must not exceed 1:12 ratio.</p>
+                    <span class="ai-badge">✓ AI VERIFIED (1:12)</span>
+                </div>
+                <div class="check-status">
+                    <div class="status-btn btn-pass active">✔</div>
+                </div>
+            </div>
+
+            <div class="check-item">
+                <div class="check-info">
+                    <h4>Emergency Exit Width</h4>
+                    <p>Min 1200mm required.</p>
+                    <span class="ai-badge">✓ AI VERIFIED (1250mm)</span>
+                </div>
+                <div class="check-status">
+                    <div class="status-btn btn-pass active">✔</div>
+                </div>
+            </div>
+
+            <div class="category-title">Structural Elements</div>
+            
+            <div class="check-item">
+                <div class="check-info">
+                    <h4>Column Reinforcement</h4>
+                    <p>Check rebar size and spacing.</p>
+                </div>
+                <div class="check-status">
+                    <div class="status-btn btn-pass">✔</div>
+                    <div class="status-btn btn-fail">✖</div>
+                </div>
+            </div>
+
+            <div class="check-item">
+                <div class="check-info">
+                    <h4>Foundation Depth</h4>
+                    <p>Check depth vs approved plans.</p>
+                </div>
+                <div class="check-status">
+                    <div class="status-btn btn-pass">✔</div>
+                    <div class="status-btn btn-fail">✖</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button class="btn-stop" onclick="window.location.href='bco-stoporder.html'">STOP ORDER</button>
+            <button class="btn-primary" onclick="alert('Inspection Report Submitted to NBRB')">SUBMIT REPORT</button>
+        </div>
+    </div>
+</body>
+</html>

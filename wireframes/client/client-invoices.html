@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS - Invoices & PRNs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-green: #036939; --accent-gold: #f2a948; --bg: #F4F7F5; --danger: #CC0000; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .phone { width: 375px; height: 812px; background: var(--bg); border-radius: 40px; position: relative; border: 8px solid #111; overflow: hidden; }
+        
+        .header { height: 15%; background: var(--primary-green); color: white; padding: 45px 20px 0; border-bottom: 4px solid var(--accent-gold);}
+        .header h1 { font-size: 16px; font-weight: 700; }
+        
+        .list-area { padding: 15px; height: 75%; overflow-y: auto; padding-bottom: 100px; }
+
+        .search-container { padding: 15px 20px; background: white; border-bottom: 1px solid #eee; }
+        .search-bar { width: 100%; padding: 10px 15px; border: 1px solid var(--accent-gold); border-radius: 8px; font-size: 12px; }
+        
+        .invoice-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border-left: 5px solid var(--accent-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .card-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        
+        .prn-label { font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; }
+        .prn-value { font-size: 14px; font-weight: 700; color: var(--primary-green); display: block; }
+        
+        .status-pill { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 5px; text-transform: uppercase; }
+        .paid { background: #E6F4EA; color: #1E7E34; }
+        .pending { background: #FFF9E6; color: var(--accent-gold); }
+        .expired { background: #FDE8E8; color: var(--danger); }
+
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+        .detail-box label { font-size: 8px; font-weight: 700; color: #aaa; text-transform: uppercase; display: block; }
+        .detail-box span { font-size: 11px; font-weight: 600; color: #444; }
+
+        .amount-tag { font-size: 14px; font-weight: 800; color: var(--primary-green); margin-top: 10px; display: block; }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-mini { flex: 1; padding: 10px; border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; text-align: center; border: 1.5px solid var(--primary-green); }
+        .btn-download { background: white; color: var(--primary-green); }
+        .btn-regen { background: var(--accent-gold); color: white; border-color: var(--accent-gold); }
+
+        .nav-bar { 
+            position: absolute; bottom: 0; width: 100%; height: 80px; 
+            background: white; border-top: 1px solid #eee; display: flex; 
+            justify-content: space-around; align-items: center; 
+            padding-bottom: 15px; 
+        }
+        .nav-item { text-align: center; color: #999; cursor: pointer; text-decoration: none; }
+        .nav-item.active { color: var(--primary-green); }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-label { font-size: 10px; font-weight: 600; }
+        
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="header">
+            <h1>Invoices & PRNs</h1>
+            <p style="font-size: 10px; opacity: 0.8; margin-top: 4px;">Manage Payment References</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Search PRN or Serial No...">
+        </div>
+
+        <div class="list-area">
+            <div class="invoice-card" style="border-left-color: #1E7E34;">
+                <div class="card-row">
+                    <div>
+                        <span class="prn-label">PRN Number</span>
+                        <span class="prn-value">2260010992341</span>
+                    </div>
+                    <span class="status-pill paid">PAID</span>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-box"><label>Ref ID</label><span>APP/2026/045</span></div>
+                    <div class="detail-box"><label>Search Code</label><span>XYZ-88</span></div>
+                </div>
+                <span class="amount-tag">UGX 150,000</span>
+                <div class="btn-row">
+                    <div class="btn-mini btn-download">📄 DOWNLOAD PDF</div>
+                </div>
+            </div>
+
+            <div class="invoice-card" style="border-left-color: var(--danger);">
+                <div class="card-row">
+                    <div>
+                        <span class="prn-label">PRN Number</span>
+                        <span class="prn-value">2260010887122</span>
+                    </div>
+                    <span class="status-pill expired">EXPIRED</span>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-box"><label>Expiry Date</label><span style="color: var(--danger);">Feb 20, 2026</span></div>
+                    <div class="detail-box"><label>Type</label><span>Inspection Fee</span></div>
+                </div>
+                <span class="amount-tag">UGX 85,000</span>
+                <div class="btn-row">
+                    <div class="btn-mini btn-regen" onclick="alert('Regenerating PRN...')">🔄 REGENERATE</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-bar">
+            <a class="nav-item" onclick="window.location.href='client-dashboard.html'">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Home</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-applications.html'">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Applications</span>
+            </a>
+            <a class="nav-item active" onclick="window.location.href='client-invoices.html'">
+                <span class="nav-icon">💰</span>
+                <span class="nav-label">Invoices</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-profile.html'">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profile</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

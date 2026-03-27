@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS - Digital Stop Order</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-green: #036939; --accent-gold: #f2a948; --danger-red: #990000; --bg: #F8F9FA; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .phone { width: 375px; height: 812px; background: var(--bg); border-radius: 40px; position: relative; border: 8px solid #111; overflow: hidden; }
+        
+        .header { height: 18%; background: var(--danger-red); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 20px; }
+        .stop-icon { font-size: 32px; border: 3px solid white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-weight: 800; }
+        
+        .form-area { padding: 20px; height: 65%; overflow-y: auto; }
+        .label { font-size: 10px; font-weight: 800; color: var(--danger-red); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        
+        .violation-card { background: white; border: 1.5px solid #eee; border-left: 5px solid var(--danger-red); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .violation-card h3 { font-size: 13px; color: #333; margin-bottom: 4px; }
+        .violation-card p { font-size: 11px; color: #666; line-height: 1.4; }
+
+        .sig-pad { border: 1.5px dashed #ccc; background: white; height: 120px; border-radius: 10px; margin-top: 10px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 11px; }
+
+        .footer { position: absolute; bottom: 0; width: 100%; padding: 25px; background: white; border-top: 1px solid #eee; }
+        .btn-issue { width: 100%; padding: 18px; background: var(--danger-red); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px rgba(153,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="header">
+            <div class="stop-icon">!</div>
+            <h1 style="font-size: 18px; letter-spacing: 1px;">STOP WORK ORDER</h1>
+        </div>
+
+        <div class="form-area">
+            <label>Current Violation</label>
+            <div class="violation-card">
+                <h3>Structural Instability (Critical)</h3>
+                <p>Non-compliant reinforcement detected in columns C1 through C4. Immediate risk of slab failure.</p>
+            </div>
+
+            <label>Remediation Instructions</label>
+            <textarea style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; height: 80px; margin-bottom: 20px; outline: none;" placeholder="Enter requirements to lift order..."></textarea>
+
+            <label>BCO Digital Authorization</label>
+            <div class="sig-pad">
+                TAP TO SIGN ELECTRONICALLY
+            </div>
+            <p style="font-size: 9px; color: #999; text-align: center; margin-top: 8px;">
+                Verified at: 0.3228° N, 32.5835° E | Mar 06, 2026
+            </p>
+        </div>
+
+        <div class="footer">
+            <button class="btn-issue" onclick="alert('ORDER ISSUED: Stakeholders notified via SMS & Email. Digital Seal Applied.')">ISSUE OFFICIAL ORDER</button>
+        </div>
+    </div>
+</body>
+</html>

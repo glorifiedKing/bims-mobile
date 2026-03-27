@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS - My Permits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #036939; 
+            --accent-gold: #f2a948;   
+            --bg-light: #F4F7F5;      
+            --white: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+        .phone-container {
+            width: 375px; height: 812px;
+            background-color: var(--bg-light);
+            border-radius: 40px; overflow: hidden;
+            position: relative; border: 8px solid #111;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        }
+
+        .header {
+            height: 18%; background: linear-gradient(180deg, var(--primary-green) 0%, #00331a 100%);
+            padding: 45px 25px 10px; color: var(--white);
+            border-bottom: 4px solid var(--accent-gold);
+        }
+        .header h1 { font-size: 18px; font-weight: 700; }
+
+        .search-container { padding: 15px 20px; background: white; border-bottom: 1px solid #eee; }
+        .search-bar { width: 100%; padding: 10px 15px; border: 1px solid var(--accent-gold); border-radius: 8px; font-size: 12px; }
+
+        .list-area { height: 68%; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+
+        /* Permit Card Design */
+        .permit-card {
+            background: var(--white); border-radius: 12px; padding: 15px;
+            margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-top: 4px solid var(--accent-gold);
+        }
+        .permit-no { display: block; font-size: 14px; font-weight: 700; color: var(--primary-green); margin-bottom: 5px; }
+        .permit-sn { font-size: 11px; color: #666; font-family: monospace; }
+        
+        .detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+        .detail-item label { display: block; font-size: 9px; color: #999; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
+        .detail-item span { font-size: 11px; color: #333; font-weight: 600; }
+
+        .download-btn {
+            width: 100%; margin-top: 15px; padding: 10px;
+            background: #fff; border: 1.5px solid var(--primary-green);
+            color: var(--primary-green); border-radius: 8px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .download-btn:hover { background: #f0f7f2; }
+
+        /* BOTTOM NAVIGATION */
+        .nav-bar {
+            position: absolute; bottom: 0; width: 100%; height: 80px;
+            background: var(--white); border-top: 1px solid #eee;
+            display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px;
+        }
+        .nav-item { text-align: center; color: #999; cursor: pointer; text-decoration: none; }
+        .nav-item.active { color: var(--primary-green); }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-label { font-size: 10px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="header">
+            <h1>My Permits</h1>
+            <p style="font-size: 11px; opacity: 0.8; margin-top: 5px;">Active & Historical Approvals</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Search Permit or Serial No...">
+        </div>
+
+        <div class="list-area">
+            <div class="permit-card">
+                <span class="permit-no">KLA-2026-045-BP</span>
+                <span class="permit-sn">SN: 8892341002</span>
+                
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>Type</label>
+                        <span>Building Permit</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Location</label>
+                        <span>Mutungo, Plot 14</span>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>Issued</label>
+                        <span>Jan 15, 2026</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Expires</label>
+                        <span style="color: var(--accent-gold);">Jan 15, 2027</span>
+                    </div>
+                </div>
+
+                <button class="download-btn" onclick="alert('Downloading Permit PDF...')">
+                    📄 DOWNLOAD PDF
+                </button>
+            </div>
+
+            <div class="permit-card">
+                <span class="permit-no">ENT-2025-012-OC</span>
+                <span class="permit-sn">SN: 7721345991</span>
+                
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>Type</label>
+                        <span>Occupation Permit</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Location</label>
+                        <span>Entebbe, Block 5</span>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>Issued</label>
+                        <span>Nov 10, 2025</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Expires</label>
+                        <span>Permanent</span>
+                    </div>
+                </div>
+
+                <button class="download-btn" onclick="alert('Downloading Permit PDF...')">
+                    📄 DOWNLOAD PDF
+                </button>
+            </div>
+        </div>
+
+        
+        <div class="nav-bar">
+            <a class="nav-item" onclick="window.location.href='client-dashboard.html'">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Home</span>
+            </a>
+            <a class="nav-item active" onclick="window.location.href='client-applications.html'">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Applications</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-invoices.html'">
+                <span class="nav-icon">💰</span>
+                <span class="nav-label">Invoices</span>
+            </a>
+            <a class="nav-item" onclick="window.location.href='client-profile.html'">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profile</span>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

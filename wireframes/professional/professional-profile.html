@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS - User Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-green: #036939; --accent-gold: #f2a948; --bg: #F8F9FA; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .phone { width: 375px; height: 812px; background: var(--bg); border-radius: 40px; position: relative; border: 8px solid #111; overflow: hidden; }
+        
+        /* Profile Header */
+        .profile-header { height: 30%; background: var(--primary-green); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding-top: 20px; }
+        .avatar-circle { width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--accent-gold); background: #eee; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--primary-green); font-weight: bold; }
+        .role-badge { background: var(--accent-gold); color: white; font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+
+        .info-container { padding: 20px; height: 60%; overflow-y: auto; }
+        .info-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; }
+        .info-label { font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        .info-value { font-size: 14px; font-weight: 600; color: var(--primary-green); }
+
+        /* Role-specific section indicator */
+        .role-section { border-left: 4px solid var(--accent-gold); padding-left: 10px; }
+        .btn-edit { background: #eee; color: #666; border: 1.5px solid #666; border-radius: 12px; width: 100%; padding: 15px;}
+
+        .btn-logout { width: 100%; padding: 15px; background: transparent; color: #CC0000; border: 1.5px solid #CC0000; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        .nav-bar { position: absolute; bottom: 0; width: 100%; height: 80px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="profile-header">
+            <div class="avatar-circle">RB</div>
+            <h2 style="font-size: 18px;">Raymond Byaruhanga</h2>
+            <span class="role-badge">Professional Portal</span>
+        </div>
+
+        <div class="info-container">
+            <div class="info-card">
+                <span class="info-label">National ID (NIN)</span>
+                <span class="info-value">CM870****WGE</span>
+            </div>
+            
+            <div class="info-card">
+                <span class="info-label">Contact Details</span>
+                <span class="info-value">+256 704 555 432</span>
+                <div style="height: 1px; background: #f0f0f0; margin: 8px 0;"></div>
+                <span class="info-value">raymond@example.com</span>
+            </div>
+
+            <div class="info-card role-section">
+                <span class="info-label" style="color: var(--accent-gold);">Board Registration (ARB)</span>
+                <span class="info-value">License No: A-442</span>
+                <div style="margin-top: 10px;">
+                    <span class="info-label">Practicing Stamp</span>
+                    <div style="width: 60px; height: 40px; background: #f9f9f9; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">STAMP</div>
+                </div>
+            </div>
+            <button class="btn-edit">Edit Profile</button>
+            <button class="btn-logout">LOGOUT</button>
+        </div>
+
+        <div class="nav-bar">
+            <div style="font-size: 20px; color: #999;">🏠</div>
+            <div style="font-size: 20px; color: #999;">📜</div>
+            <div style="font-size: 20px; color: var(--primary-green);">👤</div>
+        </div>
+    </div>
+</body>
+</html>

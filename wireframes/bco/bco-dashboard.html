@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS BCO Inspector Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #036939; 
+            --accent-gold: #f2a948;   
+            --bg-field: #F0F2F0;      
+            --white: #FFFFFF;
+            --danger: #CC0000;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+        .phone-container {
+            width: 375px; height: 812px;
+            background-color: var(--bg-field);
+            border-radius: 40px; overflow: hidden;
+            position: relative; border: 8px solid #111;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        }
+
+        /* INSPECTOR HEADER (Darker Green for Field Contrast) */
+        .header {
+            height: 25%; background: linear-gradient(135deg, #00331a 0%, var(--primary-green) 100%);
+            padding: 50px 25px 20px; color: var(--white);
+            border-bottom: 4px solid var(--accent-gold);
+        }
+        .inspector-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .inspector-info h1 { font-size: 18px; font-weight: 700; margin-top: 5px; }
+        .inspector-info p { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-gold); }
+        
+        .sync-status { 
+            background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; 
+            text-align: center; cursor: pointer;
+        }
+        .sync-icon { font-size: 18px; display: block; }
+        .sync-label { font-size: 8px; font-weight: 700; margin-top: 4px; }
+
+        /* FIELD CONTENT */
+        .main-content { height: 68%; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+
+        /* INSPECTION PLANNER (RQ-7) */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .section-title { font-size: 13px; font-weight: 700; color: var(--primary-green); text-transform: uppercase; }
+        .date-chip { font-size: 11px; background: var(--primary-green); color: white; padding: 4px 10px; border-radius: 20px; }
+
+        .inspection-card {
+            background: var(--white); border-radius: 15px; padding: 18px;
+            margin-bottom: 20px; box-shadow: 0 6px 15px rgba(0,0,0,0.04);
+            border-left: 5px solid var(--primary-green);
+        }
+        .card-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .app-id { font-weight: 800; font-size: 14px; color: var(--primary-green); }
+        .ai-badge { font-size: 9px; font-weight: 800; background: #E6F4EA; color: #1E7E34; padding: 3px 8px; border-radius: 4px; border: 1px solid #C3E6CB; }
+        
+        .site-details { font-size: 12px; color: #333; font-weight: 600; margin-bottom: 12px; }
+        .meta-info { display: flex; gap: 15px; font-size: 10px; color: #777; }
+        .meta-info span { display: flex; align-items: center; gap: 4px; }
+
+        .btn-action {
+            width: 100%; padding: 12px; margin-top: 15px;
+            background: var(--primary-green); color: white;
+            border: none; border-radius: 8px; font-weight: 700; font-size: 12px;
+            cursor: pointer; transition: 0.2s;
+        }
+
+        /* TOOLKIT GRID */
+        .toolkit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .tool-item {
+            background: var(--white); border-radius: 15px; padding: 18px;
+            text-align: center; cursor: pointer; border: 1px solid #e0e6e0;
+        }
+        .tool-item.danger { border: 1px solid #ffd6d6; }
+        .tool-icon { font-size: 26px; margin-bottom: 8px; }
+        .tool-label { font-size: 10px; font-weight: 700; color: var(--primary-green); text-transform: uppercase; }
+
+        /* NAVIGATION */
+        .nav-bar {
+            position: absolute; bottom: 0; width: 100%; height: 85px;
+            background: var(--white); border-top: 1px solid #ddd;
+            display: flex; justify-content: space-around; align-items: center; padding-bottom: 15px;
+        }
+        .nav-link { text-align: center; color: #888; text-decoration: none; }
+        .nav-link.active { color: var(--primary-green); }
+        .nav-text { font-size: 10px; font-weight: 700; display: block; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="header">
+            <div class="inspector-row">
+                <div class="inspector-info">
+                    <p>Building Control Officer</p>
+                    <h1>Officer Namanya</h1>
+                </div>
+                <div class="sync-status" onclick="alert('Synchronizing 3 pending inspections...')">
+                    <span class="sync-icon">🔄</span>
+                    <span class="sync-label">3 PENDING</span>
+                </div>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; font-weight: 600;">
+                Today's Quota: <span style="color: var(--accent-gold);">12/15 Completed</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section-header">
+                <h2 class="section-title">Next Inspection</h2>
+                <span class="date-chip">TODAY, MARCH 5</span>
+            </div>
+            
+            <div class="inspection-card">
+                <div class="card-top">
+                    <span class="app-id">#BIMS-OPS-992</span>
+                    <span class="ai-badge">AI ENHANCED</span>
+                </div>
+                <p class="site-details">Commercial Plaza - Plot 19 Lumumba Ave</p>
+                <div class="meta-info">
+                    <span>📍 0.8 KM Away</span>
+                    <span>⏰ 10:30 AM</span>
+                </div>
+                <button class="btn-action" onclick="alert('Launching Inspection Checklist...')">START INSPECTION</button>
+            </div>
+
+            <h2 class="section-title" style="margin-bottom: 15px;">Inspector Toolkit</h2>
+            <div class="toolkit-grid">
+                <div class="tool-item" onclick="window.location.href='bco-camera.html'">
+                    <div class="tool-icon">📸</div>
+                    <div class="tool-label">AI Camera</div>
+                </div>
+                <div class="tool-item danger" onclick="window.location.href='bco-stoporder.html'">
+                    <div class="tool-icon">🚫</div>
+                    <div class="tool-label" style="color: var(--danger);">Stop Order</div>
+                </div>
+                <div class="tool-item">
+                    <div class="tool-icon">🏛️</div>
+                    <div class="tool-label">Committees</div>
+                </div>
+                <div class="tool-item">
+                    <div class="tool-icon">🗺️</div>
+                    <div class="tool-label">Offline Map</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-bar">
+            <a href="#" class="nav-link active">
+                <span>🏠</span>
+                <span class="nav-text">Tasks</span>
+            </a>
+            <a href="#" class="nav-link">
+                <span>📑</span>
+                <span class="nav-text">Approvals</span>
+            </a>
+            <a href="#" class="nav-link">
+                <span>📊</span>
+                <span class="nav-text">Stats</span>
+            </a>
+            <a href="#" class="nav-link">
+                <span>⚙️</span>
+                <span class="nav-text">Settings</span>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

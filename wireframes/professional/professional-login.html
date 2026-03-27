@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIMS Professionals Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        background: #1e1e1e;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .phone {
+        width: 360px;
+        height: 812px;
+        background: #036939;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        position: relative;
+    }
+
+    .header {
+        height: 40%;
+        padding: 15px 20px;
+        text-align: center;
+        background: linear-gradient(180deg, #036939 0%, #00331a 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+    }
+
+    .header img {
+        width: 240px;
+        margin: 8px 0;
+    }
+
+    .header h1 {
+        margin: 5px 0 3px;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .header p {
+        font-size: 12px;
+        opacity: 0.85;
+        margin: 0;
+    }
+
+    .header > div:first-child {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    /* CONTENT AREA */
+    .content {
+        height: 60%;
+        background: #F8F9FA;
+        padding: 20px;
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #036939;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        outline: none;
+        transition: 0.2s;
+        box-sizing: border-box;
+    }
+
+    input:focus {
+        border-color: #f2a948;
+        box-shadow: 0 0 0 2px rgba(212,175,55,0.2);
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 13px;
+        border-radius: 12px;
+        border: none;
+        font-size: 15px;
+        font-weight: 600;
+        background: #036939;
+        color: white;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 8px;
+    }
+
+    .btn-primary:hover {
+        background: #005A2E;
+    }
+
+    .btn-biometric {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: 2px solid #f2a948;
+        background: white;
+        color: #036939;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 12px;
+        transition: 0.2s;
+    }
+
+    .btn-biometric:hover {
+        background: #fff7df;
+    }
+
+    .register {
+        margin-top: 18px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .register button {
+        background: none;
+        border: none;
+        color: #f2a948;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .register button:hover {
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+    <!-- HEADER -->
+    <div class="header">
+        
+
+        
+        <img src="../BIMS_logo_white.png" alt="NBRB Logo" >
+
+       
+        <h3 style="color: #f2a948;">For Architects, Engineers & Surveyor</h3>
+    </div>
+
+    <!-- FORM AREA -->
+    <div class="content">
+
+        <div class="form-group">
+            <label>Email or Phone Number</label>
+            <input type="text" placeholder="Enter your email or phone">
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" placeholder="Enter your password">
+        </div>
+
+        <button class="btn-primary" onclick="login()">
+            Login
+        </button>
+
+        <button class="btn-biometric" onclick="biometricLogin()">
+            🔐 Login with Biometrics
+        </button>
+
+        <div class="register">
+            Don't have an account?
+            <button onclick="register()">Register New Account</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function login() {
+    
+    window.location.href = "professional-dashboard.html";
+}
+
+function biometricLogin() {
+    window.location.href = "professional-dashboard.html";
+}
+
+function register() {
+    
+    window.location.href = "professional-registration.html";
+}
+</script>
+
+</body>
+</html>

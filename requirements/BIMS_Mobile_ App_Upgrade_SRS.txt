@@ -1,0 +1,319 @@
+ 
+ 
+ 
+  
+ 
+ENHANCEMENT OF THE BUILDING INDUSTRY 
+MANAGEMENT SYSTEM (BIMS) MOBILE APPLICATION  
+FOR THE NATIONAL BUILDING REVIEW BOARD 
+ 
+System Requirements Specification  
+(SRS) Document 
+ 
+ 
+Prepared by: 
+ 
+NBRB 
+ 
+FEBRAURY 2026 
+ 
+ 
+
+ 
+ 
+i 
+ 
+Contents 
+List of Abbreviations ii 
+1.  Introduction 1 
+1.1 Purpose 1 
+1.2 Scope 1 
+1. Overall Description 1 
+1.1 Product Perspective 1 
+1.2 User Classes and Characteristics 2 
+1.3 Operating Environment 2 
+2. Functional Requirements 3 
+2.1 Enhancement of Existing Functionality 3 
+2.1.1 Developer/Client Registration and Authentication 3 
+2.1.2 RQ-1: Account Creation 3 
+2.1.3 RQ-2: Authentication 4 
+RQ-3: Profile Management 4 
+2.1.4 RQ-4: Validation of Permits 4 
+2.2 Development of New Functionality 5 
+2.2.1 Application Submission and Tracking 5 
+2.2.2 RQ-5: Submission of Drawings and Acknowledgement of applications  5 
+2.2.3 RQ-6: Application Status Tracking 5 
+2.2.4 Reviews, Inspections, and Supervision 6 
+2.2.5 RQ-7: Field Inspections 6 
+RQ-8: Issuance of Stop Order Notices 6 
+2.2.6 3.2.3 Notifications and Communication 6 
+RQ-9: Push Notifications Error! Bookmark not defined. 
+2.2.7 RQ-10: Messaging 6 
+RQ-11: Whistle Blowing 6 
+2.3 Future Enhancements 7 
+2.3.1 RQ-12: Issue of Express Penalties 7 
+3. Non-Functional Requirements 7 
+3.1 Usability 7 
+3.2 4.2 Performance 7 
+3.3 Reliability and Availability 7 
+3.4 Security 7 
+4. System Interfaces 8 
+4.1 Backend Integration 8 
+ 
+ 
+  
+ 
+ 
+ii 
+ 
+List of Abbreviations 
+Abbreviation Full Meaning 
+APP Application 
+API Application Programming Interface 
+ARB Architects Registration Board 
+ABCO Building Control Officer 
+BCO Assistant Building Control Officer 
+ERB Engineers Registration Board 
+BIMS Building Industry Management System 
+JSON JavaScript Object Notation 
+NBRB National Building Review Board 
+PMT Project Management Team 
+SLA Service Level Agreement 
+SRB Surveyors Registration Board 
+TOR Terms of Reference 
+UX User Experience 
+UI User Interface 
+URL Uniform Resource Locator 
+ 
+ 
+1 
+ 
+1.  Introduction 
+ 
+1.1 Purpose 
+ 
+This document defines the System Requirements Specification (SRS) for the 
+enhancement of the Mobile Application Version of the National Building Review 
+Board (NBRB)’s Building Industry Management System (BIMS). 
+It derives from and aligns with the approved web -based BIMS SRS, while 
+adapting requirements to mobile -specific capabilities, constraints, and user 
+contexts. 
+The document is intended for NBRB stakeholders, developers, system auditors, 
+regulators, and quality assurance teams. 
+ 
+1.2 Scope 
+ 
+The mobile application shall complement the web -based BIMS by enabling on-
+the-go access, field operations, and citizen-facing services via Android and 
+iOS platforms. The mobile app will not replace the web system but will extend 
+its functionality with mobile-optimized workflows. 
+ 
+ 
+1. Overall Description 
+ 
+1.1 Product Perspective 
+ 
+The BIMS Mobile App is a client application that consumes services from the 
+existing BIMS backend via secure APIs. It shares the same database and 
+business rules as the web system. 
+ 
+The mobile app shall: 
+i. Operate in online and limited offline modes 
+ii. Synchronize data securely with the web-based BIMS backend 
+ 
+ 
+2 
+ 
+iii. Integrate with device hardware (camera, GPS, notifications) 
+ 
+1.2  User Classes and Characteristics 
+ 
+User Class Description 
+Applicants/Citizens General submission and tracking 
+applications 
+Building Control Officers Field Inspections, Technical reviews & 
+supervision 
+Building Control Assistants Field Inspections, Technical reviews & 
+supervision 
+Building Committee Members Viewing decisions, approvals 
+Professionals (Engineers, 
+Architects & Surveyors) 
+Submission of applicants’ drawings, and 
+acknowledging/confirming applications 
+ALL Permit validation, Whistle blowing 
+ 
+1.3  Operating Environment 
+• Android 
+• iOS 
+• Secure HTTPS internet connectivity 
+• BIMS Backend hosted at NBRB/NITA-U Data centres 
+ 
+ 
+ 
+  
+ 
+ 
+3 
+ 
+ 
+2. Functional Requirements 
+ 
+2.1 Enhancement of Existing Functionality 
+ 
+These features / functionalities already exist in the current Mobile App, however 
+require UI/UX, feature enhancements and additional functionality. 
+In such cases, where additional functionality is required, such features are 
+highlighted in red 
+ 
+2.1.1  Developer/Client Registration and Authentication 
+ 
+2.1.2 RQ-1: Account Creation 
+ 
+i. The system should allow individual developers to register via the mobile 
+app using NIN-based verification, while Businesses, Government & Other 
+Entities using BRN and TIN respectively  
+ 
+ii. The system should allow registered and practising Professionals 
+(Architects, Surveyors & Engineers) to register via the mobile app 
+incorporating real-time validation from their respective bodies (ARB, 
+SRB, ERB). 
+  
+ 
+ 
+4 
+ 
+ 
+2.1.3 RQ-2: Authentication 
+ 
+The mobile app should support: 
+ 
+i. Username/password login 
+ii. OTP-based Two factor authentication via SMS 
+iii. Biometric authentication (fingerprint/face ID) where supported 
+ 
+ 
+RQ-3: Profile Management 
+The mobile app should allow users to view and update permissible profile 
+details. 
+ 
+2.1.4 RQ-4: Validation of Permits 
+ 
+The mobile app should support validation of Building Permits through the use 
+of: 
+i. Permit Serial Numbers 
+ii. QR Code 
+  
+ 
+ 
+5 
+ 
+2.2 Development of New Functionality 
+ 
+These features / functionalities do not exist in the current Mobile App and 
+require development. 
+ 
+2.2.1 Application Submission and Tracking 
+ 
+2.2.2 RQ-5: Submission of Drawings and Acknowledgement of applications 
+ 
+The mobile app should allow professionals, on behalf of developers to: 
+i. Upload drawings using device camera or file system 
+ii. Re-upload / replace drawings 
+iii. Submit GPS coordinates of the site 
+iv. Link Drawings to respective client applications 
+v. Review client applications 
+vi. Acknowledge or reject client applications 
+ 
+2.2.3 RQ-6: Application Status Tracking 
+ 
+The mobile app should allow authenticated users to: 
+i. View real-time application status 
+ii. Receive push notifications for status changes 
+iii. Retry payments whose statuses are indeterminate 
+iv. Regenerated EXPIRED PRNs 
+ 
+  
+ 
+ 
+6 
+ 
+2.2.4 Reviews, Inspections, and Supervision 
+ 
+RQ-7: Field Inspections 
+ 
+The mobile app should allow BCOs’ and ABCOs’ to: 
+i. View assigned inspections 
+ii. Capture photos, notes, and GPS-tagged evidence 
+iii. Complete inspection checklists on-site 
+ 
+RQ-8: BC Decisions & Approvals 
+ 
+The mobile app should allow BCOs’ and BC members’ to: 
+iv. View BCO and BC decisions 
+v. View Scheduled Meetings 
+vi. View Meeting Agenda and minutes 
+ 
+ 
+RQ-9: Issuance of Stop Order Notices 
+The mobile app should allow BCOs’ to issue Stop Order Notices. 
+ 
+2.2.5 Notifications and Communication 
+ 
+2.2.6 RQ-10: Messaging 
+The mobile app should provide support for in-app messaging between its users 
+and NBRB staff for application related support purposes. 
+ 
+RQ-11: Whistle Blowing 
+The mobile app should allow for anonymous reporting of: 
+i. Illegal constructions 
+ii. Building Collapses 
+Including photo and GPS evidence. 
+ 
+ 
+ 
+7 
+ 
+2.3 Future Enhancements 
+ 
+2.3.1 RQ-12: Issue of Express Penalties 
+ 
+The mobile app should take into account the  provision and mechanism for the 
+issue issuance of Express Penalties in the near future. 
+ 
+ 
+3.  Non-Functional Requirements 
+ 
+3.1  Usability 
+ 
+i. Mobile-first, responsive UI 
+ii. Minimal data entry with guided forms 
+iii. Support for English (initially), extensible to other languages  such as 
+Luganda, Kiswahili and Luo (among others) 
+ 
+3.2 4.2 Performance 
+ 
+i. App launch time ≤ 5 seconds under normal conditions 
+ii. Background synchronization without blocking user tasks 
+ 
+3.3 Reliability and Availability 
+ 
+i. Graceful handling of intermittent connectivity 
+ii. Local caching and deferred synchronization 
+ 
+3.4 Security 
+ 
+i. End-to-end encryption (HTTPS/TLS) 
+ii. Secure local storage for cached data 
+iii. Auto logout after inactivity 
+ 
+ 
+8 
+ 
+iv. Device-level authentication support 
+ 
+4. System Interfaces 
+ 
+4.1  Backend Integration 
+ 
+The mobile app shall integrate with BIMS backend services via RESTful APIs 
+ 

@@ -1,0 +1,229 @@
+Proposal: Enhancement of the BIMS Mobile 
+Application
+To: National Building Review Board (NBRB) 
+Project: Enhancement of the Building Industry Management System (BIMS) Mobile 
+Application 
+Date: 19th February 2026 
+Prepared by: Byaruhanga Raymond
+Revision: 1.1
+Table of Contents
+1. Executive Summary................................................................................................................ 2
+2. Technical Methodology & Flutter Implementation.................................................................2
+3. Detailed Functional Implementation.......................................................................................2
+3.1. Notification Architecture (Firebase Cloud Messaging)...................................................2
+3.2. Professional & Citizen Workflow................................................................................... 3
+3.2. Geo-Tagging & Field Evidence.......................................................................................3
+3.3. Authentication & Security...............................................................................................3
+3.4. Offline-First Synchronization Architecture.....................................................................4
+3.5. Detailed UI/UX Screen Map........................................................................................... 4
+3.6 possible AI enhancements (dependant on approval and availability of LLM models) – 
+may be Phase 2.......................................................................................................................5
+4. Project Duration Gantt Chart.................................................................................................. 7
+5. Financial Proposal...................................................................................................................9
+6. Support and Maintenance......................................................................................................10
+7. Declaration............................................................................................................................ 10
+1. Executive Summary
+This proposal outlines a robust technical approach to enhancing the BIMS Mobile 
+Application for the National Building Review Board (NBRB). By utilizing Flutter, we 
+will deliver a high-performance, cross-platform solution (Android and iOS) that 
+extends BIMS services to mobile users, enabling citizen self-service, field inspections, 
+and real-time notifications. Our solution focuses on security, offline reliability, and 
+seamless integration with the existing BIMS backend via RESTful APIs.
+2. Technical Methodology & Flutter Implementation
+We will employ Flutter to ensure a single codebase delivers native-grade 
+performance on both platforms, meeting the SRS requirement for an app launch time 
+of 5 seconds.
+ Architecture: We will use the BLoC (Business Logic Component) pattern to 
+separate the UI from complex business logic, ensuring scalability.
+ API Integration: Communication with the BIMS backend will be handled via 
+the Dio package, featuring interceptors for JWT-based authentication and 
+HTTPS/TLS encryption.
+ Local Persistence: To handle intermittent connectivity, Hive or Sqflite (based 
+on confirmation of nosql or relational database) will be used for local 
+caching of inspection data and permit details.
+3. Detailed Functional Implementation
+3.1. Notification Architecture (Firebase Cloud Messaging)
+To meet the requirement for real-time notifications, we will implement Firebase 
+Cloud Messaging (FCM) using a scalable enterprise architecture.
+ Implementation Strategy:
+ Packages: We will use firebase_core and firebase_messaging for the 
+core integration, along with flutter_local_notifications to handle 
+foreground alerts without an internet connection.
+ Token Management: Upon app launch, the system will retrieve a unique 
+FCM device token. This token will be securely sent to the BIMS backend 
+to allow for targeted notifications (e.g., status changes on a specific 
+permit application).
+ Lifecycle Handling:
+ Foreground: Alerts will be displayed as a custom in-app banner 
+using FirebaseMessaging.onMessage.
+ Background/Terminated: We will implement a top-level 
+_firebaseMessagingBackgroundHandler to process incoming 
+messages even when the app is closed.
+ Actionable Notifications: Clicking a notification will trigger 
+onMessageOpenedApp, deep-linking the user directly to the relevant 
+application status or messaging screen.
+3.2. Professional & Citizen Workflow 
+ Document Management: Using file_picker and image_picker, professionals can 
+upload or replace high-resolution drawings directly from their mobile device.
+ Status Tracking: Users will receive real-time updates on application status 
+changes via Firebase Cloud Messaging (FCM).
+ Financials: The app will allow for the regeneration of expired PRNs and 
+retrying of indeterminate payment statuses.
+3.2. Geo-Tagging & Field Evidence 
+To ensure the integrity of field inspections and whistle-blowing reports, we will 
+implement a multi-layered geo-tagging engine:
+ GPS Capture: Using the geolocator package to capture site coordinates with 
+high accuracy.
+ Metadata Embedding: Programmatically writing GPS coordinates 
+(Latitude/Longitude) into the EXIF data of inspection photos.
+ Visual Watermarking: Overlaying a non-removable watermark containing the 
+Timestamp and BIMS Application ID onto captured images.
+3.3. Authentication & Security 
+ Identity Verification: NIN-based verification for individuals and BRN/TIN for 
+entities.
+ Multi-Factor Auth: Implementation of OTP-based 2FA via SMS and biometric 
+(Fingerprint/Face ID) login. local_auth to provide "Device-level authentication 
+support" as required by the SRS
+ Permit Validation: A built-in QR code and Serial Number scanner for real-time 
+validation of building permits.
+3.4. Offline-First Synchronization Architecture
+To handle intermittent connectivity during field inspections, we will implement a 
+Repository Pattern with a local-first philosophy.
+ Local Database: We will use Sqflite or Hive to store all inspection data and 
+application history on-device.
+ Durable Queue: Every user action (like submitting a photo or completing a 
+checklist) will be written to a persistent Sync Queue.
+ Background Sync Engine: A background process will poll the queue and 
+attempt to push data to the BIMS REST APIs when a network is detected.
+ Conflict Resolution: If the same permit is updated on both the web and 
+mobile, we will use server-authoritative timestamps to resolve conflicts.
+3.5. Detailed UI/UX Screen Map
+The application will consist of approximately 18–22 unique screens across three 
+distinct user roles (Citizens, Professionals, and Building Control Officers) to ensure a 
+comprehensive building control workflow.
+Core Common Screens (5 Screens)
+1. Splash/Onboarding: Branded entry with safe-building messaging.
+2. Authentication Hub: Login via username/password, OTP-based 2FA, or 
+Biometric (Fingerprint/Face ID).
+3. Unified Registration: NIN-based verification for individuals or BRN/TIN for 
+entities.
+4. Professional Registration: Specialized portal for Architects/Engineers with 
+real-time validation from ARB/ERB/SRB.
+5. Main Dashboard: Role-based landing page showing quick actions and recent 
+activity.
+Applicant/Citizen & Professional Portal (8 Screens)
+6. Application Center: Overview of all active and past permit applications.
+7. Submission Wizard: Multi-step form for document uploads using the device 
+camera or file system.
+8. GPS Site Mapper: Dedicated screen to capture and verify GPS coordinates of 
+the site.
+9. Status Tracker: Real-time progress bar for current applications.
+10. Payment Portal: Integration for fee calculation and PRN (Payment 
+Reference Number) management.
+11. Review Hub: For Professionals to review, link, and acknowledge client 
+applications.
+12. Permit Validator: QR code scanner for verifying building permits in the 
+field.
+13. Anonymous Whistle Blowing: Form for reporting illegal constructions 
+with photo/GPS evidence.
+Inspector/BCO & Committee Portal (7 Screens)
+14. Inspection Planner: Calendar view of assigned field inspections.
+15. Digital Checklist: Interactive forms for BCOs to complete technical 
+reviews and supervision tasks on-site.
+16. Evidence Capture: Full-screen camera interface for capturing GPS-
+tagged photos and notes.
+17. Stop Order Center: Interface for issuing and managing Stop Order 
+Notices.
+18. Committee Meeting Hub: View scheduled meetings, agendas, and 
+minutes.
+19. Decision Portal: Interface for BCOs and Committee members to log 
+approvals or denials.
+20. Reporting Dashboard: High-level summaries for NBRB management.
+3.6 possible AI enhancements (dependant on approval and availability of LLM 
+models) – may be Phase 2
+3.6.1. Computer Vision for Automated Compliance (BCO Feature)
+Instead of a Building Control Officer (BCO) manually checking off every item, the app 
+can use a TensorFlow Lite model (integrated into Flutter) to analyze photos in real-
+time.
+ Accessibility Detection: When a BCO takes a photo of the building entrance, 
+the AI identifies the presence of a disability ramp or tactile paving. If 
+missing, the app flags a "Potential Non-Compliance" alert.
+ Infrastructure Recognition: The AI can automatically detect and tag features 
+like lifts, fire extinguishers, or emergency exits in uploaded photos.
+ Illegal Construction Detection: By comparing the current photo with the 
+original approved drawings , the AI can highlight structural deviations (e.g., 
+an extra floor or unauthorized balcony).
+3.6.2. Smart Form Autocomplete & OCR (Citizen/Professional Feature)
+This feature targets the requirement for "minimal data entry" by learning from 
+previous entries and external documents.
+ Intelligent Form Prefilling: The app uses machine learning to predict and 
+autocomplete fields (like "Building Type" or "Plot Location") based on the user's 
+past 10 submissions or common patterns in that specific district.
+ OCR for Identity Documents: Instead of typing in registration numbers, users 
+can scan their NIN, BRN, or TIN cards. The app uses Optical Character 
+Recognition (OCR) to extract the text and verify it against the backend in one 
+tap.
+ Automated Drawing Extraction: When a Professional uploads a drawing, the 
+AI can scan the title block to automatically extract the "Project Title," "Architect 
+Name," and "Plot Number ," saving minutes of manual typing.
+4. Project Duration  Gantt Chart
+Phase 1: Inception & UI/UX Design (Weeks 1–2)
+ Stakeholder Workshops: Conduct meetings to finalize the Statement of 
+Understanding of the SRS.
+ UI/UX Wireframing: Design 20+ screens in Figma for both Android and iOS, 
+focusing on the "mobile-first" approach.
+ Environment Setup: Configure the JIRA/Asana monitoring tool and co-opt the 
+NBRB Project Management Team (PMT).
+ Deliverable: Inception Report & Gantt Chart .
+Phase 2: Core Development - Professionals & Citizens (Weeks 3–6)
+ Authentication Engine: Implement NIN-based registration, Biometrics, and 
+OTP-based 2FA.
+ Submission Module (RQ-5): Build the document vault for drawing uploads and 
+link them to client applications.
+ Geo-Tagging Engine: Integrate high-accuracy GPS capturing for site 
+coordinates and anonymous whistle-blowing.
+ Status Tracking (RQ-6): Implement real-time status updates and URA PRN 
+regeneration logic.
+
+Phase 3: Field Operations & BCO Tools (Weeks 7–9)
+ Field Inspection Module (RQ-7): Develop digital checklists and GPS-tagged 
+photo evidence capture for BCOs.
+ Enforcement Tools (RQ-9): Build the interface for issuing Stop Order Notices 
+directly from the field.
+ Offline Synchronization: Implement local caching (Hive/Sqflite) and 
+background sync for intermittent connectivity.
+ Notification System: Integrate Firebase Cloud Messaging (FCM) for push 
+notifications and in-app messaging.
+Phase 4: Quality Assurance & Technical Review (Weeks 10–11)
+ Internal Testing: Conduct Unit, Integration, and System Integration Testing 
+(SIT).
+ Technical Reviews: Perform bi-weekly technical reviews and provide codebase 
+access to the NBRB software team.
+ Security Audit: Verify end-to-end encryption (HTTPS/TLS) and auto-logout 
+functionality.
+Phase 5: UAT, Training & Deployment (Week 12)
+ User Acceptance Testing (UAT): Execute UAT with stakeholders and obtain the 
+signed UAT Certificate.
+ Training: Conduct demonstration and training sessions for NBRB staff.
+ Store Deployment: Deploy the finalized applications to the Google Play Store 
+and Apple Store.
+ Deliverable: UAT Certificate & Go-Live .
+5. Financial Proposal
+In accordance with the Terms of Reference (TOR) for the enhancement of the BIMS 
+Mobile Application, we are pleased to submit our financial proposal. The total cost for 
+the professional services described in the technical proposal is UGX 15,000,000 
+(Fifteen Million Uganda Shillings Only).
+
+6. Support and Maintenance
+We shall offer support for a period of upto  6 months after handover . The support 
+will ber restricted to  bug fixes, defects,  and not feature requests or enhancements 
+of the system. Any new feature requests or enhancements shall be billed separately.
+The support will be offered as remote first approach. Any field support will incur a 
+daily or hourly rate to be negotiated.
+7. Declaration
+We confirm that we will provide high-performance, scalable mobile apps and handle 
+the entire lifecycle—from design to support —at no additional cost for any defects 
+identified during the DLP .
+Name: Byaruhanga Raymond
+Signature: ______________________________ Date: ______19th February 2026______ 
+

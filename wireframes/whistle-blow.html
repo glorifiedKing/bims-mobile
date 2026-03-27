@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS - Whistle Blow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-green: #036939; --accent-gold: #f2a948; --bg: #F8F9FA; --danger: #CC0000; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .phone { width: 375px; height: 812px; background: var(--bg); border-radius: 40px; position: relative; border: 8px solid #111; overflow: hidden; }
+        
+        .header { height: 12%; background: white; padding: 40px 20px 0; border-bottom: 1px solid #eee; text-align: center; }
+        .header h1 { font-size: 16px; font-weight: 700; color: var(--primary-green); }
+        
+        .form-area { padding: 20px; height: 75%; overflow-y: auto; }
+        .warning-box { background: #fff4f4; border: 1px solid #ffdada; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 11px; color: var(--danger); line-height: 1.4; display: flex; gap: 8px; }
+        
+        label { font-size: 10px; font-weight: 800; color: var(--primary-green); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        select, textarea { width: 100%; padding: 12px; border: 1.5px solid #eef2ef; border-radius: 10px; font-size: 13px; outline: none; background: white; margin-bottom: 20px; }
+
+        .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .evidence-box { border: 2px dashed var(--accent-gold); border-radius: 12px; padding: 20px; text-align: center; background: #fffdf5; cursor: pointer; }
+        .evidence-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+        .evidence-text { font-size: 10px; font-weight: 700; color: var(--primary-green); }
+
+        .footer { position: absolute; bottom: 0; width: 100%; padding: 20px; background: white; border-top: 1px solid #eee; }
+        .btn-submit { width: 100%; padding: 16px; background: var(--primary-green); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="header">
+            <h1>Report Construction</h1>
+        </div>
+
+        <div class="form-area">
+            <div class="warning-box">
+                <span>🛡️</span>
+                <span><b>ANONYMOUS REPORT:</b> Your personal details will not be shared with NBRB or the site owner.</span>
+            </div>
+
+            <label>Nature of Violation</label>
+            <select>
+                <option>Select an issue...</option>
+                <option>No Building Permit Displayed</option>
+                <option>Illegal Construction</option>
+                <option>Lack of Safety Measures</option>
+                <option>Construction During Night</option>
+            </select>
+
+            <label>Site Location (GPS)</label>
+            <div class="evidence-box" style="border-style: solid; margin-bottom: 20px; background: #eee; border-color: #ddd;">
+                <span class="evidence-text" style="color: #666;">📍 FETCHING SITE COORDINATES...</span>
+            </div>
+
+            <label>Upload Evidence (Photos)</label>
+            <div class="evidence-grid">
+                <div class="evidence-box" onclick="alert('Launching Camera...')">
+                    <span class="evidence-icon">📸</span>
+                    <span class="evidence-text">TAKE PHOTO</span>
+                </div>
+                <div class="evidence-box" onclick="alert('Accessing Gallery...')">
+                    <span class="evidence-icon">🖼️</span>
+                    <span class="evidence-text">GALLERY</span>
+                </div>
+            </div>
+
+            <label>Additional Details</label>
+            <textarea placeholder="Describe the situation here..." style="height: 80px;"></textarea>
+        </div>
+
+        <div class="footer">
+            <button class="btn-submit" onclick="alert('Report Submitted Anonymously. Reference: WB-2026-X99')">SUBMIT REPORT</button>
+        </div>
+    </div>
+</body>
+</html>

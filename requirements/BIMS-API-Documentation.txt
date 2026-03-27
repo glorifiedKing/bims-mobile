@@ -1,0 +1,596 @@
+ 
+ 
+ 
+ 
+Building Industry Management System 
+(BIMS) 
+ Application Programming Interface  
+(API)  
+DOCUMENTATION 
+ 
+Version 1 
+August 2023 
+  
+ 
+Authors 
+Name Designation 
+Denis Ojok Senior ICT officer – Systems Development 
+  
+  
+  
+
+ 
+ 
+Table of Contents 
+ 
+1. Revision History...................................................................................................................... 4 
+2 Background ............................................................................................................................... 5 
+3 About this API .......................................................................................................................... 5 
+3.1 API Versioning ................................................................................................................... 5 
+4 Using the API ............................................................................................................................. 5 
+4.1 Sandbox Environment ....................................................................................................... 6 
+4.2 Production Environment .................................................................................................. 6 
+4.3 Request/Response Format ............................................................................................... 6 
+Some general information about responses: .................................................................... 6 
+4.4 Rate Limiting ...................................................................................................................... 6 
+4.5 Pagination ........................................................................................................................... 7 
+4.6 Error Handling ................................................................................................................... 7 
+5 CLIENT API: ............................................................................................................................. 8 
+5.1 Base URL ............................................................................................................................. 8 
+5.2 ENDPOINTS ....................................................................................................................... 9 
+5.2.1 Create Account ............................................................................................................ 9 
+5.2.2 Request Token (Login) ............................................................................................. 12 
+5.2.3 Refresh Token (Obtain another token)................................................................... 13 
+5.2.4 API Authentication ................................................................................................... 14 
+5.2.5 Get Account Information ......................................................................................... 15 
+5.2.6 Update Account Information .................................................................................. 16 
+5.2.7 Get All Applications ................................................................................................. 17 
+5.2.8 Get Details of an Application .................................................................................. 19 
+5.2.9 Get All Invoices ........................................................................................................ 20 
+5.2.10 Get Details of a Particular Invoice ........................................................................ 22 
+5.2.11 Get Details of an Approved Permit ...................................................................... 23 
+5.2.12 Get Approved Permits ........................................................................................... 24 
+5.2.13  Get Details of an Approved Permit ..................................................................... 26 
+ 
+ 
+ 
+ 
+ 
+1. Revision History 
+ 
+Revision Date Comments Reviewer 
+August 2023 Initial Documentation Denis Ojok 
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+  
+ 
+ 
+2 Background 
+BIMS is a web-based application developed by the National Building Review Board (NBRB), with the aim 
+of automating all building control related processes such as application, review, and issuance of building 
+& occupation permits, carrying out routine inspections and appeals as per the mandate of the NBRB. 
+3 About this API 
+ 
+This is the official BIMS API documentation. 
+The API is a RESTful API (https://en.wikipedia.org/wiki/Representational_state_transfer) and uses JSON 
+(https://en.wikipedia.org/wiki/JSON) as its data format. 
+The API utilizes HTTP methods and HTTP status codes to specify requests and responses. 
+All responses are returned in JSON format. 
+ 
+3.1 API Versioning 
+ 
+The BIMS API uses a semantic versioning scheme (https://en.wikipedia.org/wiki/Software_versioning) to 
+prevent breaking changes. 
+New API versions are released only when we make backward incompatible changes to the API. We 
+define these as changes that will prevent our official client libraries from working on old versions.  
+Some changes DO NOT result in a new version, including:  
+1. Adding new API methods,  
+2. Adding optional parameters to existing API methods or 
+3. Adding new fields to responses. 
+The current version of the API is: v1 
+4 Using the API 
+We have production as well as test server environments. The test server environment is called sandbox. 
+You are advised to test all your API calls on the sandbox environment before pointing your application to 
+production 
+To point an application to production, you will be required to make only minor changes. In most cases, 
+you will simply need to change the 
+1. API URL, 
+2. API TOKEN (where applicable). 
+ 
+ 
+4.1 Sandbox Environment 
+The following is the API Endpoint for our sandbox environment: 
+https://api.test.bims.go.ug/v1/ 
+4.2 Production Environment 
+We can't stress this enough: Please test your APIs against our sandbox environment before pointing 
+them to production. We prefer to avoid service disruptions in production caused by untested code. 
+The following is the API Endpoint for our production environment: 
+https://api.bims.go.ug/v1/ 
+4.3 Request/Response Format 
+ 
+The default response format is JSON. Requests with a message-body use plain JSON to set or update 
+resource attributes. Successful requests will return a 200 (OK), 201 (CREATED) or a 202 (ACCEPTED) 
+HTTP status. 
+Some general information about responses: 
+ 
+1. Dates are returned the format: YYYY-MM-DD HH:mm:ss 
+2. Any decimal monetary amount, such as prices or totals, will be returned as strings with two 
+decimal places. 
+3. Other amounts, such as item counts, are returned as integers. 
+4. Blank fields are generally included as null or empty string instead of being omitted. 
+ 
+4.4 Rate Limiting 
+ 
+All requests, whether they are authenticated or not, are subject to rate limiting. If you have reached 
+your limit, your requests will be handled with a 429 Too Many Requests error. Responses contain 
+several headers which provide information about your current rate limit status. 
+1. The ‘RateLimit-Limit’ header contains the total number of requests you can perform per 
+minute. 
+2. The ‘RateLimit-Remaining’ header contains the number of requests remaining in the current 
+rate limit time frame. 
+3.  
+The default limit is 45 requests per second.  
+ 
+ 
+ 
+4.5 Pagination 
+ 
+Responses which return multiple items support pagination. If they do support pagination, it can be 
+controlled with following query string parameters: 
+ 
+1. A page parameter specifies the page to fetch.  
+2. The number of the first page is 1. 
+3. A per_page parameter specifies the number of items returned per page.  
+4. The default value is 25, the maximum value is 50 except otherwise specified in the 
+documentation. 
+ 
+4.6 Error Handling 
+ 
+BIMS uses HTTP response status codes to indicate success or failure. When a request to our API is 
+successful, The API returns an HTTP response code in the 2XX range. And when a request fails, returns 
+an HTTP response code in the 4XX or 5XX range. 
+ 
+In summary: 
+ 
+1. Codes in the 2XX range mean that the request was processed successfully 
+2. Codes in the 4XX range mean that something was wrong with the data that you sent. For 
+example, you might have missed some required parameters, or you might be using a wrong API 
+token. 
+3. Codes in the 5XX range mean that something went wrong within BIMS's servers. 
+ 
+In all cases, the response will include an appropriate status code and content-type. The body of the 
+response will include any additional details regarding the nature of the error. 
+Most error responses will include a message key in the body of the response, but some may include 
+additional information, for example, they may include information about missing fields. 
+  
+ 
+ 
+ 
+5 CLIENT API:  
+ 
+All the API endpoints and methods under this module, are designed to be accessed by applications that 
+desire to interact (create, retrieve, update, soft delete) with an applicant/client’s data. Examples of such 
+applications may include: 
+1. Inhouse client facing mobile applications. 
+2. Third-party Systems interested in verifying the authenticity of building and occupation permits. 
+   
+5.1 Base URL 
+ 
+The base endpoint for the client module is:  /client 
+Which translates to: 
+ https://api.test.bims.go.ug/v1/client on the sandbox environment, and 
+https://api.bims.go.ug/v1/client on the production environment 
+  
+ 
+ 
+5.2 ENDPOINTS 
+ 
+5.2.1 Create Account 
+ 
+Use this endpoint to create/register a new client/user account 
+Base URL: <API-URL>/client 
+Method: POST 
+End point: /account 
+Authentication Token Required: NO 
+Parameters 
+# Parameter Type Description 
+1 legal_status Int (Required) Legal Status of the applicant and must be 
+either 1, or 2, or 3 as explained below: 
+ 
+1: Individual, 2: Company, 3: Government 
+ 
+2 surname String (Required Only if 
+legal_status is set to 1 
+Surname of the Applicant  
+3 given_name String (Required Only if 
+legal_status is set to 1 
+Given Name of the Applicant 
+4 Other_names String (Required Only if 
+legal_status is set to 1 
+Other Name of the Applicant 
+5 citizenship Int (Required Only if 
+legal_status is set to 1 
+Citizenship type of the applicant and must be 
+either 1 or 2 
+ 
+1: Ugandan, 2: Non-Ugandan  
+6 sex String (Required Only if 
+legal_status is set to 1 
+Sex of the Applicant, Must be either “Male” or 
+“Female” 
+7 national_id String (Required Only if 
+legal_status is set to 1 
+NIN Number of the applicant 
+8 email String (Required) Email Address of the applicant 
+9 phone String (Required) Phone Number of the applicant 
+10 password String (Required) Desired Password (set by the applicant) 
+11 password_confirmation String (Required) Password Confirmation, Must be the same as 
+‘password’ 
+12 brn String (Required Only if 
+legal_status is set to 2 
+Business Registration Number of the applicant 
+13 tin String (Required Only if 
+legal_status is set to 2 or  
+3 
+Tax Identification Number of the applicant 
+ 
+ 
+ 
+ 
+5.2.1.1 Sample Request: 
+ 
+curl --location https://api.test.bims.go.ug/v1/client/account' \ 
+--header 'Content-Type: application/json' \ 
+--data-raw '{ 
+    "legal_status": 1, 
+    "surname": "Ojok", 
+    "sex": "Male", 
+    "given_name": "Denis", 
+    "citizenship": 1, 
+    "national_id":"CM9910011LKM0OL", 
+    "email": "denis.ojok@nbrb.go.ug", 
+    "phone": "256775203801", 
+    "password": "!Robot3@@1", 
+    "password_confirmation":"!Robot3@@1", 
+    "brn":"80010002492400", 
+    "tin":"1002335934" 
+}' 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+5.2.1.2 Sample Response: 
+ 
+{ 
+    "code": 201, 
+    "status": "success", 
+    "message": "Created Successfully. A verification link has 
+been sent 'denis.ojok@nbrb.go.ug' as well. Please ensure you 
+verify your account prior to login." 
+} 
+ 
+  
+
+ 
+ 
+5.2.2 Request Token (Login) 
+ 
+Use this endpoint to login  a client/user 
+Base URL: <API-URL>/client 
+Method: POST 
+End point: /token 
+Authentication Token Required: NO 
+Parameters: username, password 
+# Parameter Type Description 
+1 username String (Required) An applicant/client’s username 
+2 Password String (Required) An applicant/client’s password 
+ 
+5.2.2.1 Sample Request & Response: 
+ 
+ 
+Note: Upon successful execution, the endpoint above will return an access_token as per the above 
+screenshot, this is the access_token that you will use to authenticate your next requests, by passing it in 
+the “Authorization: bearer” header of each of your requests. 
+Please note that for security reasons, the access_token will be valid for a maximum of 3600 seconds (1 
+Hour), You may refresh the token (using the endpoint below) prior or after its expiration. 
+ 
+  
+
+ 
+ 
+5.2.3 Refresh Token (Obtain another token) 
+ 
+Use this endpoint to refresh an active token. 
+Base URL: <API-URL>/client 
+Method: POST 
+End point: /token/refresh 
+Authentication Token Required: NO 
+Parameters: token 
+ 
+# Parameter Type Description 
+1 token Json An earlier generated token 
+ 
+5.2.3.1 Sample Request: 
+ 
+5.2.3.2 Sample Response: 
+ 
+ 
+  
+
+ 
+ 
+5.2.4 API Authentication 
+ 
+From this point onwards (with an exception of the verifyPermit endpoint), All requests to the API must 
+be authenticated via an API Access token. 
+Include your API Access token (The one obtained earlier using the /token endpoints) in every request 
+you send to the API, and this must be included with in the Authorization HTTP header. 
+ 
+  
+
+ 
+ 
+5.2.5 Get Account Information 
+ 
+Use this endpoint to retrieve a client’s profile / Account Details. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /account 
+Authentication Token Required: YES 
+Parameters: None 
+# Parameter Description 
+- - - 
+ 
+5.2.5.1 Sample Request & Response: 
+ 
+  
+
+ 
+ 
+ 
+5.2.6 Update Account Information 
+ 
+Use this endpoint to update / make amendments to a client’s profile / Account Details. 
+Base URL: <API-URL>/client 
+Method: PUT 
+End point: /account 
+Authentication Token Required: YES 
+Parameters 
+# Parameter Type Description 
+1 legal_status Int (Required) Legal Status of the applicant and must be 
+either 1, or 2, or 3 as explained below: 
+ 
+1: Individual, 2: Company, 3: Government 
+ 
+2 surname String (Required Only if 
+legal_status is set to 1 
+Surname of the Applicant  
+3 given_name String (Required Only if 
+legal_status is set to 1 
+Given Name of the Applicant 
+4 Other_names String (Required Only if 
+legal_status is set to 1 
+Other Name of the Applicant 
+5 email String (Required) Email Address of the applicant 
+9 phone String (Required) Phone Number of the applicant 
+6 password String (Required) Desired Password (set by the applicant) 
+7 password_confirmation String (Required) Password Confirmation, Must be the same as 
+‘password’ 
+ 
+  
+ 
+ 
+5.2.7 Get All Applications 
+ 
+Use this endpoint to retrieve a list of all open applications belonging to the authenticated user. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /applications 
+Authentication Token Required: YES 
+Mandatory Parameters: None 
+Additional Parameters (Optional):  
+# Parameter Type Description 
+1 start String/Datetime 
+(Optional) 
+This is of the format YYYY-MM-DD HH:mm:ss, e.g 2020-05-
+15 18:44:44 – Useful for filtering applications within a given 
+date range 
+2 end String/Datetime 
+(Optional) 
+This is of the format YYYY-MM-DD HH:mm:ss, e.g 2020-05-
+15 18:44:44– Useful for filtering applications within a given 
+date range 
+ status String (Optional) Filter by application status. eg PENDING PROFFESSIONAL 
+ACKNOWLEDGEMENT, PENDING PAYMENT 
+ per_page Int (Optional) Total Number of records to return. If not specified, the 25 
+records will be returned by default 
+ 
+ 
+ 
+5.2.7.1  Sample Request & Response: 
+ 
+  
+
+ 
+ 
+5.2.8 Get Details of an Application 
+ 
+Use this endpoint to retrieve details of a particular application. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /applications/<APPLICATION_KEY> 
+Authentication Token Required: YES 
+Mandatory Parameters:  Application Key (Must be passed in the URL) 
+Additional Parameters: None 
+# Parameter Description 
+- - - 
+ 
+5.2.8.1 Sample Request & Response: 
+ 
+  
+
+ 
+ 
+5.2.9 Get All Invoices 
+ 
+Use this endpoint to retrieve a list of all invoices generated by a client. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /invoices 
+Authentication Token Required: YES 
+Mandatory Parameters:  None 
+# Parameter Type Description 
+1 start String/Datetime 
+(Optional) 
+This is of the format YYYY-MM-DD HH:mm:ss, e.g 2020-05-
+15 18:44:44 – Useful for filtering invoices within a given date 
+range 
+2 end String/Datetime 
+(Optional) 
+This is of the format YYYY-MM-DD HH:mm:ss, e.g 2020-05-
+15 18:44:44– Useful for filtering invoices within a given date 
+range 
+ status String (Optional) Filter by invoice status. eg PENDING, PAID 
+ per_page Int (Optional) Total Number of records to return. If not specified, the 25 
+records will be returned by default 
+ 
+5.2.9.1  Sample Request & Response: 
+ 
+ 
+ 
+ 
+  
+
+ 
+ 
+5.2.10 Get Details of a Particular Invoice 
+ 
+Use this endpoint to retrieve details of a particular Invoice. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /invoices/<PRN> 
+Authentication Token Required: YES 
+Mandatory Parameters:  Payment Registration Number (PRN) 
+Additional Parameters: None 
+# Parameter Description 
+- - - 
+ 
+5.2.10.1  Sample Request & Response: 
+  
+
+ 
+ 
+5.2.11 Get Details of an Approved Permit 
+ 
+Use this endpoint to retrieve a list of all approved permits belonging to the authenticated user. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /permits/<PERMIT_SERIAL_NO> 
+Authentication Token Required: YES 
+Mandatory Parameters:  None 
+Additional Parameters: None 
+# Parameter Description 
+- - - 
+ 
+5.2.11.1 Sample Request & Response: 
+  
+
+ 
+ 
+5.2.12 Get Approved Permits 
+ 
+Use this endpoint to retrieve a list of all approved permits belonging to the authenticated user. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /permits 
+Authentication Token Required: YES 
+Mandatory Parameters:  None 
+Additional Parameters: None 
+# Parameter Type Description 
+1 start String/Datetime 
+(Optional) 
+This is of the format YYYY-MM-DD HH:mm:ss, e.g 2020-05-
+15 18:44:44 – Useful for filtering permits within a given date 
+range 
+2 end String/Datetime 
+(Optional) 
+This is of the format YYYY-MM-DD HH:mm:ss, e.g 2020-05-
+15 18:44:44– Useful for filtering permits within a given date 
+range 
+ status String (Optional) Filter by application status. eg Active, Expired, Cancelled 
+ per_page Int (Optional) Total Number of records to return. If not specified, the 25 
+records will be returned by default 
+ 
+ 
+ 
+5.2.12.1 Sample Request & Response: 
+ 
+  
+
+ 
+ 
+5.2.13  Get Details of an Approved Permit 
+ 
+Use this endpoint to retrieve a list of all approved permits belonging to the authenticated user. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /permits/<PERMIT_SERIAL_NO> 
+Authentication Token Required: YES 
+Mandatory Parameters:  None 
+Additional Parameters: None 
+# Parameter Description 
+- - - 
+ 
+5.2.13.1  Sample Request & Response: 
+ 
+  
+
+ 
+ 
+5.2.14 Verify Permit 
+ 
+Use this endpoint verify a permit. 
+Base URL: <API-URL>/client 
+Method: GET 
+End point: /permits/verify/<PERMIT_SERIAL_NO> 
+Authentication Token Required: NO 
+Mandatory Parameters:  None 
+Additional Parameters: None 
+# Parameter Description 
+- - - 
+ 
+5.2.14.1 Sample Request & Response: 
+ 
+ 
+ 
+ 
+
