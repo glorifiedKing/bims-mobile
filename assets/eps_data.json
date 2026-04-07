@@ -1,0 +1,92 @@
+{
+    "code": 200,
+    "status": "success",
+    "data": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 1,
+                "enactment": "BUILDING CONTROL ACT, CAP.136 - Sec 33(1) & (2)",
+                "offence_name": "Building operations without a building permit",
+                "currency_points": 2,
+                "charge_per_sqm": true
+            },
+            {
+                "id": 2,
+                "enactment": "BUILDING CONTROL ACT, CAP.136 - Sec 37(3)",
+                "offence_name": "Undertaking building operations over and above the building permit validity period without an extension",
+                "currency_points": 2,
+                "charge_per_sqm": true
+            },
+            {
+                "id": 3,
+                "enactment": "BUILDING CONTROL ACT, CAP.136 - Sec 39 (1,) (2,) (3)",
+                "offence_name": "Disobeying a lawful order to stop building operations",
+                "currency_points": 75,
+                "charge_per_sqm": false
+            },
+            {
+                "id": 4,
+                "enactment": "BUILDING CONTROL ACT, CAP.136 - Sec 40 (4)",
+                "offence_name": "Disobeying a lawful order to undertake remedial actions on a building operation",
+                "currency_points": 24,
+                "charge_per_sqm": false
+            },
+            {
+                "id": 5,
+                "enactment": "BUILDING CONTROL ACT, CAP.136 - Sec 41(3)",
+                "offence_name": "Use of a prohibited building method or material contrary to a notice issued",
+                "currency_points": 5,
+                "charge_per_sqm": true
+            },
+            {
+                "id": 6,
+                "enactment": "BUILDING CONTROL ACT, CAP.136 - Sec 8A, Sec 42",
+                "offence_name": "Hindering entry/obstruction of a Building Control Officer or an authorised officer of the Board from entry into premises",
+                "currency_points": 48,
+                "charge_per_sqm": false
+            },
+            {
+                "id": 7,
+                "enactment": "BUILDING CONTROL ACT, CAP.136 - Sec 43 (3)",
+                "offence_name": "Occupying or using a building;\na)\nBefore an occupation permit is issued, except where the occupation or use is essential for the erection of the building;\nb)\nIn any period not being the period in respect of which the occupation permit was issued;\nc)\n",
+                "currency_points": 24,
+                "charge_per_sqm": false
+            },
+            {
+                "id": 8,
+                "enactment": "BUILDING CONTROL REGULATIONS, 2020 - 42(e)",
+                "offence_name": "Failure to take out workers’ insurance as required by the workers’ Compensation Act",
+                "currency_points": 48,
+                "charge_per_sqm": false
+            }
+        ],
+        "first_page_url": "http://api.test.bims.go.ug/v1/internal/auxiliary/eps-types?page=1",
+        "from": 1,
+        "last_page": 1,
+        "last_page_url": "http://api.test.bims.go.ug/v1/internal/auxiliary/eps-types?page=1",
+        "links": [
+            {
+                "url": null,
+                "label": "&laquo; Previous",
+                "active": false
+            },
+            {
+                "url": "http://api.test.bims.go.ug/v1/internal/auxiliary/eps-types?page=1",
+                "label": "1",
+                "active": true
+            },
+            {
+                "url": null,
+                "label": "Next &raquo;",
+                "active": false
+            }
+        ],
+        "next_page_url": null,
+        "path": "http://api.test.bims.go.ug/v1/internal/auxiliary/eps-types",
+        "per_page": 500,
+        "prev_page_url": null,
+        "to": 8,
+        "total": 8
+    }
+}

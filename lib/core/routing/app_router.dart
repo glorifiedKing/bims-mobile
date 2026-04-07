@@ -29,6 +29,9 @@ import '../../features/bco/screens/bco_stop_order_screen.dart';
 import '../../features/bco/screens/bco_camera_screen.dart';
 import '../../features/bco/screens/bco_profile_screen.dart';
 import '../../features/bco/screens/bco_calendar_screen.dart';
+import '../../features/bco/screens/bco_penalties_screen.dart';
+import '../../features/bco/screens/bco_penalty_details_screen.dart';
+import '../../features/bco/screens/bco_create_penalty_screen.dart';
 import '../../features/auth/screens/professional_login_screen.dart';
 import '../../features/auth/screens/professional_registration_screen.dart';
 import '../../features/professional/screens/professional_dashboard_screen.dart';
@@ -194,6 +197,21 @@ class AppRouter {
       GoRoute(
         path: '/bco/calendar',
         builder: (context, state) => const BcoCalendarScreen(),
+      ),
+      GoRoute(
+        path: '/bco/penalties',
+        builder: (context, state) => const BcoPenaltiesScreen(),
+      ),
+      GoRoute(
+        path: '/bco/penalties/:reference',
+        builder: (context, state) {
+          final reference = state.pathParameters['reference']!;
+          return BcoPenaltyDetailsScreen(reference: reference);
+        },
+      ),
+      GoRoute(
+        path: '/bco/new-penalty',
+        builder: (context, state) => const BcoCreatePenaltyScreen(),
       ),
       GoRoute(
         path: '/professional/login',

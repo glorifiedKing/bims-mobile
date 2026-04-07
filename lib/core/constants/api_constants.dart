@@ -25,4 +25,7 @@ class ApiConstants {
   static const String adminUnitTypes = '/auxiliary/admin-unit-types';
   static const String adminUnitsList = '/auxiliary/admin-units-list';
   static const String userRoles = '/auxiliary/user-roles';
+  static const String buildingClassifications = '/auxiliary/building-classifications';
+  static const String epsTypes = '/auxiliary/eps-types';
+  static const String expressPenalties = '/eps/penalties';
 }

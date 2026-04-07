@@ -81,10 +81,7 @@ class ClientInvoicesScreen extends StatelessWidget {
                             color: Colors.white.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            Icons.logout,
-                            color: Colors.white,
-                          ),
+                          child: const Icon(Icons.logout, color: Colors.white),
                         ),
                       ),
                     ],
@@ -95,7 +92,7 @@ class ClientInvoicesScreen extends StatelessWidget {
                     labelColor: Colors.white,
                     unselectedLabelColor: Colors.white54,
                     tabs: [
-                      Tab(text: 'General Invoices'),
+                      Tab(text: '1st Year Invoices'),
                       Tab(text: 'Inspection Fees'),
                     ],
                   ),
@@ -132,7 +129,10 @@ class ClientInvoicesScreen extends StatelessWidget {
               icon: Icon(Icons.description),
               label: 'Applications',
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Invoices'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.payment),
+              label: 'Invoices',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
@@ -153,7 +153,9 @@ class ClientInvoicesScreen extends StatelessWidget {
           child: Column(
             children: [
               SearchBarWidget(
-                onChanged: (val) => context.read<ClientInvoicesBloc>().add(SearchClientInvoices(val)),
+                onChanged: (val) => context.read<ClientInvoicesBloc>().add(
+                  SearchClientInvoices(val),
+                ),
               ),
               const SizedBox(height: 15),
               BlocBuilder<ClientInvoicesBloc, ClientInvoicesState>(
@@ -162,20 +164,39 @@ class ClientInvoicesScreen extends StatelessWidget {
                   String? pendingBadge;
                   if (state is ClientInvoicesLoaded) {
                     currentFilter = state.selectedFilter;
-                    if (state.totalUnpaid != null && state.totalUnpaid!.isNotEmpty && state.totalUnpaid != '0.00' && state.totalUnpaid != '0') {
-                       try {
-                         pendingBadge = CurrencyFormatter.formatUgx(double.parse(state.totalUnpaid!));
-                       } catch (_) {}
+                    if (state.totalUnpaid != null &&
+                        state.totalUnpaid!.isNotEmpty &&
+                        state.totalUnpaid != '0.00' &&
+                        state.totalUnpaid != '0') {
+                      try {
+                        pendingBadge = CurrencyFormatter.formatUgx(
+                          double.parse(state.totalUnpaid!),
+                        );
+                      } catch (_) {}
                     }
                   }
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildGeneralFilterChip(context, 'ALL', currentFilter, null),
                         _buildGeneralFilterChip(
-                            context, 'PENDING', currentFilter, pendingBadge),
-                        _buildGeneralFilterChip(context, 'PAID', currentFilter, null),
+                          context,
+                          'ALL',
+                          currentFilter,
+                          null,
+                        ),
+                        _buildGeneralFilterChip(
+                          context,
+                          'PENDING',
+                          currentFilter,
+                          pendingBadge,
+                        ),
+                        _buildGeneralFilterChip(
+                          context,
+                          'PAID',
+                          currentFilter,
+                          null,
+                        ),
                       ],
                     ),
                   );
@@ -200,12 +221,13 @@ class ClientInvoicesScreen extends StatelessWidget {
                 );
               } else if (state is ClientInvoicesLoaded) {
                 var displayInvoices = state.invoices;
-                if (state.searchQuery != null && state.searchQuery!.length >= 3) {
+                if (state.searchQuery != null &&
+                    state.searchQuery!.length >= 3) {
                   final sq = state.searchQuery!.toLowerCase();
                   displayInvoices = state.invoices.where((i) {
-                     return (i.applicationKey.toLowerCase().contains(sq)) ||
-                            (i.prn.toLowerCase().contains(sq)) ||
-                            (i.searchCode.toLowerCase().contains(sq));
+                    return (i.applicationKey.toLowerCase().contains(sq)) ||
+                        (i.prn.toLowerCase().contains(sq)) ||
+                        (i.searchCode.toLowerCase().contains(sq));
                   }).toList();
                 }
 
@@ -226,7 +248,13 @@ class ClientInvoicesScreen extends StatelessWidget {
                   child: ListView.builder(
                     padding: const EdgeInsets.all(15),
                     itemCount:
-                        displayInvoices.length + (state.hasReachedMax ? 0 : (state.searchQuery != null && state.searchQuery!.length >= 3 ? 0 : 1)),
+                        displayInvoices.length +
+                        (state.hasReachedMax
+                            ? 0
+                            : (state.searchQuery != null &&
+                                      state.searchQuery!.length >= 3
+                                  ? 0
+                                  : 1)),
                     itemBuilder: (context, index) {
                       if (index >= displayInvoices.length) {
                         return const Padding(
@@ -245,7 +273,7 @@ class ClientInvoicesScreen extends StatelessWidget {
                       String actionText = '📄 DOWNLOAD RECEIPT';
                       Color actionColor = Colors.white;
                       Color actionTextColor = AppTheme.primaryGreen;
-                      
+
                       String? secondaryActionText;
                       Color? secondaryActionColor;
                       Color? secondaryActionTextColor;
@@ -258,18 +286,22 @@ class ClientInvoicesScreen extends StatelessWidget {
                         actionText = '💸 PAY NOW';
                         actionColor = AppTheme.primaryGreen;
                         actionTextColor = Colors.white;
-                        
+
                         secondaryActionText = '📄 INVOICE';
                         secondaryActionColor = Colors.white;
                         secondaryActionTextColor = AppTheme.primaryGreen;
                         onSecondaryActionTap = () async {
-                           final invoiceUrl = invoice.documents?['invoice'];
-                           if (invoiceUrl != null && invoiceUrl.toString().isNotEmpty) {
-                             final uri = Uri.parse(invoiceUrl);
-                             if (await canLaunchUrl(uri)) {
-                               await launchUrl(uri, mode: LaunchMode.externalApplication);
-                             }
-                           }
+                          final invoiceUrl = invoice.documents?['invoice'];
+                          if (invoiceUrl != null &&
+                              invoiceUrl.toString().isNotEmpty) {
+                            final uri = Uri.parse(invoiceUrl);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            }
+                          }
                         };
                       }
 
@@ -298,11 +330,16 @@ class ClientInvoicesScreen extends StatelessWidget {
                           actionTextColor: actionTextColor,
                           onActionTap: isPaid
                               ? () async {
-                                  final receiptUrl = invoice.documents?['receipt'];
-                                  if (receiptUrl != null && receiptUrl.toString().isNotEmpty) {
+                                  final receiptUrl =
+                                      invoice.documents?['receipt'];
+                                  if (receiptUrl != null &&
+                                      receiptUrl.toString().isNotEmpty) {
                                     final uri = Uri.parse(receiptUrl);
                                     if (await canLaunchUrl(uri)) {
-                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.externalApplication,
+                                      );
                                     }
                                   }
                                 }
@@ -343,29 +380,53 @@ class ClientInvoicesScreen extends StatelessWidget {
           child: Column(
             children: [
               SearchBarWidget(
-                onChanged: (val) => context.read<ClientInspectionInvoicesBloc>().add(SearchClientInspectionInvoices(val)),
+                onChanged: (val) => context
+                    .read<ClientInspectionInvoicesBloc>()
+                    .add(SearchClientInspectionInvoices(val)),
               ),
               const SizedBox(height: 15),
-              BlocBuilder<ClientInspectionInvoicesBloc, ClientInspectionInvoicesState>(
+              BlocBuilder<
+                ClientInspectionInvoicesBloc,
+                ClientInspectionInvoicesState
+              >(
                 builder: (context, state) {
                   String currentFilter = 'ALL';
                   String? pendingBadge;
                   if (state is ClientInspectionInvoicesLoaded) {
                     currentFilter = state.selectedFilter;
-                    if (state.totalUnpaid != null && state.totalUnpaid!.isNotEmpty && state.totalUnpaid != '0.00' && state.totalUnpaid != '0') {
-                       try {
-                         pendingBadge = CurrencyFormatter.formatUgx(double.parse(state.totalUnpaid!));
-                       } catch (_) {}
+                    if (state.totalUnpaid != null &&
+                        state.totalUnpaid!.isNotEmpty &&
+                        state.totalUnpaid != '0.00' &&
+                        state.totalUnpaid != '0') {
+                      try {
+                        pendingBadge = CurrencyFormatter.formatUgx(
+                          double.parse(state.totalUnpaid!),
+                        );
+                      } catch (_) {}
                     }
                   }
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildInspectionFilterChip(context, 'ALL', currentFilter, null),
                         _buildInspectionFilterChip(
-                            context, 'PENDING', currentFilter, pendingBadge),
-                        _buildInspectionFilterChip(context, 'PAID', currentFilter, null),
+                          context,
+                          'ALL',
+                          currentFilter,
+                          null,
+                        ),
+                        _buildInspectionFilterChip(
+                          context,
+                          'PENDING',
+                          currentFilter,
+                          pendingBadge,
+                        ),
+                        _buildInspectionFilterChip(
+                          context,
+                          'PAID',
+                          currentFilter,
+                          null,
+                        ),
                       ],
                     ),
                   );
@@ -377,143 +438,173 @@ class ClientInvoicesScreen extends StatelessWidget {
 
         // List body
         Expanded(
-          child: BlocBuilder<ClientInspectionInvoicesBloc, ClientInspectionInvoicesState>(
-            builder: (context, state) {
-              if (state is ClientInspectionInvoicesLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is ClientInspectionInvoicesError) {
-                return Center(
-                  child: Text(
-                    'Error: ${state.message}',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                );
-              } else if (state is ClientInspectionInvoicesLoaded) {
-                var displayInvoices = state.invoices;
-                if (state.searchQuery != null && state.searchQuery!.length >= 3) {
-                  final sq = state.searchQuery!.toLowerCase();
-                  displayInvoices = state.invoices.where((i) {
-                     return (i.prn.toLowerCase().contains(sq)) ||
+          child:
+              BlocBuilder<
+                ClientInspectionInvoicesBloc,
+                ClientInspectionInvoicesState
+              >(
+                builder: (context, state) {
+                  if (state is ClientInspectionInvoicesLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is ClientInspectionInvoicesError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${state.message}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  } else if (state is ClientInspectionInvoicesLoaded) {
+                    var displayInvoices = state.invoices;
+                    if (state.searchQuery != null &&
+                        state.searchQuery!.length >= 3) {
+                      final sq = state.searchQuery!.toLowerCase();
+                      displayInvoices = state.invoices.where((i) {
+                        return (i.prn.toLowerCase().contains(sq)) ||
                             (i.searchCode.toLowerCase().contains(sq)) ||
-                            (i.referencedPermitSerial.toLowerCase().contains(sq));
-                  }).toList();
-                }
+                            (i.referencedPermitSerial.toLowerCase().contains(
+                              sq,
+                            ));
+                      }).toList();
+                    }
 
-                if (displayInvoices.isEmpty) {
-                  return const Center(child: Text('No inspection invoices found.'));
-                }
-                return NotificationListener<ScrollNotification>(
-                  onNotification: (ScrollNotification scrollInfo) {
-                    if (!state.hasReachedMax &&
-                        scrollInfo.metrics.pixels ==
-                            scrollInfo.metrics.maxScrollExtent) {
-                      context.read<ClientInspectionInvoicesBloc>().add(
-                        LoadMoreClientInspectionInvoices(),
+                    if (displayInvoices.isEmpty) {
+                      return const Center(
+                        child: Text('No inspection invoices found.'),
                       );
                     }
-                    return false;
-                  },
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(15),
-                    itemCount:
-                        displayInvoices.length + (state.hasReachedMax ? 0 : (state.searchQuery != null && state.searchQuery!.length >= 3 ? 0 : 1)),
-                    itemBuilder: (context, index) {
-                      if (index >= displayInvoices.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
+                    return NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification scrollInfo) {
+                        if (!state.hasReachedMax &&
+                            scrollInfo.metrics.pixels ==
+                                scrollInfo.metrics.maxScrollExtent) {
+                          context.read<ClientInspectionInvoicesBloc>().add(
+                            LoadMoreClientInspectionInvoices(),
+                          );
+                        }
+                        return false;
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(15),
+                        itemCount:
+                            displayInvoices.length +
+                            (state.hasReachedMax
+                                ? 0
+                                : (state.searchQuery != null &&
+                                          state.searchQuery!.length >= 3
+                                      ? 0
+                                      : 1)),
+                        itemBuilder: (context, index) {
+                          if (index >= displayInvoices.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
 
-                      final invoice = displayInvoices[index];
-                      final isPaid = invoice.paymentStatus.toUpperCase() == 'PAID';
-                      final currentStatus = isPaid ? 'PAID' : 'PENDING PAYMENT';
+                          final invoice = displayInvoices[index];
+                          final isPaid =
+                              invoice.paymentStatus.toUpperCase() == 'PAID';
+                          final currentStatus = isPaid
+                              ? 'PAID'
+                              : 'PENDING PAYMENT';
 
-                      Color statusColor = const Color(0xFF1E7E34);
-                      Color statusBg = const Color(0xFFE6F4EA);
-                      Color borderColor = const Color(0xFF1E7E34);
-                      String actionText = '📄 DOWNLOAD RECEIPT';
-                      Color actionColor = Colors.white;
-                      Color actionTextColor = AppTheme.primaryGreen;
-                      
-                      String? secondaryActionText;
-                      Color? secondaryActionColor;
-                      Color? secondaryActionTextColor;
-                      VoidCallback? onSecondaryActionTap;
+                          Color statusColor = const Color(0xFF1E7E34);
+                          Color statusBg = const Color(0xFFE6F4EA);
+                          Color borderColor = const Color(0xFF1E7E34);
+                          String actionText = '📄 DOWNLOAD RECEIPT';
+                          Color actionColor = Colors.white;
+                          Color actionTextColor = AppTheme.primaryGreen;
 
-                      if (!isPaid) {
-                        statusColor = const Color(0xFFB8860B);
-                        statusBg = const Color(0xFFFFF9E6);
-                        borderColor = AppTheme.accentGold;
-                        actionText = '💸 PAY NOW';
-                        actionColor = AppTheme.primaryGreen;
-                        actionTextColor = Colors.white;
-                        
-                        secondaryActionText = '📄 INVOICE';
-                        secondaryActionColor = Colors.white;
-                        secondaryActionTextColor = AppTheme.primaryGreen;
-                        onSecondaryActionTap = () async {
-                           final invoiceUrl = invoice.documents?['invoice'];
-                           if (invoiceUrl != null && invoiceUrl.toString().isNotEmpty) {
-                             final uri = Uri.parse(invoiceUrl);
-                             if (await canLaunchUrl(uri)) {
-                               await launchUrl(uri, mode: LaunchMode.externalApplication);
-                             }
-                           }
-                        };
-                      }
+                          String? secondaryActionText;
+                          Color? secondaryActionColor;
+                          Color? secondaryActionTextColor;
+                          VoidCallback? onSecondaryActionTap;
 
-                      return GestureDetector(
-                        onTap: () {
-                          context.push(
-                              '/client/inspection-invoices/${invoice.prn}');
-                        },
-                        child: _buildInvoiceCard(
-                          prn: invoice.prn,
-                          statusText: currentStatus,
-                          statusColor: statusColor,
-                          statusBg: statusBg,
-                          refId: invoice.referencedPermitSerial,
-                          refLabel: 'Permit',
-                          refColor: const Color(0xFF444444),
-                          searchCode: invoice.inspectionFeesCoverPeriod,
-                          searchLabel: 'Period',
-                          amount: CurrencyFormatter.formatUgx(
-                            invoice.invoiceAmount.toDouble()
-                          ),
-                          borderColor: borderColor,
-                          actionText: actionText,
-                          actionColor: actionColor,
-                          actionTextColor: actionTextColor,
-                          onActionTap: isPaid
-                              ? () async {
-                                  final receiptUrl = invoice.documents?['receipt'];
-                                  if (receiptUrl != null && receiptUrl.toString().isNotEmpty) {
-                                    final uri = Uri.parse(receiptUrl);
-                                    if (await canLaunchUrl(uri)) {
-                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                    }
-                                  }
+                          if (!isPaid) {
+                            statusColor = const Color(0xFFB8860B);
+                            statusBg = const Color(0xFFFFF9E6);
+                            borderColor = AppTheme.accentGold;
+                            actionText = '💸 PAY NOW';
+                            actionColor = AppTheme.primaryGreen;
+                            actionTextColor = Colors.white;
+
+                            secondaryActionText = '📄 INVOICE';
+                            secondaryActionColor = Colors.white;
+                            secondaryActionTextColor = AppTheme.primaryGreen;
+                            onSecondaryActionTap = () async {
+                              final invoiceUrl = invoice.documents?['invoice'];
+                              if (invoiceUrl != null &&
+                                  invoiceUrl.toString().isNotEmpty) {
+                                final uri = Uri.parse(invoiceUrl);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
                                 }
-                              : () async {
-                                  final uri = Uri.parse('tel:*185%23');
-                                  if (await canLaunchUrl(uri)) {
-                                    await launchUrl(uri);
-                                  }
-                                },
-                          secondaryActionText: secondaryActionText,
-                          secondaryActionColor: secondaryActionColor,
-                          secondaryActionTextColor: secondaryActionTextColor,
-                          onSecondaryActionTap: onSecondaryActionTap,
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }
-              return const Center(child: Text('Initializing...'));
-            },
-          ),
+                              }
+                            };
+                          }
+
+                          return GestureDetector(
+                            onTap: () {
+                              context.push(
+                                '/client/inspection-invoices/${invoice.prn}',
+                              );
+                            },
+                            child: _buildInvoiceCard(
+                              prn: invoice.prn,
+                              statusText: currentStatus,
+                              statusColor: statusColor,
+                              statusBg: statusBg,
+                              refId: invoice.referencedPermitSerial,
+                              refLabel: 'Permit',
+                              refColor: const Color(0xFF444444),
+                              searchCode: invoice.inspectionFeesCoverPeriod,
+                              searchLabel: 'Period',
+                              amount: CurrencyFormatter.formatUgx(
+                                invoice.invoiceAmount.toDouble(),
+                              ),
+                              borderColor: borderColor,
+                              actionText: actionText,
+                              actionColor: actionColor,
+                              actionTextColor: actionTextColor,
+                              onActionTap: isPaid
+                                  ? () async {
+                                      final receiptUrl =
+                                          invoice.documents?['receipt'];
+                                      if (receiptUrl != null &&
+                                          receiptUrl.toString().isNotEmpty) {
+                                        final uri = Uri.parse(receiptUrl);
+                                        if (await canLaunchUrl(uri)) {
+                                          await launchUrl(
+                                            uri,
+                                            mode:
+                                                LaunchMode.externalApplication,
+                                          );
+                                        }
+                                      }
+                                    }
+                                  : () async {
+                                      final uri = Uri.parse('tel:*185%23');
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri);
+                                      }
+                                    },
+                              secondaryActionText: secondaryActionText,
+                              secondaryActionColor: secondaryActionColor,
+                              secondaryActionTextColor:
+                                  secondaryActionTextColor,
+                              onSecondaryActionTap: onSecondaryActionTap,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                  return const Center(child: Text('Initializing...'));
+                },
+              ),
         ),
       ],
     );
@@ -653,12 +744,18 @@ class ClientInvoicesScreen extends StatelessWidget {
                             child: OutlinedButton(
                               onPressed: onSecondaryActionTap ?? () {},
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: secondaryActionTextColor ?? AppTheme.primaryGreen,
+                                foregroundColor:
+                                    secondaryActionTextColor ??
+                                    AppTheme.primaryGreen,
                                 side: BorderSide(
-                                  color: secondaryActionTextColor ?? AppTheme.primaryGreen,
+                                  color:
+                                      secondaryActionTextColor ??
+                                      AppTheme.primaryGreen,
                                   width: 1.5,
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -691,7 +788,9 @@ class ClientInvoicesScreen extends StatelessWidget {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                               ),
                               child: Text(
                                 actionText,
@@ -821,8 +920,8 @@ class ClientInvoicesScreen extends StatelessWidget {
           color: isActive
               ? AppTheme.primaryGreen
               : (isPendingInactive
-                  ? AppTheme.accentGold
-                  : const Color(0xFFDDDDDD)),
+                    ? AppTheme.accentGold
+                    : const Color(0xFFDDDDDD)),
         ),
       ),
       child: Text(

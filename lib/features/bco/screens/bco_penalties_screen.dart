@@ -5,23 +5,23 @@ import '../../../core/theme.dart';
 import '../../auth/bloc/bco_auth_bloc.dart';
 import '../../auth/bloc/bco_auth_state.dart';
 import '../../../core/repositories/auxiliary_repository.dart';
-import '../bloc/applications/bco_applications_bloc.dart';
-import '../bloc/applications/bco_applications_event.dart';
-import '../bloc/applications/bco_applications_state.dart';
+import '../bloc/penalties/bco_penalties_bloc.dart';
+import '../bloc/penalties/bco_penalties_event.dart';
+import '../bloc/penalties/bco_penalties_state.dart';
 
-class BcoApplicationsScreen extends StatefulWidget {
-  const BcoApplicationsScreen({super.key});
+class BcoPenaltiesScreen extends StatefulWidget {
+  const BcoPenaltiesScreen({super.key});
 
   @override
-  State<BcoApplicationsScreen> createState() => _BcoApplicationsScreenState();
+  State<BcoPenaltiesScreen> createState() => _BcoPenaltiesScreenState();
 }
 
-class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
+class _BcoPenaltiesScreenState extends State<BcoPenaltiesScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<BcoApplicationsBloc>().add(
-      FetchBcoApplications(status: 'ALL'),
+    context.read<BcoPenaltiesBloc>().add(
+      const FetchBcoPenalties(status: 'ALL'),
     );
   }
 
@@ -31,7 +31,7 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
       backgroundColor: AppTheme.background,
       body: Column(
         children: [
-          // Inspector Header
+          // Inspector Header (identical to bco_applications_screen)
           BlocBuilder<BcoAuthBloc, BcoAuthState>(
             builder: (context, state) {
               String name = 'Officer';
@@ -128,7 +128,7 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
                               ),
                               SizedBox(width: 5),
                               Text(
-                                'APPLICATIONS',
+                                'PENALTIES',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -163,7 +163,7 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
             },
           ),
 
-          // Filters
+          // Filters - UNPAID, PAID, APPEALED, VOIDED, OVERDUE
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             decoration: const BoxDecoration(
@@ -172,30 +172,24 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: BlocBuilder<BcoApplicationsBloc, BcoApplicationsState>(
+              child: BlocBuilder<BcoPenaltiesBloc, BcoPenaltiesState>(
                 builder: (context, state) {
                   String activeFilter = 'ALL';
-                  if (state is BcoApplicationsLoaded) {
+                  if (state is BcoPenaltiesLoaded) {
                     activeFilter = state.currentFilter ?? 'ALL';
                   }
                   return Row(
                     children: [
                       _buildChip(context, 'ALL', activeFilter == 'ALL'),
+                      _buildChip(context, 'UNPAID', activeFilter == 'UNPAID'),
+                      _buildChip(context, 'PAID', activeFilter == 'PAID'),
                       _buildChip(
                         context,
-                        'IN-REVIEW',
-                        activeFilter == 'IN-REVIEW',
+                        'APPEALED',
+                        activeFilter == 'APPEALED',
                       ),
-                      _buildChip(
-                        context,
-                        'AWAITING ACTION',
-                        activeFilter == 'AWAITING ACTION',
-                      ),
-                      _buildChip(
-                        context,
-                        'REJECTED',
-                        activeFilter == 'REJECTED',
-                      ),
+                      _buildChip(context, 'VOIDED', activeFilter == 'VOIDED'),
+                      _buildChip(context, 'OVERDUE', activeFilter == 'OVERDUE'),
                     ],
                   );
                 },
@@ -205,28 +199,28 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
 
           // List Area
           Expanded(
-            child: BlocBuilder<BcoApplicationsBloc, BcoApplicationsState>(
+            child: BlocBuilder<BcoPenaltiesBloc, BcoPenaltiesState>(
               builder: (context, state) {
-                if (state is BcoApplicationsLoading) {
+                if (state is BcoPenaltiesLoading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state is BcoApplicationsError) {
+                } else if (state is BcoPenaltiesError) {
                   return Center(
                     child: Text(
                       'Error: ${state.message}',
                       style: const TextStyle(color: Colors.red),
                     ),
                   );
-                } else if (state is BcoApplicationsLoaded) {
-                  if (state.applications.isEmpty) {
-                    return const Center(child: Text('No applications found.'));
+                } else if (state is BcoPenaltiesLoaded) {
+                  if (state.penalties.isEmpty) {
+                    return const Center(child: Text('No penalties found.'));
                   }
                   return NotificationListener<ScrollNotification>(
                     onNotification: (ScrollNotification scrollInfo) {
                       if (!scrollInfo.metrics.outOfRange &&
                           scrollInfo.metrics.pixels >=
                               scrollInfo.metrics.maxScrollExtent - 200) {
-                        context.read<BcoApplicationsBloc>().add(
-                          LoadMoreBcoApplications(),
+                        context.read<BcoPenaltiesBloc>().add(
+                          LoadMoreBcoPenalties(),
                         );
                       }
                       return false;
@@ -234,19 +228,19 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
                     child: ListView.builder(
                       padding: const EdgeInsets.all(15),
                       itemCount:
-                          state.applications.length +
+                          state.penalties.length +
                           (state.hasReachedMax ? 0 : 1),
                       itemBuilder: (context, index) {
-                        if (index >= state.applications.length) {
+                        if (index >= state.penalties.length) {
                           return const Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
                             child: Center(child: CircularProgressIndicator()),
                           );
                         }
-                        final app = state.applications[index];
-                        String formattedDate = app.submittedDate;
+                        final penalty = state.penalties[index];
+                        String formattedDate = penalty.dateOfOffence;
                         try {
-                          DateTime dt = DateTime.parse(app.submittedDate);
+                          DateTime dt = DateTime.parse(penalty.dateOfOffence);
                           List<String> months = [
                             'Jan',
                             'Feb',
@@ -272,35 +266,41 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
                         Color statusBg = Colors.grey.shade200;
                         Color borderColor = Colors.grey;
 
-                        if (app.status.toUpperCase() == 'IN-REVIEW') {
+                        if (penalty.status.toUpperCase() == 'UNPAID') {
                           statusColor = const Color(0xFFB8860B);
                           statusBg = const Color(0xFFFFF9E6);
                           borderColor = AppTheme.accentGold;
-                        } else if (app.status.toUpperCase().contains(
-                          'AWAITING',
-                        )) {
-                          statusColor = Colors.blue;
-                          statusBg = const Color(0xFFE8F4FD);
-                          borderColor = Colors.blue;
-                        } else if (app.status.toUpperCase() == 'APPROVED') {
+                        } else if (penalty.status.toUpperCase() == 'PAID') {
                           statusColor = AppTheme.primaryGreen;
                           statusBg = const Color(0xFFE8F5E9);
                           borderColor = AppTheme.primaryGreen;
+                        } else if (penalty.status.toUpperCase() == 'OVERDUE') {
+                          statusColor = AppTheme.danger;
+                          statusBg = const Color(0xFFFFEBEE);
+                          borderColor = AppTheme.danger;
+                        } else if (penalty.status.toUpperCase() == 'APPEALED') {
+                          statusColor = Colors.blue;
+                          statusBg = const Color(0xFFE8F4FD);
+                          borderColor = Colors.blue;
                         }
 
                         return GestureDetector(
                           onTap: () {
-                            context.push('/bco/applications/${app.id}');
+                            context.push('/bco/penalties/${penalty.reference}');
                           },
-                          child: _buildAppCard(
-                            refNo: app.id,
-                            statusText: app.status.toUpperCase(),
+                          child: _buildPenaltyCard(
+                            refNo: penalty.reference.substring(0, 8),
+                            statusText: penalty.status.toUpperCase(),
                             statusColor: statusColor,
                             statusBg: statusBg,
-                            type: app.type,
-                            location: app.location,
+                            type: penalty.offenceName,
+                            location: penalty.location.isNotEmpty
+                                ? penalty.location
+                                : 'Unknown',
                             subDate: formattedDate,
                             borderColor: borderColor,
+                            amount: penalty.amount,
+                            offender: penalty.offenderName,
                           ),
                         );
                       },
@@ -313,15 +313,26 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppTheme.primaryGreen,
+        onPressed: () {
+          context.push('/bco/new-penalty');
+        },
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'NEW PENALTY',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
+        currentIndex: 0,
         onTap: (index) {
           if (index == 0) context.go('/bco/dashboard');
-          if (index == 1) return;
+          if (index == 1) context.go('/bco/applications');
           if (index == 2) context.go('/bco/invoices');
           if (index == 3) context.go('/bco/profile');
         },
-        selectedItemColor: AppTheme.primaryGreen,
+        selectedItemColor: Colors.grey,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -344,8 +355,8 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
   Widget _buildChip(BuildContext context, String label, bool active) {
     return GestureDetector(
       onTap: () {
-        context.read<BcoApplicationsBloc>().add(
-          FetchBcoApplications(status: label, isRefresh: true),
+        context.read<BcoPenaltiesBloc>().add(
+          FetchBcoPenalties(status: label, isRefresh: true),
         );
       },
       child: Container(
@@ -370,7 +381,7 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
     );
   }
 
-  Widget _buildAppCard({
+  Widget _buildPenaltyCard({
     required String refNo,
     required String statusText,
     required Color statusColor,
@@ -379,6 +390,8 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
     required String location,
     required String subDate,
     required Color borderColor,
+    required String amount,
+    required String offender,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
@@ -438,14 +451,19 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildDetailItem('Application Type', type),
+                    _buildDetailItem('Offence Name', type),
                     const SizedBox(height: 8),
-                    _buildDetailItem('Building Location', location),
+                    _buildDetailItem('Offender', offender),
+                    const SizedBox(height: 8),
+                    _buildDetailItem(
+                      'Amount/Location',
+                      'UGX $amount - $location',
+                    ),
                     const SizedBox(height: 15),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     const SizedBox(height: 12),
                     Text(
-                      'Sub: $subDate',
+                      'Date: $subDate',
                       style: const TextStyle(fontSize: 10, color: Colors.grey),
                     ),
                   ],

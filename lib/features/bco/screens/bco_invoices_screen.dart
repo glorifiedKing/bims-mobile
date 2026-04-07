@@ -34,7 +34,7 @@ class BcoInvoicesScreen extends StatelessWidget {
               builder: (context, state) {
                 String name = 'Officer';
                 String roleName = 'BUILDING CONTROL OFFICER';
-                String adminUnitName = 'Unknown Region';
+                String adminUnitName = 'NBRB';
 
                 if (state is BcoAuthAuthenticated) {
                   final user = state.user;
@@ -173,7 +173,7 @@ class BcoInvoicesScreen extends StatelessWidget {
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white54,
                 tabs: [
-                  Tab(text: 'General Invoices'),
+                  Tab(text: '1st Year Invoices'),
                   Tab(text: 'Inspection Fees'),
                 ],
               ),

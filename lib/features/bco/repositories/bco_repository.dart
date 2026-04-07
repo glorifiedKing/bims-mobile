@@ -9,6 +9,7 @@ import '../../client/models/inspection_invoice_model.dart';
 import '../models/audit_trail_model.dart';
 import '../models/bco_profile_model.dart';
 import '../models/bco_counters_model.dart';
+import '../models/express_penalty_model.dart';
 
 class BcoRepository {
   final BcoApiClient bcoApiClient;
@@ -335,6 +336,82 @@ class BcoRepository {
         return BcoCountersModel.fromJson(response.data['data']);
       } else {
         throw Exception('Failed to fetch BCO counters');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getExpressPenalties({
+    int page = 1,
+    String? status,
+  }) async {
+    try {
+      final Map<String, dynamic> queryParams = {'page': page};
+      if (status != null && status != 'ALL') {
+        queryParams['status'] = status;
+      }
+
+      final response = await bcoApiClient.dio.get(
+        ApiConstants.expressPenalties,
+        queryParameters: queryParams,
+      );
+      if (response.statusCode == 200) {
+        final penaltiesData = response.data['penalties'];
+        final List<dynamic> dataList = penaltiesData['data'] is List ? penaltiesData['data'] : [];
+        final List<ExpressPenaltyModel> penalties = dataList
+            .map((json) => ExpressPenaltyModel.fromJson(json))
+            .toList();
+
+        bool hasReachedMax = false;
+        try {
+          final int currentPage = penaltiesData['current_page'] ?? 1;
+          final int lastPage = penaltiesData['last_page'] ?? 1;
+          hasReachedMax = currentPage >= lastPage;
+        } catch (_) {}
+
+        return {'penalties': penalties, 'hasReachedMax': hasReachedMax};
+      } else {
+        throw Exception('Failed to fetch express penalties');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<ExpressPenaltyModel> getExpressPenaltyDetails(String reference) async {
+    try {
+      final response = await bcoApiClient.dio.get('${ApiConstants.expressPenalties}/$reference');
+      if (response.statusCode == 200) {
+        return ExpressPenaltyModel.fromJson(response.data['penalty']);
+      } else {
+        throw Exception('Failed to fetch express penalty details');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> createExpressPenalty(Map<String, dynamic> data) async {
+    try {
+      final response = await bcoApiClient.dio.post(
+        ApiConstants.expressPenalties,
+        data: data,
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+          response.data['message'] ?? 'Failed to create express penalty',
+        );
       }
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
