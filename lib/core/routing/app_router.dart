@@ -21,6 +21,7 @@ import '../../features/auth/screens/bco_login_screen.dart';
 import '../../features/bco/screens/bco_dashboard_screen.dart';
 import '../../features/bco/screens/bco_applications_screen.dart';
 import '../../features/bco/screens/bco_application_details_screen.dart';
+import '../../features/bco/screens/bco_application_attachments_screen.dart';
 import '../../features/bco/screens/bco_checklist_screen.dart';
 import '../../features/bco/screens/bco_invoices_screen.dart';
 import '../../features/bco/screens/bco_invoice_details_screen.dart';
@@ -164,6 +165,13 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/bco/applications/:id/attachments',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return BcoApplicationAttachmentsScreen(applicationKey: id);
+        },
+      ),
+      GoRoute(
         path: '/bco/invoices',
         builder: (context, state) {
           final extras = state.extra as Map<String, dynamic>? ?? {};
@@ -212,6 +220,10 @@ class AppRouter {
       GoRoute(
         path: '/bco/new-penalty',
         builder: (context, state) => const BcoCreatePenaltyScreen(),
+      ),
+      GoRoute(
+        path: '/bco/camera',
+        builder: (context, state) => const BcoCameraScreen(),
       ),
       GoRoute(
         path: '/professional/login',

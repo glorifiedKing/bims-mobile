@@ -60,10 +60,7 @@ class ClientApplicationsScreen extends StatelessWidget {
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.logout,
-                      color: Colors.white,
-                    ),
+                    child: const Icon(Icons.logout, color: Colors.white),
                   ),
                 ),
               ],
@@ -92,12 +89,12 @@ class ClientApplicationsScreen extends StatelessWidget {
                           _buildChip(
                             context,
                             'IN-REVIEW',
-                            activeFilter == 'IN-REVIEW',
+                            activeFilter == 'PENDING',
                           ),
                           _buildChip(
                             context,
                             'AWAITING ACTION',
-                            activeFilter == 'AWAITING ACTION',
+                            activeFilter == 'APPROVED',
                           ),
                           _buildChip(
                             context,

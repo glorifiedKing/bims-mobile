@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bims_mobile_general/core/utils/currency_formatter.dart';
 import '../../../core/theme.dart';
 import '../bloc/penalty_details/bco_penalty_details_bloc.dart';
 import '../bloc/penalty_details/bco_penalty_details_event.dart';
@@ -11,14 +12,17 @@ class BcoPenaltyDetailsScreen extends StatefulWidget {
   const BcoPenaltyDetailsScreen({super.key, required this.reference});
 
   @override
-  State<BcoPenaltyDetailsScreen> createState() => _BcoPenaltyDetailsScreenState();
+  State<BcoPenaltyDetailsScreen> createState() =>
+      _BcoPenaltyDetailsScreenState();
 }
 
 class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<BcoPenaltyDetailsBloc>().add(FetchBcoPenaltyDetails(widget.reference));
+    context.read<BcoPenaltyDetailsBloc>().add(
+      FetchBcoPenaltyDetails(widget.reference),
+    );
   }
 
   @override
@@ -26,16 +30,25 @@ class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Penalty Details', style: TextStyle(color: Colors.white, fontSize: 16)),
+        title: const Text(
+          'Penalty Details',
+          style: TextStyle(color: Colors.white, fontSize: 16),
+        ),
         backgroundColor: AppTheme.primaryGreen,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: BlocBuilder<BcoPenaltyDetailsBloc, BcoPenaltyDetailsState>(
         builder: (context, state) {
-          if (state is BcoPenaltyDetailsLoading || state is BcoPenaltyDetailsInitial) {
+          if (state is BcoPenaltyDetailsLoading ||
+              state is BcoPenaltyDetailsInitial) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is BcoPenaltyDetailsError) {
-            return Center(child: Text('Error: ${state.message}', style: const TextStyle(color: Colors.red)));
+            return Center(
+              child: Text(
+                'Error: ${state.message}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
           } else if (state is BcoPenaltyDetailsLoaded) {
             final penalty = state.penalty;
             return SingleChildScrollView(
@@ -43,12 +56,17 @@ class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                   _buildSectionCard(
+                  _buildSectionCard(
                     title: 'General Information',
                     children: [
                       _buildDetailRow('Reference', penalty.reference),
                       _buildDetailRow('Status', penalty.status.toUpperCase()),
-                      _buildDetailRow('Amount', 'UGX ${penalty.amount}'),
+                      _buildDetailRow(
+                        'Amount',
+                        CurrencyFormatter.formatUgx(
+                          double.tryParse(penalty.amount) ?? 0,
+                        ),
+                      ),
                       _buildDetailRow('Date Issued', penalty.dateOfOffence),
                       _buildDetailRow('Issued By', penalty.issuedBy),
                     ],
@@ -66,7 +84,10 @@ class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
                     title: 'Location Information',
                     children: [
                       _buildDetailRow('Location', penalty.location),
-                      _buildDetailRow('Admin Unit', '${penalty.administrativeUnitName} (${penalty.administrativeUnitType})'),
+                      _buildDetailRow(
+                        'Admin Unit',
+                        '${penalty.administrativeUnitName} (${penalty.administrativeUnitType})',
+                      ),
                       _buildDetailRow('Postal Address', penalty.postalAddress),
                     ],
                   ),
@@ -85,8 +106,18 @@ class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
                     title: 'Building Details',
                     children: [
                       _buildDetailRow('Class', penalty.buildingClass),
-                      _buildDetailRow('Permit No', penalty.buildingPermitNumber.isNotEmpty ? penalty.buildingPermitNumber : 'N/A'),
-                      _buildDetailRow('Occupation Permit', penalty.occupationPermitNumber.isNotEmpty ? penalty.occupationPermitNumber : 'N/A'),
+                      _buildDetailRow(
+                        'Permit No',
+                        penalty.buildingPermitNumber.isNotEmpty
+                            ? penalty.buildingPermitNumber
+                            : 'N/A',
+                      ),
+                      _buildDetailRow(
+                        'Occupation Permit',
+                        penalty.occupationPermitNumber.isNotEmpty
+                            ? penalty.occupationPermitNumber
+                            : 'N/A',
+                      ),
                       _buildDetailRow('Square Metres', penalty.squareMetres),
                     ],
                   ),
@@ -101,18 +132,34 @@ class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
     );
   }
 
-  Widget _buildSectionCard({required String title, required List<Widget> children}) {
+  Widget _buildSectionCard({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryGreen,
+            ),
+          ),
           const Divider(height: 24, thickness: 1),
           ...children,
         ],
@@ -126,8 +173,29 @@ class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500))),
-          Expanded(flex: 3, child: Text(value, textAlign: TextAlign.right, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87))),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../bloc/application_details/bco_application_details_bloc.dart';
 import '../bloc/application_details/bco_application_details_event.dart';
@@ -178,6 +179,21 @@ class _BcoApplicationDetailsScreenState extends State<BcoApplicationDetailsScree
                           _buildDetailRow('Name', details.applicant.name),
                           _buildDetailRow('Phone', details.applicant.phone),
                           _buildDetailRow('Email', details.applicant.email),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      _buildSectionCard(
+                        title: 'Attachments',
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.description, color: AppTheme.primaryGreen),
+                            title: const Text('View Application Documents', style: TextStyle(fontWeight: FontWeight.w600)),
+                            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                            onTap: () {
+                              context.push('/bco/applications/${widget.applicationKey}/attachments');
+                            },
+                          ),
                         ],
                       ),
                       const SizedBox(height: 15),

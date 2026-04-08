@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'features/client/bloc/permit_details/client_permit_details_bloc.dart';
 import 'core/theme.dart';
 import 'core/routing/app_router.dart';
@@ -18,6 +20,7 @@ import 'features/bco/repositories/bco_repository.dart';
 import 'features/bco/bloc/invoices/bco_invoices_bloc.dart';
 import 'features/bco/bloc/applications/bco_applications_bloc.dart';
 import 'features/bco/bloc/application_details/bco_application_details_bloc.dart';
+import 'features/bco/bloc/application_attachments/bco_application_attachments_bloc.dart';
 import 'features/bco/bloc/general_invoices/bco_general_invoices_bloc.dart';
 import 'features/bco/bloc/general_invoices/bco_general_invoices_event.dart';
 import 'features/bco/bloc/inspection_invoices_list/bco_inspection_invoices_list_bloc.dart';
@@ -29,6 +32,7 @@ import 'features/bco/bloc/counters/bco_counters_bloc.dart';
 import 'features/bco/bloc/penalties/bco_penalties_bloc.dart';
 import 'features/bco/bloc/penalty_details/bco_penalty_details_bloc.dart';
 import 'features/bco/bloc/create_penalty/bco_create_penalty_bloc.dart';
+import 'features/bco/bloc/camera/bco_camera_bloc.dart';
 import 'features/client/repositories/client_repository.dart';
 import 'features/client/bloc/applications/client_applications_bloc.dart';
 import 'features/client/bloc/applications/client_applications_event.dart';
@@ -47,6 +51,13 @@ import 'features/client/bloc/profile/client_profile_event.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  try {
+    await Firebase.initializeApp();
+    // await FirebaseAuth.instance.signInAnonymously();
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+  }
+
   // Dependency injection setup
   await Hive.initFlutter();
   await Hive.openBox('auxiliaryBox');
@@ -56,7 +67,7 @@ void main() async {
   final auxiliaryRepository = AuxiliaryRepository(bcoApiClient: bcoApiClient);
   final bcoRepository = BcoRepository(bcoApiClient: bcoApiClient);
   final clientRepository = ClientRepository(dio: apiClient.dio);
-  
+
   // Trigger background sync without awaiting
   auxiliaryRepository.syncAuxiliaryData();
 
@@ -96,17 +107,20 @@ void main() async {
             )..add(FetchClientApplications()),
           ),
           BlocProvider(
-            create: (context) => BcoInvoicesBloc(
-              repository: context.read<BcoRepository>(),
-            ),
+            create: (context) =>
+                BcoInvoicesBloc(repository: context.read<BcoRepository>()),
           ),
           BlocProvider(
-            create: (context) => BcoApplicationsBloc(
-              repository: context.read<BcoRepository>(),
-            ),
+            create: (context) =>
+                BcoApplicationsBloc(repository: context.read<BcoRepository>()),
           ),
           BlocProvider(
             create: (context) => BcoApplicationDetailsBloc(
+              repository: context.read<BcoRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => BcoApplicationAttachmentsBloc(
               repository: context.read<BcoRepository>(),
             ),
           ),
@@ -131,19 +145,16 @@ void main() async {
             ),
           ),
           BlocProvider(
-            create: (context) => BcoProfileBloc(
-              repository: context.read<BcoRepository>(),
-            ),
+            create: (context) =>
+                BcoProfileBloc(repository: context.read<BcoRepository>()),
           ),
           BlocProvider(
-            create: (context) => BcoCountersBloc(
-              repository: context.read<BcoRepository>(),
-            ),
+            create: (context) =>
+                BcoCountersBloc(repository: context.read<BcoRepository>()),
           ),
           BlocProvider(
-            create: (context) => BcoPenaltiesBloc(
-              repository: context.read<BcoRepository>(),
-            ),
+            create: (context) =>
+                BcoPenaltiesBloc(repository: context.read<BcoRepository>()),
           ),
           BlocProvider(
             create: (context) => BcoPenaltyDetailsBloc(
@@ -151,10 +162,10 @@ void main() async {
             ),
           ),
           BlocProvider(
-            create: (context) => BcoCreatePenaltyBloc(
-              repository: context.read<BcoRepository>(),
-            ),
+            create: (context) =>
+                BcoCreatePenaltyBloc(repository: context.read<BcoRepository>()),
           ),
+          BlocProvider(create: (context) => BcoCameraBloc()),
           BlocProvider(
             create: (context) =>
                 ClientInvoicesBloc(repository: context.read<ClientRepository>())
@@ -162,8 +173,8 @@ void main() async {
           ),
           BlocProvider(
             create: (context) => ClientInspectionInvoicesBloc(
-                repository: context.read<ClientRepository>())
-              ..add(FetchClientInspectionInvoices()),
+              repository: context.read<ClientRepository>(),
+            )..add(FetchClientInspectionInvoices()),
           ),
           BlocProvider(
             create: (context) =>

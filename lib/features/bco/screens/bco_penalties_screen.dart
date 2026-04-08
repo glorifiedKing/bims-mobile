@@ -1,3 +1,4 @@
+import 'package:bims_mobile_general/core/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -456,9 +457,11 @@ class _BcoPenaltiesScreenState extends State<BcoPenaltiesScreen> {
                     _buildDetailItem('Offender', offender),
                     const SizedBox(height: 8),
                     _buildDetailItem(
-                      'Amount/Location',
-                      'UGX $amount - $location',
+                      'Amount',
+                      CurrencyFormatter.formatUgx(double.tryParse(amount) ?? 0),
                     ),
+                    const SizedBox(height: 8),
+                    _buildDetailItem('Location', location),
                     const SizedBox(height: 15),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     const SizedBox(height: 12),

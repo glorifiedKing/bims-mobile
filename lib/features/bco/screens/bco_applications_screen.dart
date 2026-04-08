@@ -184,12 +184,12 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
                       _buildChip(
                         context,
                         'IN-REVIEW',
-                        activeFilter == 'IN-REVIEW',
+                        activeFilter == 'PENDING',
                       ),
                       _buildChip(
                         context,
                         'AWAITING ACTION',
-                        activeFilter == 'AWAITING ACTION',
+                        activeFilter == 'APPROVED',
                       ),
                       _buildChip(
                         context,

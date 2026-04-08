@@ -10,6 +10,7 @@ import '../models/audit_trail_model.dart';
 import '../models/bco_profile_model.dart';
 import '../models/bco_counters_model.dart';
 import '../models/express_penalty_model.dart';
+import '../models/bco_application_attachment_model.dart';
 
 class BcoRepository {
   final BcoApiClient bcoApiClient;
@@ -412,6 +413,42 @@ class BcoRepository {
         throw Exception(
           response.data['message'] ?? 'Failed to create express penalty',
         );
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getApplicationAttachments(String applicationKey, {int page = 1}) async {
+    try {
+      final response = await bcoApiClient.dio.get(
+        '${ApiConstants.getApplications}/$applicationKey/attachments',
+        queryParameters: {'page': page},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> dataList = response.data['data'] is List 
+            ? response.data['data'] 
+            : [];
+        final List<BcoApplicationAttachmentModel> attachments = dataList
+            .map((json) => BcoApplicationAttachmentModel.fromJson(json))
+            .toList();
+
+        bool hasReachedMax = false;
+        try {
+          final meta = response.data['meta'];
+          if (meta is Map<String, dynamic>) {
+            final int currentPage = meta['current_page'] ?? 1;
+            final int lastPage = meta['last_page'] ?? 1;
+            hasReachedMax = currentPage >= lastPage;
+          }
+        } catch (_) {}
+
+        return {'attachments': attachments, 'hasReachedMax': hasReachedMax};
+      } else {
+        throw Exception('Failed to fetch application attachments');
       }
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
