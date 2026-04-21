@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../auth/bloc/professional_auth_bloc.dart';
 import '../../auth/bloc/professional_auth_event.dart';
+import '../bloc/profile/professional_profile_bloc.dart';
+import '../bloc/profile/professional_profile_state.dart';
+import '../bloc/documents/professional_documents_bloc.dart';
+import '../bloc/documents/professional_documents_state.dart';
 
 class ProfessionalProfileScreen extends StatelessWidget {
   const ProfessionalProfileScreen({super.key});
@@ -12,8 +16,23 @@ class ProfessionalProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: Column(
-        children: [
+      body: BlocBuilder<ProfessionalProfileBloc, ProfessionalProfileState>(
+        builder: (context, state) {
+          if (state is ProfessionalProfileLoading || state is ProfessionalProfileInitial) {
+            return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+          }
+          if (state is ProfessionalProfileError) {
+            return Center(child: Text('Error: ${state.message}'));
+          }
+          
+          if (state is ProfessionalProfileLoaded) {
+            final profile = state.profile;
+            final initials = profile.name.trim().isNotEmpty 
+              ? profile.name.trim().split(RegExp(r'\s+')).map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+              : '??';
+
+            return Column(
+              children: [
           // Profile Header
           Container(
             padding: const EdgeInsets.only(top: 60, bottom: 30),
@@ -31,10 +50,10 @@ class ProfessionalProfileScreen extends StatelessWidget {
                     color: const Color(0xFFEEEEEE),
                     border: Border.all(color: AppTheme.accentGold, width: 3),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'RB',
-                      style: TextStyle(
+                      initials,
+                      style: const TextStyle(
                         color: AppTheme.primaryGreen,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -42,9 +61,9 @@ class ProfessionalProfileScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Text(
-                  'Raymond Byaruhanga',
-                  style: TextStyle(
+                Text(
+                  profile.name,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -60,8 +79,8 @@ class ProfessionalProfileScreen extends StatelessWidget {
                     color: AppTheme.accentGold,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'PROFESSIONAL PORTAL',
+                  child: Text(
+                    '${profile.profession.toUpperCase()} PORTAL',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -79,11 +98,20 @@ class ProfessionalProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 _buildInfoCard(
-                  label: 'National ID (NIN)',
+                  label: 'Registration Details',
                   children: [
-                    const Text(
-                      'CM870****WGE',
-                      style: TextStyle(
+                    Text(
+                      'Reg. No: ${profile.registrationNo}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryGreen,
+                      ),
+                    ),
+                    const Divider(color: Color(0xFFF0F0F0), height: 16),
+                    Text(
+                      'Discipline: ${profile.discipline}',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryGreen,
@@ -94,18 +122,18 @@ class ProfessionalProfileScreen extends StatelessWidget {
                 _buildInfoCard(
                   label: 'Contact Details',
                   children: [
-                    const Text(
-                      '+256 704 555 432',
-                      style: TextStyle(
+                    Text(
+                      profile.phone,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryGreen,
                       ),
                     ),
                     const Divider(color: Color(0xFFF0F0F0), height: 16),
-                    const Text(
-                      'raymond@example.com',
-                      style: TextStyle(
+                    Text(
+                      profile.email,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryGreen,
@@ -118,9 +146,9 @@ class ProfessionalProfileScreen extends StatelessWidget {
                   labelColor: AppTheme.accentGold,
                   isRoleSection: true,
                   children: [
-                    const Text(
-                      'License No: A-442',
-                      style: TextStyle(
+                    Text(
+                      'License No: ${profile.registrationNo}',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryGreen,
@@ -155,6 +183,105 @@ class ProfessionalProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                    ),
+                  ],
+                ),
+                _buildInfoCard(
+                  label: 'Professional Documents',
+                  children: [
+                    BlocBuilder<ProfessionalDocumentsBloc, ProfessionalDocumentsState>(
+                      builder: (context, docState) {
+                        if (docState is ProfessionalDocumentsLoading || docState is ProfessionalDocumentsInitial) {
+                           return const Padding(
+                             padding: EdgeInsets.all(20.0),
+                             child: Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
+                           );
+                        }
+                        if (docState is ProfessionalDocumentsError) {
+                           return Text('Error loading documents: ${docState.message}', style: const TextStyle(color: AppTheme.danger));
+                        }
+                        if (docState is ProfessionalDocumentsLoaded) {
+                           final docs = docState.documents.documents;
+                           if (docs.isEmpty) {
+                              return const Text('No documents found.', style: TextStyle(color: Colors.grey));
+                           }
+                           return Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: docs.entries.map((entry) {
+                               final keyName = entry.key.replaceAll('_', ' ').toUpperCase();
+                               final url = entry.value;
+                               final isImage = url.toLowerCase().endsWith('.png') || 
+                                               url.toLowerCase().endsWith('.jpg') || 
+                                               url.toLowerCase().endsWith('.jpeg');
+                               
+                               return Padding(
+                                 padding: const EdgeInsets.only(bottom: 15),
+                                 child: Column(
+                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                   children: [
+                                     Text(
+                                       keyName,
+                                       style: const TextStyle(
+                                         fontSize: 12,
+                                         fontWeight: FontWeight.bold,
+                                         color: AppTheme.primaryGreen,
+                                       ),
+                                     ),
+                                     const SizedBox(height: 8),
+                                     if (isImage)
+                                       Container(
+                                         width: double.infinity,
+                                         padding: const EdgeInsets.all(8),
+                                         decoration: BoxDecoration(
+                                            border: Border.all(color: const Color(0xFFEEEEEE)),
+                                            borderRadius: BorderRadius.circular(8),
+                                         ),
+                                         child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.network(
+                                              url,
+                                              height: 120,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (context, error, stackTrace) => const Padding(
+                                                padding: EdgeInsets.all(20.0),
+                                                child: Icon(Icons.broken_image, color: Colors.grey),
+                                              ),
+                                            ),
+                                         ),
+                                       )
+                                     else
+                                       Container(
+                                         padding: const EdgeInsets.all(12),
+                                         decoration: BoxDecoration(
+                                           color: const Color(0xFFF9F9F9),
+                                           borderRadius: BorderRadius.circular(8),
+                                           border: Border.all(color: const Color(0xFFEEEEEE)),
+                                         ),
+                                         child: Row(
+                                           children: [
+                                              const Icon(Icons.description, color: AppTheme.accentGold),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  url.split('/').last,
+                                                  style: const TextStyle(
+                                                    color: AppTheme.primaryGreen,
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                           ],
+                                         ),
+                                       ),
+                                   ],
+                                 ),
+                               );
+                             }).toList(),
+                           );
+                        }
+                        return const SizedBox.shrink();
+                      }
                     ),
                   ],
                 ),
@@ -203,11 +330,16 @@ class ProfessionalProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      );
+    }
+    return const SizedBox.shrink();
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
         onTap: (index) {
           if (index == 0) context.go('/professional/dashboard');
+          if (index == 1) context.push('/professional/applications');
         },
         selectedItemColor: AppTheme.primaryGreen,
         unselectedItemColor: const Color(0xFF999999),

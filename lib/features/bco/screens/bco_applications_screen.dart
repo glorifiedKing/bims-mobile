@@ -149,7 +149,7 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                         children: [
-                          const TextSpan(text: "Region: "),
+                          const TextSpan(text: "Location: "),
                           TextSpan(
                             text: adminUnitName,
                             style: const TextStyle(color: AppTheme.accentGold),

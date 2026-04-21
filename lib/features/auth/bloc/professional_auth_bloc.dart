@@ -1,15 +1,16 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
-import '../../../core/network/api_client.dart';
+import '../../../core/network/pro_api_client.dart';
+import '../../../core/constants/api_constants.dart';
 import 'professional_auth_event.dart';
 import 'professional_auth_state.dart';
 
 class ProfessionalAuthBloc
     extends Bloc<ProfessionalAuthEvent, ProfessionalAuthState> {
-  final ApiClient apiClient;
+  final ProApiClient proApiClient;
 
-  ProfessionalAuthBloc({required this.apiClient})
+  ProfessionalAuthBloc({required this.proApiClient})
     : super(ProfessionalAuthInitial()) {
     on<ProfessionalAuthLoginRequested>(_onLoginRequested);
     on<ProfessionalAuthLogoutRequested>(_onLogoutRequested);
@@ -22,23 +23,10 @@ class ProfessionalAuthBloc
   ) async {
     emit(ProfessionalAuthLoading());
     try {
-      // Mock login for now
-      await Future.delayed(const Duration(seconds: 1));
-      if (event.identifier.isNotEmpty && event.password.isNotEmpty) {
-        final mockToken =
-            'mock_professional_token_${DateTime.now().millisecondsSinceEpoch}';
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('professional_access_token', mockToken);
-        emit(ProfessionalAuthAuthenticated(mockToken));
-      } else {
-        emit(ProfessionalAuthError('Invalid credentials'));
-      }
-
-      /* Real API call when ready
-      final response = await apiClient.dio.post(
-        ApiConstants.professionalLogin,
+      final response = await proApiClient.dio.post(
+        '/token',
         data: {
-          'identifier': event.identifier,
+          'email': event.identifier,
           'password': event.password,
         },
       );
@@ -48,7 +36,6 @@ class ProfessionalAuthBloc
       await prefs.setString('professional_access_token', token);
       
       emit(ProfessionalAuthAuthenticated(token));
-      */
     } on DioException catch (e) {
       emit(
         ProfessionalAuthError(e.response?.data['message'] ?? 'Login failed'),

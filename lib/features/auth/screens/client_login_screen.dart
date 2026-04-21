@@ -34,7 +34,9 @@ class _ClientLoginScreenState extends State<ClientLoginScreen> {
     if (!isEmail && !isPhone) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a valid email or a 10-digit phone number starting with 0'),
+          content: Text(
+            'Please enter a valid email or a 10-digit phone number starting with 0',
+          ),
         ),
       );
       return;
@@ -90,10 +92,10 @@ class _ClientLoginScreenState extends State<ClientLoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/images/BIMS_logo_white.png',
+                          'assets/images/BIMS_logo_white_m.png',
                           height: 120, // Adjust size as needed
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         const Text(
                           'Client Portal: Permits & More',
                           style: TextStyle(
@@ -248,7 +250,10 @@ class _ClientLoginScreenState extends State<ClientLoginScreen> {
                             onPressed: () {
                               context.go('/');
                             },
-                            icon: const Icon(Icons.swap_horiz, color: AppTheme.primaryGreen),
+                            icon: const Icon(
+                              Icons.swap_horiz,
+                              color: AppTheme.primaryGreen,
+                            ),
                             label: const Text(
                               'Switch Login Portal',
                               style: TextStyle(

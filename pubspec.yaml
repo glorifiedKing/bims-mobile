@@ -44,7 +44,7 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/BIMS_logo_mini.png"
+  image_path: "assets/images/BIMS_logo_m.png"
 flutter_native_splash:
   color: "#FFFFFF"
   #background_image: "assets/background.png" # Optional background image

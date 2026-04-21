@@ -27,12 +27,17 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
   final TextEditingController _sqmController = TextEditingController();
   final TextEditingController _offenderNameController = TextEditingController();
   final TextEditingController _offenderAgeController = TextEditingController();
-  final TextEditingController _offenderPhoneController = TextEditingController();
+  final TextEditingController _offenderPhoneController =
+      TextEditingController();
   final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _buildingPermitController = TextEditingController();
-  final TextEditingController _occupationPermitController = TextEditingController();
-  final TextEditingController _postalAddressController = TextEditingController();
-  final TextEditingController _dateOfOffenceController = TextEditingController();
+  final TextEditingController _buildingPermitController =
+      TextEditingController();
+  final TextEditingController _occupationPermitController =
+      TextEditingController();
+  final TextEditingController _postalAddressController =
+      TextEditingController();
+  final TextEditingController _dateOfOffenceController =
+      TextEditingController();
 
   String? _selectedOffenceType;
   String? _selectedBuildingClass;
@@ -65,7 +70,7 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
 
   void _onAdminUnitTypeSelected(String? typeIdStr) {
     if (typeIdStr == null) return;
-    
+
     final auxRepo = context.read<AuxiliaryRepository>();
     setState(() {
       _selectedAdminUnitType = typeIdStr;
@@ -80,9 +85,11 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
       return;
     }
 
-    final offence = _offenceTypes.firstWhere((o) => o.id.toString() == _selectedOffenceType);
+    final offence = _offenceTypes.firstWhere(
+      (o) => o.id.toString() == _selectedOffenceType,
+    );
     double sqm = double.tryParse(_sqmController.text) ?? 0.0;
-    
+
     // Formula: Amount = (charge_per_sqm ? square_metres : 1) * currency_points * 20000
     double chargeMultiplier = offence.chargePerSqm ? sqm : 1.0;
     double calculated = chargeMultiplier * offence.currencyPoints * 20000.0;
@@ -118,8 +125,12 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
         return Theme(
           data: ThemeData.light().copyWith(
             primaryColor: AppTheme.primaryGreen,
-            colorScheme: const ColorScheme.light(primary: AppTheme.primaryGreen),
-            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryGreen,
+            ),
+            buttonTheme: const ButtonThemeData(
+              textTheme: ButtonTextTheme.primary,
+            ),
           ),
           child: child!,
         );
@@ -136,8 +147,12 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: AppTheme.primaryGreen,
-              colorScheme: const ColorScheme.light(primary: AppTheme.primaryGreen),
-              buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+              colorScheme: const ColorScheme.light(
+                primary: AppTheme.primaryGreen,
+              ),
+              buttonTheme: const ButtonThemeData(
+                textTheme: ButtonTextTheme.primary,
+              ),
             ),
             child: child!,
           );
@@ -164,12 +179,14 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
 
   void _submitPenalty() {
     if (_formKey.currentState!.validate()) {
-      if (_selectedOffenceType == null || 
-          _selectedBuildingClass == null || 
-          _selectedAdminUnitType == null || 
+      if (_selectedOffenceType == null ||
+          _selectedBuildingClass == null ||
+          _selectedAdminUnitType == null ||
           _selectedAdminUnit == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select all required dropdown fields.')),
+          const SnackBar(
+            content: Text('Please select all required dropdown fields.'),
+          ),
         );
         return;
       }
@@ -188,7 +205,9 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
         "administrative_unit_type": int.parse(_selectedAdminUnitType!),
         "administrative_unit_id": int.parse(_selectedAdminUnit!),
         "postal_address": _postalAddressController.text.trim(),
-        "date_of_offence": _selectedDateOfOffence != null ? _formatDate(_selectedDateOfOffence!) : _formatDate(DateTime.now()), 
+        "date_of_offence": _selectedDateOfOffence != null
+            ? _formatDate(_selectedDateOfOffence!)
+            : _formatDate(DateTime.now()),
       };
 
       context.read<BcoCreatePenaltyBloc>().add(SubmitBcoCreatePenalty(data));
@@ -200,7 +219,10 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Create Express Penalty', style: TextStyle(color: Colors.white, fontSize: 16)),
+        title: const Text(
+          'Create Express Penalty',
+          style: TextStyle(color: Colors.white, fontSize: 16),
+        ),
         backgroundColor: AppTheme.primaryGreen,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
@@ -209,14 +231,22 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
         listener: (context, state) {
           if (state is BcoCreatePenaltySuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Penalty Created Successfully!'), backgroundColor: AppTheme.primaryGreen),
+              const SnackBar(
+                content: Text('Penalty Created Successfully!'),
+                backgroundColor: AppTheme.primaryGreen,
+              ),
             );
             // Refresh list
-            context.read<BcoPenaltiesBloc>().add(const FetchBcoPenalties(status: 'ALL', isRefresh: true));
+            context.read<BcoPenaltiesBloc>().add(
+              const FetchBcoPenalties(status: 'ALL', isRefresh: true),
+            );
             context.pop(); // Go back
           } else if (state is BcoCreatePenaltyError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: ${state.message}'), backgroundColor: AppTheme.danger),
+              SnackBar(
+                content: Text('Error: ${state.message}'),
+                backgroundColor: AppTheme.danger,
+              ),
             );
           }
         },
@@ -228,7 +258,7 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
               children: [
                 // Offence Info Section
                 const _SectionHeader(title: 'OFFENCE DETAILS'),
-                
+
                 _buildTextField(
                   controller: _dateOfOffenceController,
                   label: 'Date of Offence',
@@ -236,7 +266,8 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   icon: Icons.calendar_today,
                   readOnly: true,
                   onTap: () => _selectDateAndTime(context),
-                  validator: (val) => val == null || val.isEmpty ? 'Date required' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'Date required' : null,
                 ),
                 const SizedBox(height: 15),
 
@@ -250,7 +281,10 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   items: _offenceTypes.map((o) {
                     return DropdownMenuItem<String>(
                       value: o.id.toString(),
-                      child: Text(o.offenceName, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        o.offenceName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -265,8 +299,12 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   label: 'Square Metres',
                   hint: 'e.g. 150.5',
                   icon: Icons.square_foot,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (val) => val == null || val.isEmpty ? 'Square metres required' : null,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (val) => val == null || val.isEmpty
+                      ? 'Square metres required'
+                      : null,
                 ),
                 const SizedBox(height: 15),
 
@@ -276,18 +314,27 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.primaryGreen.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
+                    border: Border.all(
+                      color: AppTheme.primaryGreen.withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         'Tentative Amount:',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryGreen,
+                        ),
                       ),
                       Text(
                         'UGX ${_tentativeAmount.toStringAsFixed(2)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryGreen),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppTheme.primaryGreen,
+                        ),
                       ),
                     ],
                   ),
@@ -302,7 +349,8 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   label: 'Offender Name',
                   hint: 'Enter offender name',
                   icon: Icons.person_outline,
-                  validator: (val) => val == null || val.isEmpty ? 'Name required' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'Name required' : null,
                 ),
                 const SizedBox(height: 15),
 
@@ -315,7 +363,8 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                         hint: 'e.g. 33',
                         icon: Icons.calendar_today,
                         keyboardType: TextInputType.number,
-                        validator: (val) => val == null || val.isEmpty ? 'Req' : null,
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: 15),
@@ -323,10 +372,16 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                       flex: 2,
                       child: DropdownButtonFormField<String>(
                         value: _offenderSex,
-                        decoration: _inputDecoration(label: 'Sex', icon: Icons.wc),
+                        decoration: _inputDecoration(
+                          label: 'Sex',
+                          icon: Icons.wc,
+                        ),
                         items: const [
                           DropdownMenuItem(value: 'Male', child: Text('Male')),
-                          DropdownMenuItem(value: 'Female', child: Text('Female')),
+                          DropdownMenuItem(
+                            value: 'Female',
+                            child: Text('Female'),
+                          ),
                         ],
                         onChanged: (val) {
                           if (val != null) setState(() => _offenderSex = val);
@@ -343,7 +398,10 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   hint: 'e.g. 256772...',
                   icon: Icons.phone,
                   keyboardType: TextInputType.phone,
-                  validator: (val) => val == null || val.isEmpty ? 'Phone required' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty || val.length != 12
+                      ? 'Invalid Phone'
+                      : null,
                 ),
                 const SizedBox(height: 30),
 
@@ -354,21 +412,26 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   label: 'Location',
                   hint: 'Plot, Street...',
                   icon: Icons.location_on_outlined,
-                  validator: (val) => val == null || val.isEmpty ? 'Location required' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'Location required' : null,
                 ),
                 const SizedBox(height: 15),
 
                 DropdownButtonFormField<String>(
                   isExpanded: true,
                   value: _selectedBuildingClass,
-                  decoration: _inputDecoration(label: 'Building Classification', icon: Icons.business),
+                  decoration: _inputDecoration(
+                    label: 'Building Classification',
+                    icon: Icons.business,
+                  ),
                   items: _buildingClasses.map((c) {
                     return DropdownMenuItem<String>(
                       value: c.id.toString(),
                       child: Text(c.name),
                     );
                   }).toList(),
-                  onChanged: (val) => setState(() => _selectedBuildingClass = val),
+                  onChanged: (val) =>
+                      setState(() => _selectedBuildingClass = val),
                 ),
                 const SizedBox(height: 15),
 
@@ -391,7 +454,10 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                 DropdownButtonFormField<String>(
                   isExpanded: true,
                   value: _selectedAdminUnitType,
-                  decoration: _inputDecoration(label: 'Administrative Unit Type', icon: Icons.account_balance_outlined),
+                  decoration: _inputDecoration(
+                    label: 'Administrative Unit Type',
+                    icon: Icons.account_balance_outlined,
+                  ),
                   items: _adminUnitTypes.map((t) {
                     return DropdownMenuItem<String>(
                       value: t.id.toString(),
@@ -405,11 +471,18 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                 DropdownButtonFormField<String>(
                   isExpanded: true,
                   value: _selectedAdminUnit,
-                  decoration: _inputDecoration(label: 'Administrative Unit', icon: Icons.map),
+                  decoration: _inputDecoration(
+                    label: 'Administrative Unit',
+                    icon: Icons.map,
+                  ),
                   items: _adminUnits.map((u) {
                     return DropdownMenuItem<String>(
                       value: u.id.toString(),
-                      child: Text(u.name.length > 30 ? '${u.name.substring(0, 30)}...' : u.name),
+                      child: Text(
+                        u.name.length > 30
+                            ? '${u.name.substring(0, 30)}...'
+                            : u.name,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) => setState(() => _selectedAdminUnit = val),
@@ -421,7 +494,8 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                   label: 'Postal Address',
                   hint: 'P.O Box...',
                   icon: Icons.local_post_office_outlined,
-                  validator: (val) => val == null || val.isEmpty ? 'Address required' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'Address required' : null,
                 ),
 
                 const SizedBox(height: 40),
@@ -430,18 +504,33 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: state is BcoCreatePenaltyLoading ? null : _submitPenalty,
+                    onPressed: state is BcoCreatePenaltyLoading
+                        ? null
+                        : _submitPenalty,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryGreen,
                       padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 2,
                     ),
                     child: state is BcoCreatePenaltyLoading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Text(
                             'CREATE PENALTY',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
                           ),
                   ),
                 ),
@@ -454,7 +543,11 @@ class _BcoCreatePenaltyScreenState extends State<BcoCreatePenaltyScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({required String label, required IconData icon, String? hint}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+    String? hint,
+  }) {
     return InputDecoration(
       labelText: label,
       hintText: hint,

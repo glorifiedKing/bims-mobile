@@ -71,10 +71,10 @@ class _BcoLoginScreenState extends State<BcoLoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/images/BIMS_logo_white.png',
+                          'assets/images/BIMS_logo_white_m.png',
                           height: 120,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         const Text(
                           'For BCOs, Accounting Officers, Local Authorities',
                           textAlign: TextAlign.center,

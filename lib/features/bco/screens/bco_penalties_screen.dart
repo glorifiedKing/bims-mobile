@@ -150,7 +150,7 @@ class _BcoPenaltiesScreenState extends State<BcoPenaltiesScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                         children: [
-                          const TextSpan(text: "Region: "),
+                          const TextSpan(text: "Location: "),
                           TextSpan(
                             text: adminUnitName,
                             style: const TextStyle(color: AppTheme.accentGold),

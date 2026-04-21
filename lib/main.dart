@@ -8,6 +8,7 @@ import 'core/theme.dart';
 import 'core/routing/app_router.dart';
 import 'core/network/api_client.dart';
 import 'core/network/bco_api_client.dart';
+import 'core/network/pro_api_client.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/repositories/auxiliary_repository.dart';
 import 'features/auth/bloc/auth_bloc.dart';
@@ -47,6 +48,16 @@ import 'features/client/bloc/invoice_details/client_invoice_details_bloc.dart';
 import 'features/client/bloc/inspection_invoice_details/client_inspection_invoice_details_bloc.dart';
 import 'features/client/bloc/profile/client_profile_bloc.dart';
 import 'features/client/bloc/profile/client_profile_event.dart';
+import 'features/professional/repositories/professional_repository.dart';
+import 'features/professional/bloc/profile/professional_profile_bloc.dart';
+import 'features/professional/bloc/profile/professional_profile_event.dart';
+import 'features/professional/bloc/counters/professional_counters_bloc.dart';
+import 'features/professional/bloc/counters/professional_counters_event.dart';
+import 'features/professional/bloc/documents/professional_documents_bloc.dart';
+import 'features/professional/bloc/documents/professional_documents_event.dart';
+import 'features/professional/bloc/applications/professional_applications_bloc.dart';
+import 'features/professional/bloc/applications/professional_applications_event.dart';
+import 'features/professional/bloc/application_details/professional_application_details_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,9 +75,11 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final apiClient = ApiClient();
   final bcoApiClient = BcoApiClient();
+  final proApiClient = ProApiClient();
   final auxiliaryRepository = AuxiliaryRepository(bcoApiClient: bcoApiClient);
   final bcoRepository = BcoRepository(bcoApiClient: bcoApiClient);
   final clientRepository = ClientRepository(dio: apiClient.dio);
+  final professionalRepository = ProfessionalRepository(proApiClient: proApiClient);
 
   // Trigger background sync without awaiting
   auxiliaryRepository.syncAuxiliaryData();
@@ -76,10 +89,12 @@ void main() async {
       providers: [
         RepositoryProvider.value(value: apiClient),
         RepositoryProvider.value(value: bcoApiClient),
+        RepositoryProvider.value(value: proApiClient),
         RepositoryProvider.value(value: prefs),
         RepositoryProvider.value(value: clientRepository),
         RepositoryProvider.value(value: auxiliaryRepository),
         RepositoryProvider.value(value: bcoRepository),
+        RepositoryProvider.value(value: professionalRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -98,7 +113,7 @@ void main() async {
           ),
           BlocProvider(
             create: (context) =>
-                ProfessionalAuthBloc(apiClient: context.read<ApiClient>())
+                ProfessionalAuthBloc(proApiClient: context.read<ProApiClient>())
                   ..add(ProfessionalAuthCheckRequested()),
           ),
           BlocProvider(
@@ -205,6 +220,31 @@ void main() async {
             create: (context) =>
                 ClientProfileBloc(repository: context.read<ClientRepository>())
                   ..add(FetchClientProfile()),
+          ),
+          BlocProvider(
+            create: (context) => ProfessionalProfileBloc(
+              repository: context.read<ProfessionalRepository>(),
+            )..add(FetchProfessionalProfile()),
+          ),
+          BlocProvider(
+            create: (context) => ProfessionalCountersBloc(
+              repository: context.read<ProfessionalRepository>(),
+            )..add(FetchProfessionalCounters()),
+          ),
+          BlocProvider(
+            create: (context) => ProfessionalDocumentsBloc(
+              repository: context.read<ProfessionalRepository>(),
+            )..add(FetchProfessionalDocuments()),
+          ),
+          BlocProvider(
+            create: (context) => ProfessionalApplicationsBloc(
+              repository: context.read<ProfessionalRepository>(),
+            )..add(FetchProfessionalApplications()),
+          ),
+          BlocProvider(
+            create: (context) => ProfessionalApplicationDetailsBloc(
+              repository: context.read<ProfessionalRepository>(),
+            ),
           ),
         ],
         child: const MainApp(),

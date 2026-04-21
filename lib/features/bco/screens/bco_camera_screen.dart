@@ -14,8 +14,24 @@ class BcoCameraScreen extends StatefulWidget {
   State<BcoCameraScreen> createState() => _BcoCameraScreenState();
 }
 
-class _BcoCameraScreenState extends State<BcoCameraScreen> {
+class _BcoCameraScreenState extends State<BcoCameraScreen> with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
+  late AnimationController _scannerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scannerController = AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _scannerController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -135,11 +151,26 @@ class _BcoCameraScreenState extends State<BcoCameraScreen> {
                       else
                         ClipRRect(
                           borderRadius: BorderRadius.circular(15),
-                          child: Image.memory(
-                            currentImage,
-                            fit: BoxFit.cover,
-                            height: 300,
-                            width: double.infinity,
+                          child: Stack(
+                            children: [
+                              Image.memory(
+                                currentImage,
+                                fit: BoxFit.cover,
+                                height: 300,
+                                width: double.infinity,
+                              ),
+                              if (isAnalyzing)
+                                Positioned.fill(
+                                  child: AnimatedBuilder(
+                                    animation: _scannerController,
+                                    builder: (context, child) {
+                                      return CustomPaint(
+                                        painter: ScannerPainter(_scannerController.value),
+                                      );
+                                    },
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                         
@@ -224,5 +255,42 @@ class _BcoCameraScreenState extends State<BcoCameraScreen> {
         },
       ),
     );
+  }
+}
+
+class ScannerPainter extends CustomPainter {
+  final double animationValue;
+
+  ScannerPainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final yPos = size.height * animationValue;
+    
+    final Paint linePaint = Paint()
+      ..color = AppTheme.primaryGreen
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+    
+    final Paint gradientPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [
+          AppTheme.primaryGreen.withOpacity(0.5),
+          AppTheme.primaryGreen.withOpacity(0.0),
+        ]
+      ).createShader(Rect.fromLTWH(0, yPos - 60, size.width, 60));
+
+    if (animationValue > 0) {
+       canvas.drawRect(Rect.fromLTWH(0, yPos - 60, size.width, 60), gradientPaint);
+    }
+    
+    canvas.drawLine(Offset(0, yPos), Offset(size.width, yPos), linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant ScannerPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
   }
 }

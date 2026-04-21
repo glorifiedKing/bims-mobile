@@ -2,12 +2,14 @@ class ApiConstants {
   static const String baseUrl = 'https://api.test.bims.go.ug/v1';
   static const String clientBaseUrl = '$baseUrl/client';
   static const String bcoBaseUrl = '$baseUrl/internal';
+  static const String professionalBaseUrl = '$baseUrl/pro';
 
   // Auth
   static const String createAccount = '/account';
   static const String account = '/account';
   static const String login = '/token'; // Client Token
   static const String bcoLogin = '/token'; // BCO Token
+  static const String professionalLogin = '$professionalBaseUrl/token';
   static const String refreshToken = '/token/refresh';
 
   // Applications
@@ -25,7 +27,8 @@ class ApiConstants {
   static const String adminUnitTypes = '/auxiliary/admin-unit-types';
   static const String adminUnitsList = '/auxiliary/admin-units-list';
   static const String userRoles = '/auxiliary/user-roles';
-  static const String buildingClassifications = '/auxiliary/building-classifications';
+  static const String buildingClassifications =
+      '/auxiliary/building-classifications';
   static const String epsTypes = '/auxiliary/eps-types';
   static const String expressPenalties = '/eps/penalties';
 }

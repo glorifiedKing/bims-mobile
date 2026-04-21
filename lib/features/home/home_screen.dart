@@ -95,10 +95,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Image.asset(
-                      'assets/images/BIMS_logo_white.png',
-                      height: 100, // Adjust size as needed
+                      'assets/images/BIMS_logo_white_m.png',
+                      height: 120, // Adjust size as needed
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     // const Text(
                     //   'NBRB Portal',
                     //   style: TextStyle(

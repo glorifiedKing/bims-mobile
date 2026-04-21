@@ -37,6 +37,8 @@ import '../../features/auth/screens/professional_login_screen.dart';
 import '../../features/auth/screens/professional_registration_screen.dart';
 import '../../features/professional/screens/professional_dashboard_screen.dart';
 import '../../features/professional/screens/professional_profile_screen.dart';
+import '../../features/professional/screens/professional_applications_screen.dart';
+import '../../features/professional/screens/professional_application_details_screen.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> rootNavigatorKey =
@@ -240,6 +242,17 @@ class AppRouter {
       GoRoute(
         path: '/professional/profile',
         builder: (context, state) => const ProfessionalProfileScreen(),
+      ),
+      GoRoute(
+        path: '/professional/applications',
+        builder: (context, state) => const ProfessionalApplicationsScreen(),
+      ),
+      GoRoute(
+        path: '/professional/applications/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ProfessionalApplicationDetailsScreen(applicationKey: id);
+        },
       ),
     ],
   );

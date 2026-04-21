@@ -150,7 +150,7 @@ class BcoInvoicesScreen extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                           children: [
-                            const TextSpan(text: "Region: "),
+                            const TextSpan(text: "Location: "),
                             TextSpan(
                               text: adminUnitName,
                               style: const TextStyle(

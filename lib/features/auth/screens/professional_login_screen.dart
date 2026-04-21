@@ -63,17 +63,17 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'NBRB Portal',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
+                        // const Text(
+                        //   'NBRB Portal',
+                        //   style: TextStyle(
+                        //     color: Colors.white,
+                        //     fontSize: 14,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        // ),
+                        // const SizedBox(height: 5),
                         Image.asset(
-                          'assets/images/BIMS_logo_white.png',
+                          'assets/images/BIMS_logo_white_m.png',
                           height: 120,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(
@@ -130,7 +130,7 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
                           children: [
                             // Email/Phone
                             const Text(
-                              'Email or Phone Number',
+                              'Email',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -141,7 +141,7 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
                             TextFormField(
                               controller: _identifierController,
                               decoration: InputDecoration(
-                                hintText: 'Enter your email or phone',
+                                hintText: 'Enter your email',
                                 hintStyle: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
@@ -341,7 +341,10 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
                               onPressed: () {
                                 context.go('/');
                               },
-                              icon: const Icon(Icons.swap_horiz, color: AppTheme.primaryGreen),
+                              icon: const Icon(
+                                Icons.swap_horiz,
+                                color: AppTheme.primaryGreen,
+                              ),
                               label: const Text(
                                 'Switch Login Portal',
                                 style: TextStyle(
