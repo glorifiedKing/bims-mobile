@@ -10,3 +10,8 @@ class BcoAuthLoginRequested extends BcoAuthEvent {
 class BcoAuthLogoutRequested extends BcoAuthEvent {}
 
 class BcoAuthCheckRequested extends BcoAuthEvent {}
+
+class BcoAuthBiometricLoginRequested extends BcoAuthEvent {
+  final String oldToken;
+  BcoAuthBiometricLoginRequested(this.oldToken);
+}

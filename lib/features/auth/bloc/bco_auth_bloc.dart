@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/bco_api_client.dart';
+import '../../../core/services/biometric_service.dart';
 import '../models/bco_user.dart';
 import 'bco_auth_event.dart';
 import 'bco_auth_state.dart';
@@ -21,6 +22,7 @@ class BcoAuthBloc extends Bloc<BcoAuthEvent, BcoAuthState> {
     on<BcoAuthCheckRequested>(_onAuthCheck);
     on<BcoAuthLoginRequested>(_onLogin);
     on<BcoAuthLogoutRequested>(_onLogout);
+    on<BcoAuthBiometricLoginRequested>(_onBiometricLogin);
   }
 
   void _onAuthCheck(BcoAuthCheckRequested event, Emitter<BcoAuthState> emit) {
@@ -51,13 +53,24 @@ class BcoAuthBloc extends Bloc<BcoAuthEvent, BcoAuthState> {
 
       if (response.statusCode == 200 && response.data['access_token'] != null) {
         final token = response.data['access_token'];
-        final userJson = response.data['user'];
-        final user = BcoUser.fromJson(userJson);
         
-        // Using distinct keys for BCO tokens and user data
+        // Save token to prefs first so BcoApiClient interdeptor picks it up
         await prefs.setString('bco_access_token', token);
-        await prefs.setString('bco_user_data', jsonEncode(userJson));
-        emit(BcoAuthAuthenticated(token, user));
+        await BiometricService().updateBcoSecureTokenIfEnabled(token);
+
+        try {
+          final accountResponse = await bcoDio.get('/account');
+          if (accountResponse.statusCode == 200) {
+            final userJson = accountResponse.data['data'][0];
+            final user = BcoUser.fromJson(userJson);
+            await prefs.setString('bco_user_data', jsonEncode(userJson));
+            emit(BcoAuthAuthenticated(token, user));
+          } else {
+             emit(BcoAuthError('Failed to fetch account details'));
+          }
+        } catch(e) {
+             emit(BcoAuthError('Error fetching account details: $e'));
+        }
       } else {
         emit(BcoAuthError('Login failed: Invalid credentials'));
       }
@@ -78,5 +91,48 @@ class BcoAuthBloc extends Bloc<BcoAuthEvent, BcoAuthState> {
     await prefs.remove('bco_access_token');
     await prefs.remove('bco_user_data');
     emit(BcoAuthUnauthenticated());
+    emit(BcoAuthUnauthenticated());
+  }
+
+  Future<void> _onBiometricLogin(
+    BcoAuthBiometricLoginRequested event,
+    Emitter<BcoAuthState> emit,
+  ) async {
+    emit(BcoAuthLoading());
+    try {
+      final response = await bcoDio.post(
+        ApiConstants.refreshToken,
+        data: {'token': event.oldToken},
+      );
+
+      if (response.statusCode == 200 && response.data['access_token'] != null) {
+        final token = response.data['access_token'];
+
+        // Save token to prefs first so BcoApiClient interceptor picks it up
+        await prefs.setString('bco_access_token', token);
+        await BiometricService().updateBcoSecureTokenIfEnabled(token);
+        
+        try {
+          final accountResponse = await bcoDio.get('/account');
+          if (accountResponse.statusCode == 200) {
+            final userJson = accountResponse.data['data'][0];
+            final user = BcoUser.fromJson(userJson);
+            await prefs.setString('bco_user_data', jsonEncode(userJson));
+            emit(BcoAuthAuthenticated(token, user));
+          } else {
+             emit(BcoAuthError('Failed to fetch account details'));
+          }
+        } catch(e) {
+             emit(BcoAuthError('Error fetching account details: $e'));
+        }
+      } else {
+        emit(BcoAuthError('Biometric login expired. Please log in manually.'));
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Token refresh failed';
+      emit(BcoAuthError('Biometric login failed: $msg'));
+    } catch (e) {
+      emit(BcoAuthError('Unexpected error: $e'));
+    }
   }
 }

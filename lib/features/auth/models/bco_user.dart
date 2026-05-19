@@ -1,47 +1,63 @@
 class BcoUser {
-  final String fname;
-  final String lname;
-  final String otherNames;
+  final String names;
   final String email;
+  final String? phone;
+  final String role;
   final int roleId;
-  final int? speciality;
-  final int? administrativeUnitType;
-  final int? administrativeUnitId;
+  final int administrativeUnitTypeId;
+  final int administrativeUnitId;
+  final int administrativeDivisionId;
+  final String administrativeUnitType;
+  final String administrativeUnitName;
+  final String createdOn;
+  final String updatedOn;
 
   BcoUser({
-    required this.fname,
-    required this.lname,
-    required this.otherNames,
+    required this.names,
     required this.email,
+    this.phone,
+    required this.role,
     required this.roleId,
-    this.speciality,
-    this.administrativeUnitType,
-    this.administrativeUnitId,
+    required this.administrativeUnitTypeId,
+    required this.administrativeUnitId,
+    required this.administrativeDivisionId,
+    required this.administrativeUnitType,
+    required this.administrativeUnitName,
+    required this.createdOn,
+    required this.updatedOn,
   });
 
   factory BcoUser.fromJson(Map<String, dynamic> json) {
     return BcoUser(
-      fname: json['fname'] ?? '',
-      lname: json['lname'] ?? '',
-      otherNames: json['otherNames'] ?? '',
+      names: json['names'] ?? '',
       email: json['email'] ?? '',
+      phone: json['phone'],
+      role: json['role'] ?? '',
       roleId: json['role_id'] ?? 0,
-      speciality: json['speciality'],
-      administrativeUnitType: json['administrative_unit_type'],
-      administrativeUnitId: json['administrative_unit_id'],
+      administrativeUnitTypeId: json['administrative_unit_type_id'] ?? 0,
+      administrativeUnitId: json['administrative_unit_id'] ?? 0,
+      administrativeDivisionId: json['administrative_division_id'] ?? 0,
+      administrativeUnitType: json['administrative_unit_type'] ?? '',
+      administrativeUnitName: json['administrative_unit_name'] ?? '',
+      createdOn: json['created_on'] ?? '',
+      updatedOn: json['updated_on'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'fname': fname,
-      'lname': lname,
-      'otherNames': otherNames,
+      'names': names,
       'email': email,
+      'phone': phone,
+      'role': role,
       'role_id': roleId,
-      'speciality': speciality,
-      'administrative_unit_type': administrativeUnitType,
+      'administrative_unit_type_id': administrativeUnitTypeId,
       'administrative_unit_id': administrativeUnitId,
+      'administrative_division_id': administrativeDivisionId,
+      'administrative_unit_type': administrativeUnitType,
+      'administrative_unit_name': administrativeUnitName,
+      'created_on': createdOn,
+      'updated_on': updatedOn,
     };
   }
 }

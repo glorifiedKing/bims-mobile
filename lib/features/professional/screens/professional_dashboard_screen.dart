@@ -251,8 +251,8 @@ class ProfessionalDashboardScreen extends StatelessWidget {
           },
           selectedItemColor: AppTheme.primaryGreen,
           unselectedItemColor: const Color(0xFF999999),
-          showUnselectedLabels: false,
-          showSelectedLabels: false,
+          showUnselectedLabels: true,
+          showSelectedLabels: true,
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(

@@ -10,7 +10,9 @@ import '../models/audit_trail_model.dart';
 import '../models/bco_profile_model.dart';
 import '../models/bco_counters_model.dart';
 import '../models/express_penalty_model.dart';
+import '../models/express_penalty_invoice_model.dart';
 import '../models/bco_application_attachment_model.dart';
+import '../models/bco_whistleblow_model.dart';
 
 class BcoRepository {
   final BcoApiClient bcoApiClient;
@@ -174,8 +176,8 @@ class BcoRepository {
         queryParameters: queryParams,
       );
       if (response.statusCode == 200) {
-        final List<dynamic> dataList = response.data['data'] is List 
-            ? response.data['data'] 
+        final List<dynamic> dataList = response.data['data'] is List
+            ? response.data['data']
             : [];
         final List<InvoiceModel> invoices = dataList
             .map((json) => InvoiceModel.fromJson(json))
@@ -219,8 +221,8 @@ class BcoRepository {
         queryParameters: queryParams,
       );
       if (response.statusCode == 200) {
-        final List<dynamic> dataList = response.data['data'] is List 
-            ? response.data['data'] 
+        final List<dynamic> dataList = response.data['data'] is List
+            ? response.data['data']
             : [];
         final List<InspectionInvoiceModel> invoices = dataList
             .map((json) => InspectionInvoiceModel.fromJson(json))
@@ -250,9 +252,12 @@ class BcoRepository {
 
   Future<InvoiceDetailModel> getInvoiceDetails(String prn) async {
     try {
-      final response = await bcoApiClient.dio.get('${ApiConstants.invoices}/$prn');
+      final response = await bcoApiClient.dio.get(
+        '${ApiConstants.invoices}/$prn',
+      );
       if (response.statusCode == 200) {
-        final data = response.data['prn'] ?? response.data['data'] ?? response.data;
+        final data =
+            response.data['prn'] ?? response.data['data'] ?? response.data;
         return InvoiceDetailModel.fromJson(data);
       } else {
         throw Exception('Failed to fetch BCO invoice details');
@@ -267,7 +272,9 @@ class BcoRepository {
 
   Future<InspectionInvoiceModel> getInspectionInvoiceDetails(String prn) async {
     try {
-      final response = await bcoApiClient.dio.get('${ApiConstants.inspectionInvoices}/$prn');
+      final response = await bcoApiClient.dio.get(
+        '${ApiConstants.inspectionInvoices}/$prn',
+      );
       if (response.statusCode == 200) {
         final data = response.data['data'] ?? response.data;
         return InspectionInvoiceModel.fromJson(data);
@@ -362,7 +369,9 @@ class BcoRepository {
       );
       if (response.statusCode == 200) {
         final penaltiesData = response.data['penalties'];
-        final List<dynamic> dataList = penaltiesData['data'] is List ? penaltiesData['data'] : [];
+        final List<dynamic> dataList = penaltiesData['data'] is List
+            ? penaltiesData['data']
+            : [];
         final List<ExpressPenaltyModel> penalties = dataList
             .map((json) => ExpressPenaltyModel.fromJson(json))
             .toList();
@@ -388,7 +397,9 @@ class BcoRepository {
 
   Future<ExpressPenaltyModel> getExpressPenaltyDetails(String reference) async {
     try {
-      final response = await bcoApiClient.dio.get('${ApiConstants.expressPenalties}/$reference');
+      final response = await bcoApiClient.dio.get(
+        '${ApiConstants.expressPenalties}/$reference',
+      );
       if (response.statusCode == 200) {
         return ExpressPenaltyModel.fromJson(response.data['penalty']);
       } else {
@@ -415,22 +426,27 @@ class BcoRepository {
         );
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
-      throw Exception('API Error: $msg');
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+
+      throw Exception(msg);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
-  Future<Map<String, dynamic>> getApplicationAttachments(String applicationKey, {int page = 1}) async {
+  Future<Map<String, dynamic>> getApplicationAttachments(
+    String applicationKey, {
+    int page = 1,
+  }) async {
     try {
       final response = await bcoApiClient.dio.get(
         '${ApiConstants.getApplications}/$applicationKey/attachments',
         queryParameters: {'page': page},
       );
       if (response.statusCode == 200) {
-        final List<dynamic> dataList = response.data['data'] is List 
-            ? response.data['data'] 
+        final List<dynamic> dataList = response.data['data'] is List
+            ? response.data['data']
             : [];
         final List<BcoApplicationAttachmentModel> attachments = dataList
             .map((json) => BcoApplicationAttachmentModel.fromJson(json))
@@ -449,6 +465,134 @@ class BcoRepository {
         return {'attachments': attachments, 'hasReachedMax': hasReachedMax};
       } else {
         throw Exception('Failed to fetch application attachments');
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      if (!ApiConstants.isProduction) {
+        throw Exception(msg);
+      }
+      return {
+        'attachments': <BcoApplicationAttachmentModel>[],
+        'hasReachedMax': false,
+      };
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getExpressPenaltyInvoices({
+    int page = 1,
+    String? filter,
+  }) async {
+    try {
+      final Map<String, dynamic> queryParams = {'page': page};
+      if (filter != null && filter != 'ALL') {
+        if (filter == 'PAID') queryParams['status'] = 'PAID';
+        if (filter == 'PENDING') queryParams['status'] = 'PENDING';
+      }
+
+      final response = await bcoApiClient.dio.get(
+        '${ApiConstants.expressPenalties}/invoices',
+        queryParameters: queryParams,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> dataList = response.data['data'] is List
+            ? response.data['data']
+            : [];
+        final List<ExpressPenaltyInvoiceModel> invoices = dataList
+            .map((json) => ExpressPenaltyInvoiceModel.fromJson(json))
+            .toList();
+
+        bool hasReachedMax = false;
+        try {
+          final meta = response.data['meta'];
+          if (meta is Map<String, dynamic>) {
+            final int currentPage = meta['current_page'] ?? 1;
+            final int lastPage = meta['last_page'] ?? 1;
+            hasReachedMax = currentPage >= lastPage;
+          }
+        } catch (_) {}
+
+        return {'invoices': invoices, 'hasReachedMax': hasReachedMax};
+      } else {
+        throw Exception('Failed to fetch express penalty invoices');
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      if (!ApiConstants.isProduction) {
+        throw Exception(msg);
+      }
+
+      return {
+        'invoices': <ExpressPenaltyInvoiceModel>[],
+        'hasReachedMax': false,
+      };
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getWhistleblows({
+    int page = 1,
+    String? feedbackType,
+    String? adminUnitId,
+    String? search,
+  }) async {
+    try {
+      final Map<String, dynamic> queryParams = {'page': page};
+      if (feedbackType != null && feedbackType.isNotEmpty) {
+        queryParams['feedback_type'] = feedbackType;
+      }
+      if (adminUnitId != null && adminUnitId.isNotEmpty) {
+        queryParams['administrative_unit_id'] = adminUnitId;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search; 
+      }
+
+      final response = await bcoApiClient.dio.get(
+        ApiConstants.feedback,
+        queryParameters: queryParams,
+      );
+      if (response.statusCode == 200) {
+        final feedbackData = response.data['data'];
+        final List<dynamic> dataList = feedbackData['data'] is List
+            ? feedbackData['data']
+            : [];
+        final List<BcoWhistleblowModel> whistleblows = dataList
+            .map((json) => BcoWhistleblowModel.fromJson(json))
+            .toList();
+
+        bool hasReachedMax = false;
+        try {
+          final int currentPage = feedbackData['current_page'] ?? 1;
+          final int lastPage = feedbackData['last_page'] ?? 1;
+          hasReachedMax = currentPage >= lastPage;
+        } catch (_) {}
+
+        return {'whistleblows': whistleblows, 'hasReachedMax': hasReachedMax};
+      } else {
+        throw Exception('Failed to fetch whistleblows');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<BcoWhistleblowModel> getWhistleblowDetails(String reference) async {
+    try {
+      final response = await bcoApiClient.dio.get(
+        '${ApiConstants.feedback}/$reference',
+      );
+      if (response.statusCode == 200) {
+        return BcoWhistleblowModel.fromJson(response.data['data']);
+      } else {
+        throw Exception('Failed to fetch whistleblow details');
       }
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';

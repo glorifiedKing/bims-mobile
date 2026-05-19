@@ -30,6 +30,8 @@ import '../../features/bco/screens/bco_stop_order_screen.dart';
 import '../../features/bco/screens/bco_camera_screen.dart';
 import '../../features/bco/screens/bco_profile_screen.dart';
 import '../../features/bco/screens/bco_calendar_screen.dart';
+import '../../features/bco/screens/bco_whistleblows_screen.dart';
+import '../../features/bco/screens/bco_whistleblow_details_screen.dart';
 import '../../features/bco/screens/bco_penalties_screen.dart';
 import '../../features/bco/screens/bco_penalty_details_screen.dart';
 import '../../features/bco/screens/bco_create_penalty_screen.dart';
@@ -222,6 +224,17 @@ class AppRouter {
       GoRoute(
         path: '/bco/new-penalty',
         builder: (context, state) => const BcoCreatePenaltyScreen(),
+      ),
+      GoRoute(
+        path: '/bco/whistleblows',
+        builder: (context, state) => const BcoWhistleblowsScreen(),
+      ),
+      GoRoute(
+        path: '/bco/whistleblows/:reference',
+        builder: (context, state) {
+          final reference = state.pathParameters['reference']!;
+          return BcoWhistleblowDetailsScreen(reference: reference);
+        },
       ),
       GoRoute(
         path: '/bco/camera',

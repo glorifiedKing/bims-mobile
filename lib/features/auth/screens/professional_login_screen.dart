@@ -5,6 +5,13 @@ import '../../../core/theme.dart';
 import '../bloc/professional_auth_bloc.dart';
 import '../bloc/professional_auth_event.dart';
 import '../bloc/professional_auth_state.dart';
+import '../../professional/bloc/profile/professional_profile_bloc.dart';
+import '../../professional/bloc/profile/professional_profile_event.dart';
+import '../../professional/bloc/counters/professional_counters_bloc.dart';
+import '../../professional/bloc/counters/professional_counters_event.dart';
+import '../../professional/bloc/applications/professional_applications_bloc.dart';
+import '../../professional/bloc/applications/professional_applications_event.dart';
+import '../../../core/services/biometric_service.dart';
 
 class ProfessionalLoginScreen extends StatefulWidget {
   const ProfessionalLoginScreen({super.key});
@@ -18,6 +25,7 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -33,6 +41,9 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
       body: BlocConsumer<ProfessionalAuthBloc, ProfessionalAuthState>(
         listener: (context, state) {
           if (state is ProfessionalAuthAuthenticated) {
+            context.read<ProfessionalProfileBloc>().add(FetchProfessionalProfile());
+            context.read<ProfessionalCountersBloc>().add(FetchProfessionalCounters());
+            context.read<ProfessionalApplicationsBloc>().add(FetchProfessionalApplications(status: 'ALL'));
             context.go('/professional/dashboard');
           } else if (state is ProfessionalAuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -187,12 +198,25 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _passwordController,
-                              obscureText: true,
+                              obscureText: !_isPasswordVisible,
                               decoration: InputDecoration(
                                 hintText: 'Enter your password',
                                 hintStyle: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isPasswordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isPasswordVisible = !_isPasswordVisible;
+                                    });
+                                  },
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
@@ -275,14 +299,32 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
-                                onPressed: () {
-                                  // Mock Biometric login -> just login
-                                  context.read<ProfessionalAuthBloc>().add(
-                                    ProfessionalAuthLoginRequested(
-                                      'biometric',
-                                      'biometric',
-                                    ),
-                                  );
+                                onPressed: () async {
+                                  final biometricService = BiometricService();
+                                  final isEnabled = await biometricService.isProBiometricEnabled();
+                                  
+                                  if (!isEnabled) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Please log in first and enable biometric login in your profile.'),
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  final authSuccess = await biometricService.authenticate();
+                                  if (authSuccess) {
+                                    final oldToken = await biometricService.getProSecureToken();
+                                    if (oldToken != null && context.mounted) {
+                                      context.read<ProfessionalAuthBloc>().add(ProfessionalAuthBiometricLoginRequested(oldToken));
+                                    } else if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Saved session invalid. Please log in manually.')),
+                                      );
+                                    }
+                                  }
                                 },
                                 icon: const Text(
                                   '🔐',

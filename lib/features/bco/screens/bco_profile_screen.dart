@@ -7,6 +7,8 @@ import '../../auth/bloc/bco_auth_event.dart';
 import '../bloc/profile/bco_profile_bloc.dart';
 import '../bloc/profile/bco_profile_event.dart';
 import '../bloc/profile/bco_profile_state.dart';
+import '../../../core/services/biometric_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BcoProfileScreen extends StatefulWidget {
   const BcoProfileScreen({super.key});
@@ -16,10 +18,23 @@ class BcoProfileScreen extends StatefulWidget {
 }
 
 class _BcoProfileScreenState extends State<BcoProfileScreen> {
+  final BiometricService _biometricService = BiometricService();
+  bool _isBiometricEnabled = false;
+
   @override
   void initState() {
     super.initState();
     context.read<BcoProfileBloc>().add(FetchBcoProfile());
+    _checkBiometricStatus();
+  }
+
+  Future<void> _checkBiometricStatus() async {
+    final enabled = await _biometricService.isBcoBiometricEnabled();
+    if (mounted) {
+      setState(() {
+        _isBiometricEnabled = enabled;
+      });
+    }
   }
 
   void _logout() {
@@ -79,6 +94,53 @@ class _BcoProfileScreenState extends State<BcoProfileScreen> {
                   _buildDetailRow('Created On', profile.createdOn),
                   _buildDetailRow('Last Updated', profile.updatedOn),
                 ]),
+                const SizedBox(height: 25),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: const Color(0xFFEEEEEE)),
+                  ),
+                  child: SwitchListTile(
+                    title: const Text(
+                      'Enable Biometric Login',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryGreen,
+                      ),
+                    ),
+                    activeColor: AppTheme.primaryGreen,
+                    value: _isBiometricEnabled,
+                    onChanged: (val) async {
+                      if (val) {
+                        final auth = await _biometricService.authenticate();
+                        if (auth) {
+                          final prefs = await SharedPreferences.getInstance();
+                          final token = prefs.getString('bco_access_token');
+                          if (token != null) {
+                            await _biometricService.enableBcoBiometric(token);
+                            setState(() => _isBiometricEnabled = true);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Biometric login enabled successfully.')),
+                              );
+                            }
+                          }
+                        } else {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Authentication failed. Biometric login not enabled.')),
+                            );
+                          }
+                        }
+                      } else {
+                        await _biometricService.disableBcoBiometric();
+                        setState(() => _isBiometricEnabled = false);
+                      }
+                    },
+                  ),
+                ),
                 const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/network/pro_api_client.dart';
 import '../../../core/theme.dart';
+import 'package:dio/dio.dart';
 
 class ProfessionalRegistrationScreen extends StatefulWidget {
   const ProfessionalRegistrationScreen({super.key});
@@ -62,6 +63,14 @@ class _ProfessionalRegistrationScreenState
           );
         }
       }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,6 +113,14 @@ class _ProfessionalRegistrationScreenState
           ),
         );
         context.pop();
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -217,7 +234,7 @@ class _ProfessionalRegistrationScreenState
                       ),
                       contentPadding: const EdgeInsets.all(12),
                     ),
-                    value: _selectedProfession,
+                    initialValue: _selectedProfession,
                     items: const [
                       DropdownMenuItem(
                         value: 1,

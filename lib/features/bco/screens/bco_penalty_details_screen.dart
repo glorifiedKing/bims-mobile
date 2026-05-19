@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:bims_mobile_general/core/utils/currency_formatter.dart';
 import '../../../core/theme.dart';
 import '../bloc/penalty_details/bco_penalty_details_bloc.dart';
@@ -121,6 +122,41 @@ class _BcoPenaltyDetailsScreenState extends State<BcoPenaltyDetailsScreen> {
                       _buildDetailRow('Square Metres', penalty.squareMetres),
                     ],
                   ),
+                  if (penalty.invoice != null) ...[
+                    const SizedBox(height: 15),
+                    _buildSectionCard(
+                      title: 'Invoice Details',
+                      children: [
+                        _buildDetailRow('PRN', penalty.invoice!.prn),
+                        _buildDetailRow('Search Code', penalty.invoice!.searchCode),
+                        _buildDetailRow('Expiry Date', penalty.invoice!.expiryDate),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final url = Uri.parse(penalty.invoice!.file);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Could not open invoice PDF')),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.download, color: Colors.white),
+                            label: const Text('DOWNLOAD INVOICE PDF', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryGreen,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 40),
                 ],
               ),

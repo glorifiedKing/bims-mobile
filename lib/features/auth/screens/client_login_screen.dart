@@ -5,6 +5,15 @@ import '../../../core/theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../client/bloc/profile/client_profile_bloc.dart';
+import '../../client/bloc/profile/client_profile_event.dart';
+import '../../client/bloc/applications/client_applications_bloc.dart';
+import '../../client/bloc/applications/client_applications_event.dart';
+import '../../client/bloc/invoices/client_invoices_bloc.dart';
+import '../../client/bloc/invoices/client_invoices_event.dart';
+import '../../client/bloc/inspection_invoices/client_inspection_invoices_bloc.dart';
+import '../../client/bloc/inspection_invoices/client_inspection_invoices_event.dart';
+import '../../../core/services/biometric_service.dart';
 
 class ClientLoginScreen extends StatefulWidget {
   const ClientLoginScreen({super.key});
@@ -16,6 +25,7 @@ class ClientLoginScreen extends StatefulWidget {
 class _ClientLoginScreenState extends State<ClientLoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   void _login() {
     final identifier = _identifierController.text.trim();
@@ -60,6 +70,16 @@ class _ClientLoginScreenState extends State<ClientLoginScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
+            // Fetch initial data to clear residual states
+            context.read<ClientProfileBloc>().add(FetchClientProfile());
+            context.read<ClientApplicationsBloc>().add(
+              FetchClientApplications(),
+            );
+            context.read<ClientInvoicesBloc>().add(FetchClientInvoices());
+            context.read<ClientInspectionInvoicesBloc>().add(
+              FetchClientInspectionInvoices(),
+            );
+
             // Navigate to dashboard
             context.go('/client/dashboard');
           } else if (state is AuthError) {
@@ -162,9 +182,22 @@ class _ClientLoginScreenState extends State<ClientLoginScreen> {
                           const SizedBox(height: 8),
                           TextField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
                               hintText: 'Enter your password',
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(
@@ -197,8 +230,32 @@ class _ClientLoginScreenState extends State<ClientLoginScreen> {
 
                           const SizedBox(height: 16),
                           OutlinedButton.icon(
-                            onPressed: () {
-                              // context.go('/client/dashboard'); // Mock biometric login
+                            onPressed: () async {
+                              final biometricService = BiometricService();
+                              final isEnabled = await biometricService.isClientBiometricEnabled();
+                              
+                              if (!isEnabled) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please log in first and enable biometric login in your profile.'),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+
+                              final authSuccess = await biometricService.authenticate();
+                              if (authSuccess) {
+                                final oldToken = await biometricService.getSecureToken();
+                                if (oldToken != null && context.mounted) {
+                                  context.read<AuthBloc>().add(AuthBiometricLoginRequested(oldToken));
+                                } else if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Saved session invalid. Please log in manually.')),
+                                  );
+                                }
+                              }
                             },
                             icon: const Icon(
                               Icons.fingerprint,

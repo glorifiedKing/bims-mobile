@@ -5,6 +5,8 @@ import '../../../core/theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/network/public_repository.dart';
 
 class ClientRegistrationScreen extends StatefulWidget {
   const ClientRegistrationScreen({super.key});
@@ -38,6 +40,130 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
 
+  bool _isVerified = false;
+  bool _isVerifying = false;
+
+  void _clearVerification() {
+    if (_isVerified) {
+      setState(() {
+        _isVerified = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _surnameController.addListener(_clearVerification);
+    _givenNameController.addListener(_clearVerification);
+    _otherNamesController.addListener(_clearVerification);
+    _nationalIdController.addListener(_clearVerification);
+    _brnController.addListener(_clearVerification);
+    _tinController.addListener(_clearVerification);
+  }
+
+  Future<void> _verifyData() async {
+    setState(() {
+      _isVerifying = true;
+      _isVerified = false;
+    });
+
+    try {
+      final publicRepo = PublicRepository();
+
+      if (_legalStatus == '1') {
+        if (_surnameController.text.trim().isEmpty ||
+            _givenNameController.text.trim().isEmpty) {
+          _showError(
+            'Surname and Given Name are mandatory for NIN verification.',
+          );
+          setState(() {
+            _isVerifying = false;
+          });
+          return;
+        }
+        await publicRepo.validateNin(
+          ApiConstants.clientBaseUrl,
+          _nationalIdController.text.trim(),
+          _surnameController.text.trim(),
+          _givenNameController.text.trim(),
+          _otherNamesController.text.trim(),
+        );
+        setState(() {
+          _isVerified = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('NIN Verified Successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (_legalStatus == '2') {
+        if (_brnController.text.trim().isNotEmpty) {
+          final companyData = await publicRepo.validateBrn(
+            ApiConstants.clientBaseUrl,
+            _brnController.text.trim(),
+          );
+          setState(() {
+            _isVerified = true;
+            _departmentController.text =
+                companyData['entityName']?.toString() ?? '';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('BRN Verified Successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (_tinController.text.trim().isNotEmpty) {
+          final tinData = await publicRepo.validateTin(
+            ApiConstants.clientBaseUrl,
+            _tinController.text.trim(),
+          );
+          setState(() {
+            _isVerified = true;
+            _departmentController.text = tinData['name']?.toString() ?? '';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('TIN Verified Successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          _showError('Please provide BRN or TIN for verification.');
+        }
+      } else if (_legalStatus == '3') {
+        if (_tinController.text.trim().isNotEmpty) {
+          final tinData = await publicRepo.validateTin(
+            ApiConstants.clientBaseUrl,
+            _tinController.text.trim(),
+          );
+          setState(() {
+            _isVerified = true;
+            _departmentController.text = tinData['name']?.toString() ?? '';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('TIN Verified Successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          _showError('Please provide TIN for verification.');
+        }
+      }
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isVerifying = false;
+        });
+      }
+    }
+  }
+
   void _nextStep() {
     if (_currentStep == 1) {
       setState(() {
@@ -58,6 +184,11 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
       return;
     }
 
+    if (_phoneController.text.trim().length != 12) {
+      _showError('Please provide a valid 12-digit phone number.');
+      return;
+    }
+
     if (_passwordController.text != _passwordConfirmController.text) {
       _showError('Passwords do not match.');
       return;
@@ -69,6 +200,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
       'phone': _phoneController.text.trim(),
       'password': _passwordController.text,
       'password_confirmation': _passwordConfirmController.text,
+      'signin_preference': 'phone',
     };
 
     if (_legalStatus == '1') {
@@ -80,9 +212,9 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
         );
         return;
       }
-      payload['surname'] = _surnameController.text.trim();
-      payload['given_name'] = _givenNameController.text.trim();
-      payload['Other_names'] = _otherNamesController.text.trim();
+      payload['client_surname'] = _surnameController.text.trim();
+      payload['client_given_name'] = _givenNameController.text.trim();
+      payload['client_other_names'] = _otherNamesController.text.trim();
       payload['citizenship'] = int.tryParse(_citizenship) ?? 1;
       payload['sex'] = _sex;
       payload['national_id'] = _nationalIdController.text.trim();
@@ -92,6 +224,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
         _showError('Please fill in the BRN and TIN numbers.');
         return;
       }
+      payload['legal_name'] = _departmentController.text.trim();
       payload['brn'] = _brnController.text.trim();
       payload['tin'] = _tinController.text.trim();
     } else if (_legalStatus == '3') {
@@ -224,6 +357,30 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
               ),
               child: Column(
                 children: [
+                  if (_currentStep == 1)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: ElevatedButton(
+                        onPressed: _isVerifying ? null : _verifyData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isVerified
+                              ? Colors.green
+                              : AppTheme.accentGold,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: _isVerifying
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(_isVerified ? 'VERIFIED ✓' : 'VERIFY DATA'),
+                      ),
+                    ),
                   if (_currentStep == 2)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -261,7 +418,9 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                         return const Center(child: CircularProgressIndicator());
                       }
                       return ElevatedButton(
-                        onPressed: _nextStep,
+                        onPressed: (_currentStep == 1 && !_isVerified)
+                            ? null
+                            : _nextStep,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                         ),
@@ -330,6 +489,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
           onChanged: (val) {
             setState(() {
               _legalStatus = val!;
+              _isVerified = false;
             });
           },
         ),
@@ -451,7 +611,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
           ),
         ],
         const SizedBox(height: 20),
-        _buildTextField('Phone Number', '+256 700 000000', _phoneController),
+        _buildTextField('Phone Number', '2567000000', _phoneController),
       ],
     );
   }

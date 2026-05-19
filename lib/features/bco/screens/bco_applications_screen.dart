@@ -40,26 +40,10 @@ class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
 
               if (state is BcoAuthAuthenticated) {
                 final user = state.user;
-                name = '${user.fname} ${user.lname}';
-
-                final auxRepo = context.read<AuxiliaryRepository>();
-
-                // Get Role Name
-                final roles = auxRepo.getUserRoles();
-                final roleObj = roles.cast().firstWhere(
-                  (r) => r.id == user.roleId,
-                  orElse: () => null,
-                );
-                if (roleObj != null) roleName = roleObj.name;
-
-                // Get Admin Unit Name
-                if (user.administrativeUnitId != null) {
-                  final units = auxRepo.getAllAdminUnits();
-                  final unitObj = units.cast().firstWhere(
-                    (u) => u.id == user.administrativeUnitId,
-                    orElse: () => null,
-                  );
-                  if (unitObj != null) adminUnitName = unitObj.name;
+                name = user.names;
+                roleName = user.role;
+                if (user.administrativeUnitName.isNotEmpty) {
+                  adminUnitName = user.administrativeUnitName;
                 }
               }
 

@@ -2,18 +2,31 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import '../network/bco_api_client.dart';
+import '../network/pro_api_client.dart';
+import '../network/api_client.dart';
 import '../constants/api_constants.dart';
 import '../models/auxiliary/admin_unit_type.dart';
 import '../models/auxiliary/admin_unit.dart';
 import '../models/auxiliary/user_role.dart';
 import '../models/auxiliary/building_classification.dart';
 import '../models/auxiliary/express_penalty_offence_type.dart';
+import '../models/auxiliary/whistle_blower_category.dart';
+import '../models/auxiliary/building_purpose.dart';
+import '../models/auxiliary/land_tenures.dart';
+import '../models/auxiliary/application_type.dart';
+import '../models/auxiliary/building_operation.dart';
 
 class AuxiliaryRepository {
   final BcoApiClient bcoApiClient;
+  final ProApiClient proApiClient;
+  final ApiClient clientApiClient;
   static const String _boxName = 'auxiliaryBox';
 
-  AuxiliaryRepository({required this.bcoApiClient});
+  AuxiliaryRepository({
+    required this.bcoApiClient,
+    required this.proApiClient,
+    required this.clientApiClient,
+  });
 
   Box get _box => Hive.box(_boxName);
 
@@ -126,6 +139,85 @@ class AuxiliaryRepository {
         print('Error fetching EPS types: $e');
       }
 
+      // 6. Fetch Whistleblower Categories
+      List<Map<String, dynamic>> finalWbCategories = [];
+      try {
+        final wbResponse = await clientApiClient.dio.get(
+          ApiConstants.wbCategories,
+        );
+        List<dynamic> wbData = wbResponse.data['data']?['data'] ?? [];
+        for (var wbJson in wbData) {
+          finalWbCategories.add({'id': wbJson['id'], 'name': wbJson['name']});
+        }
+      } catch (e) {
+        print('Error fetching whistleblower categories: $e');
+      }
+
+      // 7. fetch building purposes
+      List<Map<String, dynamic>> finalBuildingPurposes = [];
+      try {
+        final bpResponse = await clientApiClient.dio.get(
+          ApiConstants.buildingPurposes,
+        );
+        List<dynamic> bpData = bpResponse.data['data']?['data'] ?? [];
+        for (var bpJson in bpData) {
+          finalBuildingPurposes.add({
+            'id': bpJson['id'],
+            'name': bpJson['name'],
+          });
+        }
+      } catch (e) {
+        print('Error fetching building purposes: $e');
+      }
+
+      // 8. fetch land tenures
+      List<Map<String, dynamic>> finalLandTenures = [];
+      try {
+        final ltResponse = await clientApiClient.dio.get(
+          ApiConstants.landTenures,
+        );
+        List<dynamic> ltData = ltResponse.data['data']?['data'] ?? [];
+        for (var ltJson in ltData) {
+          finalLandTenures.add({'id': ltJson['id'], 'name': ltJson['name']});
+        }
+      } catch (e) {
+        print('Error fetching land tenures: $e');
+      }
+
+      // 9. fetch application types
+      List<Map<String, dynamic>> finalApplicationTypes = [];
+      try {
+        final appResponse = await clientApiClient.dio.get(
+          ApiConstants.applicationTypes,
+        );
+        List<dynamic> appData = appResponse.data['data']?['data'] ?? [];
+        for (var appJson in appData) {
+          finalApplicationTypes.add({
+            'id': appJson['id'],
+            'name': appJson['name'],
+          });
+        }
+      } catch (e) {
+        print('Error fetching application types: $e');
+      }
+
+      // 10. fetch building operations
+      List<Map<String, dynamic>> finalBuildingOperations = [];
+      try {
+        final boResponse = await clientApiClient.dio.get(
+          ApiConstants.buildingOperations,
+        );
+        List<dynamic> boData = boResponse.data['data']?['data'] ?? [];
+        for (var boJson in boData) {
+          finalBuildingOperations.add({
+            'id': boJson['id'],
+            'name': boJson['name'],
+          });
+        }
+      } catch (e) {
+        print('Error fetching building operations: $e');
+      }
+
       // Save to Hive
       await _box.put('admin_unit_types', jsonEncode(finalAdminUnitTypes));
       await _box.put('admin_units', jsonEncode(finalAdminUnits));
@@ -135,6 +227,14 @@ class AuxiliaryRepository {
         jsonEncode(finalBuildingClassifications),
       );
       await _box.put('eps_types', jsonEncode(finalEpsTypes));
+      await _box.put('wb_categories', jsonEncode(finalWbCategories));
+      await _box.put('building_purposes', jsonEncode(finalBuildingPurposes));
+      await _box.put('land_tenures', jsonEncode(finalLandTenures));
+      await _box.put('application_types', jsonEncode(finalApplicationTypes));
+      await _box.put(
+        'building_operations',
+        jsonEncode(finalBuildingOperations),
+      );
       await _box.put('last_sync_timestamp', DateTime.now().toIso8601String());
 
       // print('Successfully synchronized auxiliary data.');
@@ -227,6 +327,76 @@ class AuxiliaryRepository {
             (e) =>
                 ExpressPenaltyOffenceType.fromJson(e as Map<String, dynamic>),
           )
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<WhistleBlowerCategory> getWhistleBlowerCategories() {
+    final data = _box.get('wb_categories');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => WhistleBlowerCategory.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<BuildingPurpose> getBuildingPurposes() {
+    final data = _box.get('building_purposes');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => BuildingPurpose.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<LandTenure> getLandTenures() {
+    final data = _box.get('land_tenures');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => LandTenure.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<ApplicationType> getApplicationTypes() {
+    final data = _box.get('application_types');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => ApplicationType.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<BuildingOperation> getBuildingOperations() {
+    final data = _box.get('building_operations');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => BuildingOperation.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       return [];

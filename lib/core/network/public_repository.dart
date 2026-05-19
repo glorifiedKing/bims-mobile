@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../features/client/models/permit_detail_model.dart';
 
 import 'dart:convert';
+import '../../../core/constants/api_constants.dart';
 
 class PublicRepository {
   final Dio _dio;
@@ -57,6 +58,90 @@ class PublicRepository {
       if (errorString.startsWith('Exception: ')) {
         throw Exception(errorString.replaceFirst('Exception: ', ''));
       }
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<bool> validateNin(
+    String baseUrl,
+    String nin,
+    String surname,
+    String givenName,
+    String otherNames,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '$baseUrl${ApiConstants.validateNin}',
+        data: {
+          'nin': nin,
+          'surname': surname,
+          'given_name': givenName,
+          'other_names': otherNames,
+        },
+      );
+      if (response.statusCode == 200 && response.data['valid'] == true) {
+        return true;
+      }
+      throw Exception('Invalid NIN');
+    } on DioException catch (e) {
+      final msg =
+          e.response?.data['message'] ?? e.message ?? 'Error validating NIN';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> validateBrn(String baseUrl, String brn) async {
+    try {
+      final response = await _dio.post(
+        '$baseUrl${ApiConstants.validateBrn}',
+        data: {'brn': brn},
+      );
+      if (response.statusCode == 200 && response.data['valid'] == true) {
+        return response.data['company'] ?? <String, dynamic>{};
+      }
+      throw Exception('Invalid BRN');
+    } on DioException catch (e) {
+      final msg =
+          e.response?.data['message'] ?? e.message ?? 'Error validating BRN';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> validateTin(String baseUrl, String tin) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl${ApiConstants.validateTin}/$tin',
+      );
+      if (response.statusCode == 200 && response.data['valid'] == true) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('Invalid TIN');
+    } on DioException catch (e) {
+      final msg =
+          e.response?.data['message'] ?? e.message ?? 'Error validating TIN';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> submitFeedback(String baseUrl, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post(
+        '$baseUrl${ApiConstants.feedback}',
+        data: data,
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to submit report');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Error submitting report';
+      throw Exception(msg);
+    } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }

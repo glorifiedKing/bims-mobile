@@ -8,6 +8,9 @@ import '../bloc/general_invoices/bco_general_invoices_state.dart';
 import '../bloc/inspection_invoices_list/bco_inspection_invoices_list_bloc.dart';
 import '../bloc/inspection_invoices_list/bco_inspection_invoices_list_event.dart';
 import '../bloc/inspection_invoices_list/bco_inspection_invoices_list_state.dart';
+import '../bloc/express_penalty_invoices/bco_express_penalty_invoices_bloc.dart';
+import '../bloc/express_penalty_invoices/bco_express_penalty_invoices_event.dart';
+import '../bloc/express_penalty_invoices/bco_express_penalty_invoices_state.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/search_bar_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -22,139 +25,102 @@ class BcoInvoicesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<BcoAuthBloc>().state;
+    bool hasExpressPenaltyInvoices = false;
+    String name = 'Officer';
+    String roleName = 'BUILDING CONTROL OFFICER';
+    String adminUnitName = 'NBRB';
+
+    if (authState is BcoAuthAuthenticated) {
+      final user = authState.user;
+      name = user.names;
+      roleName = user.role;
+      if (user.administrativeUnitName.isNotEmpty) {
+        adminUnitName = user.administrativeUnitName;
+      }
+      if (user.roleId == 1 || user.roleId == 7 || user.roleId == 9) {
+        hasExpressPenaltyInvoices = true;
+      }
+    }
+
     return DefaultTabController(
-      length: 2,
+      length: hasExpressPenaltyInvoices ? 3 : 2,
       initialIndex: initialIndex,
       child: Scaffold(
         backgroundColor: AppTheme.background,
         body: Column(
           children: [
             // Internal BCO Header Details
-            BlocBuilder<BcoAuthBloc, BcoAuthState>(
-              builder: (context, state) {
-                String name = 'Officer';
-                String roleName = 'BUILDING CONTROL OFFICER';
-                String adminUnitName = 'NBRB';
-
-                if (state is BcoAuthAuthenticated) {
-                  final user = state.user;
-                  name = '${user.fname} ${user.lname}';
-
-                  final auxRepo = context.read<AuxiliaryRepository>();
-
-                  // Get Role Name
-                  final roles = auxRepo.getUserRoles();
-                  final roleObj = roles.cast().firstWhere(
-                    (r) => r.id == user.roleId,
-                    orElse: () => null,
-                  );
-                  if (roleObj != null) roleName = roleObj.name;
-
-                  // Get Admin Unit Name
-                  if (user.administrativeUnitId != null) {
-                    final units = auxRepo.getAllAdminUnits();
-                    final unitObj = units.cast().firstWhere(
-                      (u) => u.id == user.administrativeUnitId,
-                      orElse: () => null,
-                    );
-                    if (unitObj != null) adminUnitName = unitObj.name;
-                  }
-                }
-
-                return Container(
-                  padding: const EdgeInsets.only(
-                    top: 60,
-                    bottom: 20,
-                    left: 25,
-                    right: 25,
-                  ),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF00331a), AppTheme.primaryGreen],
-                    ),
-                    // border: Border(
-                    //   bottom: BorderSide(color: AppTheme.accentGold, width: 4),
-                    // ),
-                  ),
-                  child: Column(
+            Container(
+              padding: const EdgeInsets.only(
+                top: 60,
+                bottom: 20,
+                left: 25,
+                right: 25,
+              ),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF00331a), AppTheme.primaryGreen],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  roleName.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: AppTheme.accentGold,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(
-                                  Icons.receipt_long,
-                                  size: 14,
-                                  color: AppTheme.accentGold,
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  'INVOICES',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const TextSpan(text: "Location: "),
-                            TextSpan(
-                              text: adminUnitName,
+                            Text(
+                              roleName.toUpperCase(),
                               style: const TextStyle(
                                 color: AppTheme.accentGold,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.receipt_long,
+                              size: 14,
+                              color: AppTheme.accentGold,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              'INVOICES',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
@@ -162,19 +128,39 @@ class BcoInvoicesScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                );
-              },
+                  const SizedBox(height: 20),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      children: [
+                        const TextSpan(text: "Location: "),
+                        TextSpan(
+                          text: adminUnitName,
+                          style: const TextStyle(color: AppTheme.accentGold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             // The Original TabBar
             Container(
               color: AppTheme.primaryGreen,
-              child: const TabBar(
+              child: TabBar(
+                isScrollable: hasExpressPenaltyInvoices,
                 indicatorColor: AppTheme.accentGold,
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white54,
                 tabs: [
-                  Tab(text: '1st Year Invoices'),
-                  Tab(text: 'Inspection Fees'),
+                  const Tab(text: '1st Year Invoices'),
+                  const Tab(text: 'Inspection Fees'),
+                  if (hasExpressPenaltyInvoices)
+                    const Tab(text: 'Express Penalty Invoices'),
                 ],
               ),
             ),
@@ -184,6 +170,8 @@ class BcoInvoicesScreen extends StatelessWidget {
                 children: [
                   _buildGeneralInvoicesView(context),
                   _buildInspectionInvoicesView(context),
+                  if (hasExpressPenaltyInvoices)
+                    _buildExpressPenaltyInvoicesView(context),
                 ],
               ),
             ),
@@ -568,6 +556,7 @@ class BcoInvoicesScreen extends StatelessWidget {
     Color actionColor = Colors.white,
     Color actionTextColor = AppTheme.primaryGreen,
     VoidCallback? onActionTap,
+    Widget? extraDetails,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
@@ -665,6 +654,7 @@ class BcoInvoicesScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (extraDetails != null) extraDetails,
                     const SizedBox(height: 10),
                     Text(
                       amount,
@@ -798,6 +788,253 @@ class BcoInvoicesScreen extends StatelessWidget {
           fontSize: 11,
         ),
       ),
+    );
+  }
+
+  Widget _buildExpressPenaltyInvoicesView(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+          ),
+          child: Column(
+            children: [
+              SearchBarWidget(onChanged: (val) {}),
+              const SizedBox(height: 15),
+              BlocBuilder<
+                BcoExpressPenaltyInvoicesBloc,
+                BcoExpressPenaltyInvoicesState
+              >(
+                builder: (context, state) {
+                  String currentFilter = 'ALL';
+                  if (state is BcoExpressPenaltyInvoicesLoaded) {
+                    currentFilter = state.selectedFilter;
+                  }
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildExpressPenaltyFilterChip(
+                          context,
+                          'ALL',
+                          currentFilter,
+                        ),
+                        _buildExpressPenaltyFilterChip(
+                          context,
+                          'PENDING',
+                          currentFilter,
+                        ),
+                        _buildExpressPenaltyFilterChip(
+                          context,
+                          'PAID',
+                          currentFilter,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child:
+              BlocBuilder<
+                BcoExpressPenaltyInvoicesBloc,
+                BcoExpressPenaltyInvoicesState
+              >(
+                builder: (context, state) {
+                  if (state is BcoExpressPenaltyInvoicesLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is BcoExpressPenaltyInvoicesError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${state.message}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  } else if (state is BcoExpressPenaltyInvoicesLoaded) {
+                    if (state.invoices.isEmpty) {
+                      return const Center(
+                        child: Text('No express penalty invoices found.'),
+                      );
+                    }
+                    return NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification scrollInfo) {
+                        if (!state.hasReachedMax &&
+                            scrollInfo.metrics.pixels ==
+                                scrollInfo.metrics.maxScrollExtent) {
+                          context.read<BcoExpressPenaltyInvoicesBloc>().add(
+                            LoadMoreBcoExpressPenaltyInvoices(),
+                          );
+                        }
+                        return false;
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(15),
+                        itemCount:
+                            state.invoices.length +
+                            (state.hasReachedMax ? 0 : 1),
+                        itemBuilder: (context, index) {
+                          if (index >= state.invoices.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          final invoice = state.invoices[index];
+                          final isPaid = invoice.status.toUpperCase() == 'PAID';
+                          final currentStatus = isPaid
+                              ? 'PAID'
+                              : 'PENDING PAYMENT';
+
+                          Color statusColor = isPaid
+                              ? const Color(0xFF1E7E34)
+                              : const Color(0xFFB8860B);
+                          Color statusBg = isPaid
+                              ? const Color(0xFFE6F4EA)
+                              : const Color(0xFFFFF9E6);
+                          Color borderColor = isPaid
+                              ? const Color(0xFF1E7E34)
+                              : AppTheme.accentGold;
+
+                          String actionText = isPaid
+                              ? '📄 DOWNLOAD RECEIPT'
+                              : '📄 DOWNLOAD INVOICE';
+                          Color actionColor = Colors.white;
+                          Color actionTextColor = AppTheme.primaryGreen;
+
+                          return GestureDetector(
+                            onTap: () {},
+                            child: _buildInvoiceCard(
+                              prn: invoice.prn,
+                              statusText: currentStatus,
+                              statusColor: statusColor,
+                              statusBg: statusBg,
+                              refId: invoice.referencedOffenceSerial,
+                              refLabel: 'Serial',
+                              refColor: const Color(0xFF444444),
+                              searchCode: invoice.searchCode,
+                              searchLabel: 'Search Code',
+                              amount: CurrencyFormatter.formatUgx(
+                                double.tryParse(invoice.amount) ?? 0.0,
+                              ),
+                              borderColor: borderColor,
+                              actionText: actionText,
+                              actionColor: actionColor,
+                              actionTextColor: actionTextColor,
+                              extraDetails: Container(
+                                margin: const EdgeInsets.only(top: 10),
+                                padding: const EdgeInsets.only(top: 10),
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Color(0xFFF0F0F0)),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: _buildDetailBox(
+                                            'Offender Name',
+                                            invoice.offenderName,
+                                            const Color(0xFF444444),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: _buildDetailBox(
+                                            'Offender Phone',
+                                            invoice.offenderPhone,
+                                            const Color(0xFF444444),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: _buildDetailBox(
+                                            'Offence Name',
+                                            invoice.offenceName,
+                                            const Color(0xFF444444),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: _buildDetailBox(
+                                            'Offence Enactment',
+                                            invoice.offenceEnactment,
+                                            const Color(0xFF444444),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildDetailBox(
+                                      'Expires On',
+                                      invoice.expires,
+                                      Colors.red.shade700,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onActionTap: () async {
+                                final docUrl = isPaid
+                                    ? (invoice.documents != null
+                                          ? invoice.documents!['receipt']
+                                          : null)
+                                    : (invoice.documents != null
+                                          ? invoice.documents!['invoice']
+                                          : null);
+                                if (docUrl != null &&
+                                    docUrl.toString().isNotEmpty) {
+                                  final uri = Uri.parse(docUrl);
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                  return const Center(child: Text('Initializing...'));
+                },
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpressPenaltyFilterChip(
+    BuildContext context,
+    String label,
+    String currentFilter,
+  ) {
+    final isActive = label == currentFilter;
+    return GestureDetector(
+      onTap: () {
+        context.read<BcoExpressPenaltyInvoicesBloc>().add(
+          ChangeBcoExpressPenaltyInvoicesFilter(label),
+        );
+      },
+      child: _buildChipUI(label, isActive),
     );
   }
 }

@@ -44,26 +44,10 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
 
               if (state is BcoAuthAuthenticated) {
                 final user = state.user;
-                name = '${user.fname} ${user.lname}';
-
-                final auxRepo = context.read<AuxiliaryRepository>();
-
-                // Get Role Name
-                final roles = auxRepo.getUserRoles();
-                final roleObj = roles.cast().firstWhere(
-                  (r) => r.id == user.roleId,
-                  orElse: () => null,
-                );
-                if (roleObj != null) roleName = roleObj.name;
-
-                // Get Admin Unit Name
-                if (user.administrativeUnitId != null) {
-                  final units = auxRepo.getAllAdminUnits();
-                  final unitObj = units.cast().firstWhere(
-                    (u) => u.id == user.administrativeUnitId,
-                    orElse: () => null,
-                  );
-                  if (unitObj != null) adminUnitName = unitObj.name;
+                name = user.names;
+                roleName = user.role;
+                if (user.administrativeUnitName.isNotEmpty) {
+                  adminUnitName = user.administrativeUnitName;
                 }
               }
 
@@ -364,14 +348,14 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
                       mainAxisSpacing: 15,
                       childAspectRatio: 1.1,
                       children: [
-                        if ([1, 2, 3, 4, 5, 6, 7].contains(userRoleId))
-                          _buildToolkitItem(
-                            icon: '📸',
-                            label: 'AI Camera',
-                            onTap: () {
-                              context.push('/bco/camera');
-                            },
-                          ),
+                        // if ([1, 2, 3, 4, 5, 6, 7].contains(userRoleId))
+                        //   _buildToolkitItem(
+                        //     icon: '📸',
+                        //     label: 'AI Camera',
+                        //     onTap: () {
+                        //       context.push('/bco/camera');
+                        //     },
+                        //   ),
                         if ([1, 2, 3, 4, 5, 6, 7].contains(userRoleId))
                           _buildToolkitItem(
                             icon: '🚫',
@@ -381,17 +365,25 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
                               context.push('/bco/stop-order');
                             },
                           ),
-                        _buildToolkitItem(
-                          icon: '🏛️',
-                          label: 'Committees',
-                          onTap: () {},
-                        ),
+                        // _buildToolkitItem(
+                        //   icon: '🏛️',
+                        //   label: 'Committees',
+                        //   onTap: () {},
+                        // ),
                         if ([2, 3].contains(userRoleId))
                           _buildToolkitItem(
                             icon: '📅',
                             label: 'Calendar',
                             onTap: () {
                               context.push('/bco/calendar');
+                            },
+                          ),
+                        if ([1, 7, 8].contains(userRoleId))
+                          _buildToolkitItem(
+                            icon: '📢',
+                            label: 'Whistleblows',
+                            onTap: () {
+                              context.push('/bco/whistleblows');
                             },
                           ),
                         if ([1, 7, 8].contains(userRoleId))

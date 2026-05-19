@@ -1,5 +1,8 @@
 class ApiConstants {
-  static const String baseUrl = 'https://api.test.bims.go.ug/v1';
+  static const bool isProduction = false;
+  static const String baseUrl = isProduction
+      ? 'https://api.bims.go.ug/v1'
+      : 'https://api.test.bims.go.ug/v1';
   static const String clientBaseUrl = '$baseUrl/client';
   static const String bcoBaseUrl = '$baseUrl/internal';
   static const String professionalBaseUrl = '$baseUrl/pro';
@@ -26,9 +29,18 @@ class ApiConstants {
   // Auxiliary
   static const String adminUnitTypes = '/auxiliary/admin-unit-types';
   static const String adminUnitsList = '/auxiliary/admin-units-list';
+  static const String validateNin = '/auxiliary/validate-nin';
+  static const String validateBrn = '/auxiliary/validate-brn';
+  static const String validateTin = '/auxiliary/validate-tin';
+  static const String wbCategories = '/auxiliary/feedback-types';
   static const String userRoles = '/auxiliary/user-roles';
   static const String buildingClassifications =
       '/auxiliary/building-classifications';
   static const String epsTypes = '/auxiliary/eps-types';
   static const String expressPenalties = '/eps/penalties';
+  static const String feedback = '/feedback';
+  static const String buildingPurposes = '/auxiliary/building-purposes';
+  static const String landTenures = '/auxiliary/land-tenures';
+  static const String applicationTypes = '/auxiliary/application-types';
+  static const String buildingOperations = '/auxiliary/building-operations';
 }

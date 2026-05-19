@@ -21,3 +21,8 @@ class AuthRegisterRequested extends AuthEvent {
 class AuthLogoutRequested extends AuthEvent {}
 
 class AuthCheckRequested extends AuthEvent {}
+
+class AuthBiometricLoginRequested extends AuthEvent {
+  final String oldToken;
+  AuthBiometricLoginRequested(this.oldToken);
+}

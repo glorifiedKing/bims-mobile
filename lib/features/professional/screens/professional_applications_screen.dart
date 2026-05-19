@@ -14,10 +14,12 @@ class ProfessionalApplicationsScreen extends StatefulWidget {
   const ProfessionalApplicationsScreen({super.key});
 
   @override
-  State<ProfessionalApplicationsScreen> createState() => _ProfessionalApplicationsScreenState();
+  State<ProfessionalApplicationsScreen> createState() =>
+      _ProfessionalApplicationsScreenState();
 }
 
-class _ProfessionalApplicationsScreenState extends State<ProfessionalApplicationsScreen> {
+class _ProfessionalApplicationsScreenState
+    extends State<ProfessionalApplicationsScreen> {
   @override
   void initState() {
     super.initState();
@@ -137,117 +139,173 @@ class _ProfessionalApplicationsScreenState extends State<ProfessionalApplication
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: BlocBuilder<ProfessionalApplicationsBloc, ProfessionalApplicationsState>(
-                builder: (context, state) {
-                  String activeFilter = 'ALL';
-                  if (state is ProfessionalApplicationsLoaded) {
-                    activeFilter = state.currentFilter;
-                  }
-                  return Row(
-                    children: [
-                      _buildChip(context, 'ALL', activeFilter == 'ALL'),
-                      _buildChip(context, 'PENDING', activeFilter == 'PENDING'),
-                      _buildChip(context, 'CONFIRMED', activeFilter == 'CONFIRMED'),
-                      _buildChip(context, 'NOT CONFIRMED', activeFilter == 'NOT CONFIRMED'),
-                    ],
-                  );
-                },
-              ),
+              child:
+                  BlocBuilder<
+                    ProfessionalApplicationsBloc,
+                    ProfessionalApplicationsState
+                  >(
+                    builder: (context, state) {
+                      String activeFilter = 'ALL';
+                      if (state is ProfessionalApplicationsLoaded) {
+                        activeFilter = state.currentFilter;
+                      }
+                      return Row(
+                        children: [
+                          _buildChip(context, 'ALL', activeFilter == 'ALL'),
+                          _buildChip(
+                            context,
+                            'PENDING',
+                            activeFilter == 'PENDING',
+                          ),
+                          _buildChip(
+                            context,
+                            'CONFIRMED',
+                            activeFilter == 'CONFIRMED',
+                          ),
+                          _buildChip(
+                            context,
+                            'NOT CONFIRMED',
+                            activeFilter == 'NOT CONFIRMED',
+                          ),
+                        ],
+                      );
+                    },
+                  ),
             ),
           ),
 
           // List Area
           Expanded(
-            child: BlocBuilder<ProfessionalApplicationsBloc, ProfessionalApplicationsState>(
-              builder: (context, state) {
-                if (state is ProfessionalApplicationsLoading || state is ProfessionalApplicationsInitial) {
-                  return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
-                } else if (state is ProfessionalApplicationsError) {
-                  return Center(
-                    child: Text(
-                      'Error: ${state.message}',
-                      style: const TextStyle(color: AppTheme.danger),
-                    ),
-                  );
-                } else if (state is ProfessionalApplicationsLoaded) {
-                  if (state.applications.isEmpty) {
-                    return const Center(child: Text('No applications found.'));
-                  }
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: (ScrollNotification scrollInfo) {
-                      if (!scrollInfo.metrics.outOfRange &&
-                          scrollInfo.metrics.pixels >=
-                              scrollInfo.metrics.maxScrollExtent - 200) {
-                        context.read<ProfessionalApplicationsBloc>().add(
-                          LoadMoreProfessionalApplications(),
+            child:
+                BlocBuilder<
+                  ProfessionalApplicationsBloc,
+                  ProfessionalApplicationsState
+                >(
+                  builder: (context, state) {
+                    if (state is ProfessionalApplicationsLoading ||
+                        state is ProfessionalApplicationsInitial) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryGreen,
+                        ),
+                      );
+                    } else if (state is ProfessionalApplicationsError) {
+                      return Center(
+                        child: Text(
+                          'Error: ${state.message}',
+                          style: const TextStyle(color: AppTheme.danger),
+                        ),
+                      );
+                    } else if (state is ProfessionalApplicationsLoaded) {
+                      if (state.applications.isEmpty) {
+                        return const Center(
+                          child: Text('No applications found.'),
                         );
                       }
-                      return false;
-                    },
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(15),
-                      itemCount:
-                          state.applications.length +
-                          (state.hasReachedMax ? 0 : 1),
-                      itemBuilder: (context, index) {
-                        if (index >= state.applications.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
-                          );
-                        }
-                        final app = state.applications[index];
-                        String formattedDate = app.createdOn ?? 'Unknown Date';
-                        try {
-                          if (app.createdOn != null) {
-                            DateTime dt = DateTime.parse(app.createdOn!);
-                            List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                            String monthStr = dt.month >= 1 && dt.month <= 12 ? months[dt.month - 1] : dt.month.toString();
-                            formattedDate = '$monthStr ${dt.day.toString().padLeft(2, '0')}, ${dt.year}';
+                      return NotificationListener<ScrollNotification>(
+                        onNotification: (ScrollNotification scrollInfo) {
+                          if (!scrollInfo.metrics.outOfRange &&
+                              scrollInfo.metrics.pixels >=
+                                  scrollInfo.metrics.maxScrollExtent - 200) {
+                            context.read<ProfessionalApplicationsBloc>().add(
+                              LoadMoreProfessionalApplications(),
+                            );
                           }
-                        } catch (_) {}
-
-                        Color statusColor = Colors.grey;
-                        Color statusBg = Colors.grey.shade200;
-                        Color borderColor = Colors.grey;
-
-                        if (app.status.toUpperCase() == 'PENDING') {
-                          statusColor = const Color(0xFFB8860B);
-                          statusBg = const Color(0xFFFFF9E6);
-                          borderColor = AppTheme.accentGold;
-                        } else if (app.status.toUpperCase() == 'NOT CONFIRMED' || app.status.toUpperCase() == 'NOT  CONFIRMED') {
-                          statusColor = AppTheme.danger;
-                          statusBg = const Color(0xFFFFEBEB);
-                          borderColor = AppTheme.danger;
-                        } else if (app.status.toUpperCase() == 'CONFIRMED') {
-                          statusColor = AppTheme.primaryGreen;
-                          statusBg = const Color(0xFFE8F5E9);
-                          borderColor = AppTheme.primaryGreen;
-                        }
-
-                        return GestureDetector(
-                          onTap: () {
-                            if (app.applicantKey != null && app.applicantKey!.isNotEmpty) {
-                              context.push('/professional/applications/${app.applicantKey}');
+                          return false;
+                        },
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(15),
+                          itemCount:
+                              state.applications.length +
+                              (state.hasReachedMax ? 0 : 1),
+                          itemBuilder: (context, index) {
+                            if (index >= state.applications.length) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppTheme.primaryGreen,
+                                  ),
+                                ),
+                              );
                             }
+                            final app = state.applications[index];
+                            String formattedDate =
+                                app.createdOn ?? 'Unknown Date';
+                            try {
+                              if (app.createdOn != null) {
+                                DateTime dt = DateTime.parse(app.createdOn!);
+                                List<String> months = [
+                                  'Jan',
+                                  'Feb',
+                                  'Mar',
+                                  'Apr',
+                                  'May',
+                                  'Jun',
+                                  'Jul',
+                                  'Aug',
+                                  'Sep',
+                                  'Oct',
+                                  'Nov',
+                                  'Dec',
+                                ];
+                                String monthStr =
+                                    dt.month >= 1 && dt.month <= 12
+                                    ? months[dt.month - 1]
+                                    : dt.month.toString();
+                                formattedDate =
+                                    '$monthStr ${dt.day.toString().padLeft(2, '0')}, ${dt.year}';
+                              }
+                            } catch (_) {}
+
+                            Color statusColor = Colors.grey;
+                            Color statusBg = Colors.grey.shade200;
+                            Color borderColor = Colors.grey;
+
+                            if (app.status.toUpperCase() == 'PENDING') {
+                              statusColor = const Color(0xFFB8860B);
+                              statusBg = const Color(0xFFFFF9E6);
+                              borderColor = AppTheme.accentGold;
+                            } else if (app.status.toUpperCase() ==
+                                    'NOT CONFIRMED' ||
+                                app.status.toUpperCase() == 'NOT  CONFIRMED') {
+                              statusColor = AppTheme.danger;
+                              statusBg = const Color(0xFFFFEBEB);
+                              borderColor = AppTheme.danger;
+                            } else if (app.status.toUpperCase() ==
+                                'CONFIRMED') {
+                              statusColor = AppTheme.primaryGreen;
+                              statusBg = const Color(0xFFE8F5E9);
+                              borderColor = AppTheme.primaryGreen;
+                            }
+
+                            return GestureDetector(
+                              onTap: () {
+                                if (app.applicantKey != null &&
+                                    app.applicantKey!.isNotEmpty) {
+                                  context.push(
+                                    '/professional/applications/${app.applicantKey}',
+                                  );
+                                }
+                              },
+                              child: _buildAppCard(
+                                code: app.code,
+                                statusText: app.status.toUpperCase(),
+                                statusColor: statusColor,
+                                statusBg: statusBg,
+                                developerName:
+                                    app.developerName ?? 'Unknown Developer',
+                                createdDate: formattedDate,
+                                borderColor: borderColor,
+                              ),
+                            );
                           },
-                          child: _buildAppCard(
-                            code: app.code,
-                            statusText: app.status.toUpperCase(),
-                            statusColor: statusColor,
-                            statusBg: statusBg,
-                            developerName: app.developerName ?? 'Unknown Developer',
-                            createdDate: formattedDate,
-                            borderColor: borderColor,
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }
-                return const Center(child: Text('Initializing...'));
-              },
-            ),
+                        ),
+                      );
+                    }
+                    return const Center(child: Text('Initializing...'));
+                  },
+                ),
           ),
         ],
       ),
@@ -260,18 +318,21 @@ class _ProfessionalApplicationsScreenState extends State<ProfessionalApplication
         },
         selectedItemColor: AppTheme.primaryGreen,
         unselectedItemColor: const Color(0xFF999999),
-        showUnselectedLabels: false,
-        showSelectedLabels: false,
+        showUnselectedLabels: true,
+        showSelectedLabels: true,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home, size: 28), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, size: 28),
+            label: 'Home',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment, size: 28),
-            label: '',
+            label: 'Applications',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person, size: 28),
-            label: '',
+            label: 'Profile',
           ),
         ],
       ),

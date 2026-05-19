@@ -28,12 +28,16 @@ import 'features/bco/bloc/inspection_invoices_list/bco_inspection_invoices_list_
 import 'features/bco/bloc/inspection_invoices_list/bco_inspection_invoices_list_event.dart';
 import 'features/bco/bloc/invoice_details/bco_invoice_details_bloc.dart';
 import 'features/bco/bloc/inspection_invoice_details/bco_inspection_invoice_details_bloc.dart';
+import 'features/bco/bloc/express_penalty_invoices/bco_express_penalty_invoices_bloc.dart';
+import 'features/bco/bloc/express_penalty_invoices/bco_express_penalty_invoices_event.dart';
 import 'features/bco/bloc/profile/bco_profile_bloc.dart';
 import 'features/bco/bloc/counters/bco_counters_bloc.dart';
 import 'features/bco/bloc/penalties/bco_penalties_bloc.dart';
 import 'features/bco/bloc/penalty_details/bco_penalty_details_bloc.dart';
 import 'features/bco/bloc/create_penalty/bco_create_penalty_bloc.dart';
 import 'features/bco/bloc/camera/bco_camera_bloc.dart';
+import 'features/bco/bloc/whistleblows/bco_whistleblows_bloc.dart';
+import 'features/bco/bloc/whistleblow_details/bco_whistleblow_details_bloc.dart';
 import 'features/client/repositories/client_repository.dart';
 import 'features/client/bloc/applications/client_applications_bloc.dart';
 import 'features/client/bloc/applications/client_applications_event.dart';
@@ -76,10 +80,16 @@ void main() async {
   final apiClient = ApiClient();
   final bcoApiClient = BcoApiClient();
   final proApiClient = ProApiClient();
-  final auxiliaryRepository = AuxiliaryRepository(bcoApiClient: bcoApiClient);
+  final auxiliaryRepository = AuxiliaryRepository(
+    bcoApiClient: bcoApiClient,
+    proApiClient: proApiClient,
+    clientApiClient: apiClient,
+  );
   final bcoRepository = BcoRepository(bcoApiClient: bcoApiClient);
   final clientRepository = ClientRepository(dio: apiClient.dio);
-  final professionalRepository = ProfessionalRepository(proApiClient: proApiClient);
+  final professionalRepository = ProfessionalRepository(
+    proApiClient: proApiClient,
+  );
 
   // Trigger background sync without awaiting
   auxiliaryRepository.syncAuxiliaryData();
@@ -150,6 +160,11 @@ void main() async {
             )..add(FetchBcoInspectionInvoicesList()),
           ),
           BlocProvider(
+            create: (context) => BcoExpressPenaltyInvoicesBloc(
+              repository: context.read<BcoRepository>(),
+            )..add(FetchBcoExpressPenaltyInvoices()),
+          ),
+          BlocProvider(
             create: (context) => BcoInvoiceDetailsBloc(
               repository: context.read<BcoRepository>(),
             ),
@@ -181,6 +196,16 @@ void main() async {
                 BcoCreatePenaltyBloc(repository: context.read<BcoRepository>()),
           ),
           BlocProvider(create: (context) => BcoCameraBloc()),
+          BlocProvider(
+            create: (context) => BcoWhistleblowsBloc(
+              repository: context.read<BcoRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => BcoWhistleblowDetailsBloc(
+              repository: context.read<BcoRepository>(),
+            ),
+          ),
           BlocProvider(
             create: (context) =>
                 ClientInvoicesBloc(repository: context.read<ClientRepository>())

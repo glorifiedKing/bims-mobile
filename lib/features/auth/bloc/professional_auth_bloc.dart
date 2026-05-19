@@ -5,6 +5,7 @@ import '../../../core/network/pro_api_client.dart';
 import '../../../core/constants/api_constants.dart';
 import 'professional_auth_event.dart';
 import 'professional_auth_state.dart';
+import '../../../core/services/biometric_service.dart';
 
 class ProfessionalAuthBloc
     extends Bloc<ProfessionalAuthEvent, ProfessionalAuthState> {
@@ -15,6 +16,7 @@ class ProfessionalAuthBloc
     on<ProfessionalAuthLoginRequested>(_onLoginRequested);
     on<ProfessionalAuthLogoutRequested>(_onLogoutRequested);
     on<ProfessionalAuthCheckRequested>(_onCheckRequested);
+    on<ProfessionalAuthBiometricLoginRequested>(_onBiometricLogin);
   }
 
   Future<void> _onLoginRequested(
@@ -34,6 +36,7 @@ class ProfessionalAuthBloc
       final token = response.data['access_token'];
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('professional_access_token', token);
+      await BiometricService().updateProSecureTokenIfEnabled(token);
       
       emit(ProfessionalAuthAuthenticated(token));
     } on DioException catch (e) {
@@ -70,6 +73,35 @@ class ProfessionalAuthBloc
       emit(ProfessionalAuthAuthenticated(token));
     } else {
       emit(ProfessionalAuthUnauthenticated());
+    }
+  }
+
+  Future<void> _onBiometricLogin(
+    ProfessionalAuthBiometricLoginRequested event,
+    Emitter<ProfessionalAuthState> emit,
+  ) async {
+    emit(ProfessionalAuthLoading());
+    try {
+      final response = await proApiClient.dio.post(
+        ApiConstants.refreshToken,
+        data: {'token': event.oldToken},
+      );
+
+      if (response.statusCode == 200 && response.data['access_token'] != null) {
+        final token = response.data['access_token'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('professional_access_token', token);
+        await BiometricService().updateProSecureTokenIfEnabled(token);
+        
+        emit(ProfessionalAuthAuthenticated(token));
+      } else {
+        emit(ProfessionalAuthError('Biometric login expired. Please log in manually.'));
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Token refresh failed';
+      emit(ProfessionalAuthError('Biometric login failed: $msg'));
+    } catch (e) {
+      emit(ProfessionalAuthError('Unexpected error: $e'));
     }
   }
 }

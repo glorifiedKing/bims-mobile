@@ -20,6 +20,7 @@ class ExpressPenaltyModel {
   final String issuedBy;
   final String createdAt;
   final String updatedAt;
+  final PenaltyInvoiceModel? invoice;
 
   ExpressPenaltyModel({
     required this.reference,
@@ -43,6 +44,7 @@ class ExpressPenaltyModel {
     required this.issuedBy,
     required this.createdAt,
     required this.updatedAt,
+    this.invoice,
   });
 
   factory ExpressPenaltyModel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,32 @@ class ExpressPenaltyModel {
       issuedBy: json['issued_by']?.toString() ?? '',
       createdAt: json['created_at']?.toString() ?? '',
       updatedAt: json['updated_at']?.toString() ?? '',
+      invoice: json['invoice'] != null
+          ? PenaltyInvoiceModel.fromJson(json['invoice'])
+          : null,
+    );
+  }
+}
+
+class PenaltyInvoiceModel {
+  final String file;
+  final String prn;
+  final String searchCode;
+  final String expiryDate;
+
+  PenaltyInvoiceModel({
+    required this.file,
+    required this.prn,
+    required this.searchCode,
+    required this.expiryDate,
+  });
+
+  factory PenaltyInvoiceModel.fromJson(Map<String, dynamic> json) {
+    return PenaltyInvoiceModel(
+      file: json['file']?.toString() ?? '',
+      prn: json['prn']?.toString() ?? '',
+      searchCode: json['search_code']?.toString() ?? '',
+      expiryDate: json['expiry_date']?.toString() ?? '',
     );
   }
 }

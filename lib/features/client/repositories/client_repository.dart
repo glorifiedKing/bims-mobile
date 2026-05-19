@@ -51,8 +51,12 @@ class ClientRepository {
         throw Exception('Failed to fetch applications');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
-      throw Exception('API Error: $msg');
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      if (!ApiConstants.isProduction) {
+        throw Exception('API Error: $msg');
+      }
+      return {'applications': <ApplicationModel>[], 'hasReachedMax': false};
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -118,8 +122,8 @@ class ClientRepository {
         queryParameters: queryParams,
       );
       if (response.statusCode == 200) {
-        final List<dynamic> dataList = response.data['data'] is List 
-            ? response.data['data'] 
+        final List<dynamic> dataList = response.data['data'] is List
+            ? response.data['data']
             : [];
         final List<InvoiceModel> invoices = dataList
             .map((json) => InvoiceModel.fromJson(json))
@@ -163,8 +167,8 @@ class ClientRepository {
         queryParameters: queryParams,
       );
       if (response.statusCode == 200) {
-        final List<dynamic> dataList = response.data['data'] is List 
-            ? response.data['data'] 
+        final List<dynamic> dataList = response.data['data'] is List
+            ? response.data['data']
             : [];
         final List<InspectionInvoiceModel> invoices = dataList
             .map((json) => InspectionInvoiceModel.fromJson(json))
@@ -266,8 +270,8 @@ class ClientRepository {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> dataList = response.data['data'] is List 
-            ? response.data['data'] 
+        final List<dynamic> dataList = response.data['data'] is List
+            ? response.data['data']
             : [];
         final List<PermitModel> permits = dataList
             .map((json) => PermitModel.fromJson(json))

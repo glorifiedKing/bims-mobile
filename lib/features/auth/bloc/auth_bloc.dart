@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/api_constants.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import '../../../core/services/biometric_service.dart';
+import '../../../core/utils/exceptions.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final Dio dio;
@@ -14,6 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>(_onLogin);
     on<AuthLogoutRequested>(_onLogout);
     on<AuthRegisterRequested>(_onRegister);
+    on<AuthBiometricLoginRequested>(_onBiometricLogin);
   }
 
   void _onAuthCheck(AuthCheckRequested event, Emitter<AuthState> emit) {
@@ -32,17 +35,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final data = event.type == 'email'
-          ? {'email': event.identifier, 'password': event.password, 'type': 'email'}
-          : {'phone': event.identifier, 'password': event.password, 'type': 'phone'};
+          ? {
+              'email': event.identifier,
+              'password': event.password,
+              'type': 'email',
+            }
+          : {
+              'phone': event.identifier,
+              'password': event.password,
+              'type': 'phone',
+            };
 
-      final response = await dio.post(
-        ApiConstants.login,
-        data: data,
-      );
+      final response = await dio.post(ApiConstants.login, data: data);
 
       if (response.statusCode == 200 && response.data['access_token'] != null) {
         final token = response.data['access_token'];
         await prefs.setString('access_token', token);
+        await BiometricService().updateSecureTokenIfEnabled(token);
         emit(AuthAuthenticated(token));
       } else {
         emit(AuthError('Login failed: Invalid credentials'));
@@ -82,11 +91,37 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError('Registration failed'));
       }
     } on DioException catch (e) {
-      final msg =
-          e.response?.data['message'] ?? e.message ?? 'Registration Error';
-      emit(AuthError('Error: $msg'));
+      final cleanMessage = ApiErrorHandler.parseError(e);
+      emit(AuthError('Registration Error: $cleanMessage'));
     } catch (e) {
       emit(AuthError('Unexpected err: $e'));
+    }
+  }
+
+  Future<void> _onBiometricLogin(
+    AuthBiometricLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final response = await dio.post(
+        ApiConstants.refreshToken,
+        data: {'token': event.oldToken},
+      );
+
+      if (response.statusCode == 200 && response.data['access_token'] != null) {
+        final token = response.data['access_token'];
+        await prefs.setString('access_token', token);
+        await BiometricService().updateSecureTokenIfEnabled(token);
+        emit(AuthAuthenticated(token));
+      } else {
+        emit(AuthError('Biometric login expired. Please log in manually.'));
+      }
+    } on DioException catch (e) {
+      final msg = ApiErrorHandler.parseError(e);
+      emit(AuthError('Biometric login failed: $msg'));
+    } catch (e) {
+      emit(AuthError('Unexpected error: $e'));
     }
   }
 }

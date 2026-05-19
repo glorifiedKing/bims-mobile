@@ -6,9 +6,34 @@ import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/profile/client_profile_bloc.dart';
 import '../bloc/profile/client_profile_state.dart';
+import '../../../core/services/biometric_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ClientProfileScreen extends StatelessWidget {
+class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
+
+  @override
+  State<ClientProfileScreen> createState() => _ClientProfileScreenState();
+}
+
+class _ClientProfileScreenState extends State<ClientProfileScreen> {
+  final _biometricService = BiometricService();
+  bool _isBiometricEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricStatus();
+  }
+
+  Future<void> _checkBiometricStatus() async {
+    final enabled = await _biometricService.isClientBiometricEnabled();
+    if (mounted) {
+      setState(() {
+        _isBiometricEnabled = enabled;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +181,51 @@ class ClientProfileScreen extends StatelessWidget {
                         isRoleSection: false,
                       ),
 
+                      const SizedBox(height: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: const Color(0xFFEEEEEE)),
+                        ),
+                        child: SwitchListTile(
+                          title: const Text(
+                            'Enable Biometric Login',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                          activeColor: AppTheme.primaryGreen,
+                          value: _isBiometricEnabled,
+                          onChanged: (val) async {
+                            if (val) {
+                              final auth = await _biometricService.authenticate();
+                              if (auth) {
+                                final prefs = await SharedPreferences.getInstance();
+                                final token = prefs.getString('access_token');
+                                if (token != null) {
+                                  await _biometricService.enableClientBiometric(token);
+                                  setState(() => _isBiometricEnabled = true);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Biometric login enabled successfully.')),
+                                  );
+                                }
+                              } else {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Authentication failed. Biometric login not enabled.')),
+                                  );
+                                }
+                              }
+                            } else {
+                              await _biometricService.disableClientBiometric();
+                              setState(() => _isBiometricEnabled = false);
+                            }
+                          },
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       OutlinedButton(
                         onPressed: () {

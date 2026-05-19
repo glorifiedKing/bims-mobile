@@ -5,6 +5,13 @@ import '../../../core/theme.dart';
 import '../bloc/bco_auth_bloc.dart';
 import '../bloc/bco_auth_event.dart';
 import '../bloc/bco_auth_state.dart';
+import '../../bco/bloc/profile/bco_profile_bloc.dart';
+import '../../bco/bloc/profile/bco_profile_event.dart';
+import '../../bco/bloc/counters/bco_counters_bloc.dart';
+import '../../bco/bloc/counters/bco_counters_event.dart';
+import '../../bco/bloc/invoices/bco_invoices_bloc.dart';
+import '../../bco/bloc/invoices/bco_invoices_event.dart';
+import '../../../core/services/biometric_service.dart';
 
 class BcoLoginScreen extends StatefulWidget {
   const BcoLoginScreen({super.key});
@@ -16,6 +23,7 @@ class BcoLoginScreen extends StatefulWidget {
 class _BcoLoginScreenState extends State<BcoLoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   void _login() {
     final identifier = _identifierController.text.trim();
@@ -40,6 +48,9 @@ class _BcoLoginScreenState extends State<BcoLoginScreen> {
       body: BlocConsumer<BcoAuthBloc, BcoAuthState>(
         listener: (context, state) {
           if (state is BcoAuthAuthenticated) {
+            context.read<BcoProfileBloc>().add(FetchBcoProfile());
+            context.read<BcoCountersBloc>().add(FetchBcoCounters());
+            context.read<BcoInvoicesBloc>().add(FetchBcoInvoicesTotal());
             context.go('/bco/dashboard');
           } else if (state is BcoAuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -142,9 +153,22 @@ class _BcoLoginScreenState extends State<BcoLoginScreen> {
                           const SizedBox(height: 8),
                           TextField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
                               hintText: 'Enter your password',
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: const BorderSide(
@@ -177,10 +201,32 @@ class _BcoLoginScreenState extends State<BcoLoginScreen> {
 
                           const SizedBox(height: 16),
                           OutlinedButton.icon(
-                            onPressed: () {
-                              context.go(
-                                '/bco/dashboard',
-                              ); // Mock biometric login for now
+                            onPressed: () async {
+                              final biometricService = BiometricService();
+                              final isEnabled = await biometricService.isBcoBiometricEnabled();
+                              
+                              if (!isEnabled) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please log in first and enable biometric login in your profile.'),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+
+                              final authSuccess = await biometricService.authenticate();
+                              if (authSuccess) {
+                                final oldToken = await biometricService.getBcoSecureToken();
+                                if (oldToken != null && context.mounted) {
+                                  context.read<BcoAuthBloc>().add(BcoAuthBiometricLoginRequested(oldToken));
+                                } else if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Saved session invalid. Please log in manually.')),
+                                  );
+                                }
+                              }
                             },
                             icon: const Icon(
                               Icons.fingerprint,

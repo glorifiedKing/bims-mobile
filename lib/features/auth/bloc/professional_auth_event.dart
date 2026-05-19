@@ -10,3 +10,8 @@ class ProfessionalAuthLoginRequested extends ProfessionalAuthEvent {
 class ProfessionalAuthLogoutRequested extends ProfessionalAuthEvent {}
 
 class ProfessionalAuthCheckRequested extends ProfessionalAuthEvent {}
+
+class ProfessionalAuthBiometricLoginRequested extends ProfessionalAuthEvent {
+  final String oldToken;
+  ProfessionalAuthBiometricLoginRequested(this.oldToken);
+}
