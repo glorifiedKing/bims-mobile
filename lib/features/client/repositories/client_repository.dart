@@ -105,6 +105,45 @@ class ClientRepository {
     }
   }
 
+  Future<void> submitApplication(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.createApplication,
+        data: data,
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to submit application');
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString().replaceFirst('Exception: ', '') ??
+          e.response?.data['message'] ??
+          'API Error';
+
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> updateApplication(String id, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.put(
+        '${ApiConstants.getApplications}/$id',
+        data: data,
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to update application');
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> getInvoices({
     int page = 1,
     String? filter,

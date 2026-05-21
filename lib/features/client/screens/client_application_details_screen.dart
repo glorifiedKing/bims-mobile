@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:open_filex/open_filex.dart';
 import '../../../core/theme.dart';
 import '../bloc/application_details/client_application_details_bloc.dart';
@@ -112,48 +113,75 @@ class _ClientApplicationDetailsScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: state.isDownloadingPdf
-                              ? null
-                              : () {
-                                  context
-                                      .read<ClientApplicationDetailsBloc>()
-                                      .add(
-                                        DownloadClientApplicationPdf(
-                                          details.applicationKey,
-                                        ),
-                                      );
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: state.isDownloadingPdf
+                                  ? null
+                                  : () {
+                                      context
+                                          .read<ClientApplicationDetailsBloc>()
+                                          .add(
+                                            DownloadClientApplicationPdf(
+                                              details.applicationKey,
+                                            ),
+                                          );
+                                    },
+                              icon: state.isDownloadingPdf
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.download, size: 20),
+                              label: Text(
+                                state.isDownloadingPdf
+                                    ? 'DOWNLOADING...'
+                                    : 'DOWNLOAD PDF',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (details.status?.toUpperCase() != 'PAID') ...[
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  context.push('/client/edit-application/${details.applicationKey}');
                                 },
-                          icon: state.isDownloadingPdf
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                                icon: const Icon(Icons.edit, size: 20),
+                                label: const Text('EDIT'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.accentGold,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 15),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                )
-                              : const Icon(Icons.download, size: 20),
-                          label: Text(
-                            state.isDownloadingPdf
-                                ? 'DOWNLOADING...'
-                                : 'DOWNLOAD PDF',
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryGreen,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                                  textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 15),
                       _buildSectionCard(

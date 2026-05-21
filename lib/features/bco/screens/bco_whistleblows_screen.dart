@@ -501,6 +501,31 @@ class _BcoWhistleblowsScreenState extends State<BcoWhistleblowsScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 0) context.go('/bco/dashboard');
+          if (index == 1) context.go('/bco/applications');
+          if (index == 2) context.go('/bco/invoices');
+          if (index == 3) context.go('/bco/profile');
+        },
+        selectedItemColor: Colors.grey,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_turned_in),
+            label: 'Applications',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: 'Invoices',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
     );
   }
 }

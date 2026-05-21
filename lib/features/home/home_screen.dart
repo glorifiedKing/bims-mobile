@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 15),
                       _buildPortalCard(
                         context: context,
-                        title: 'BCO PORTAL',
+                        title: 'ADMIN PORTAL',
                         subtitle:
                             'For Building Control Officers & Local Authorities',
                         icon: Icons.security,

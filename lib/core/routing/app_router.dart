@@ -127,6 +127,13 @@ class AppRouter {
         builder: (context, state) => const ClientNewApplicationScreen(),
       ),
       GoRoute(
+        path: '/client/edit-application/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ClientNewApplicationScreen(applicationKey: id);
+        },
+      ),
+      GoRoute(
         path: '/client/permits',
         builder: (context, state) => const ClientPermitsScreen(),
       ),

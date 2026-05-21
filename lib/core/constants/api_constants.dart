@@ -17,6 +17,7 @@ class ApiConstants {
 
   // Applications
   static const String getApplications = '/applications';
+  static const String createApplication = '/applications';
 
   // Invoices
   static const String invoices = '/invoices';

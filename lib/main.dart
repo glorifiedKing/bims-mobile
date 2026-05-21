@@ -48,6 +48,7 @@ import 'features/client/bloc/inspection_invoices/client_inspection_invoices_even
 import 'features/client/bloc/permits/client_permits_bloc.dart';
 import 'features/client/bloc/permits/client_permits_event.dart';
 import 'features/client/bloc/application_details/client_application_details_bloc.dart';
+import 'features/client/bloc/new_application/client_new_application_bloc.dart';
 import 'features/client/bloc/invoice_details/client_invoice_details_bloc.dart';
 import 'features/client/bloc/inspection_invoice_details/client_inspection_invoice_details_bloc.dart';
 import 'features/client/bloc/profile/client_profile_bloc.dart';
@@ -223,6 +224,11 @@ void main() async {
           ),
           BlocProvider(
             create: (context) => ClientApplicationDetailsBloc(
+              repository: context.read<ClientRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ClientNewApplicationBloc(
               repository: context.read<ClientRepository>(),
             ),
           ),

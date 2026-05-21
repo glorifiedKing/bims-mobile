@@ -7,6 +7,13 @@ class ApplicationDetailModel {
   final String administrativeUnitType;
   final String administrativeUnitName;
   final double totalSquareMetres;
+  final String? location;
+  final String? latitude;
+  final String? longitude;
+  final String? buildingName;
+  final String? height;
+  final String? descIntendedUse;
+  final String? landtenure;
   final String created;
   final String updated;
   final String? expires;
@@ -25,6 +32,13 @@ class ApplicationDetailModel {
     required this.administrativeUnitType,
     required this.administrativeUnitName,
     required this.totalSquareMetres,
+    this.location,
+    this.latitude,
+    this.longitude,
+    this.buildingName,
+    this.height,
+    this.descIntendedUse,
+    this.landtenure,
     required this.created,
     required this.updated,
     this.expires,
@@ -44,6 +58,13 @@ class ApplicationDetailModel {
       administrativeUnitType: json['administrative_unit_type'] ?? '',
       administrativeUnitName: json['administrative_unit_name'] ?? '',
       totalSquareMetres: (json['total_square_metres'] ?? 0).toDouble(),
+      location: json['location'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
+      buildingName: json['buildingName'],
+      height: json['height'],
+      descIntendedUse: json['descIntendedUse'],
+      landtenure: json['landtenure']?.toString(), // Handle if int
       created: json['created'] ?? '',
       updated: json['updated'] ?? '',
       expires: json['expires'],

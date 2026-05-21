@@ -196,6 +196,7 @@ class ClientApplicationsScreen extends StatelessWidget {
                             context.push('/client/applications/${app.id}');
                           },
                           child: _buildAppCard(
+                            context: context,
                             refNo: app.id,
                             statusText: app.status.toUpperCase(),
                             statusColor: statusColor,
@@ -204,6 +205,7 @@ class ClientApplicationsScreen extends StatelessWidget {
                             location: app.location,
                             subDate: formattedDate,
                             borderColor: borderColor,
+                            showEdit: app.status.toUpperCase() != 'PAID',
                           ),
                         );
                       },
@@ -278,6 +280,7 @@ class ClientApplicationsScreen extends StatelessWidget {
   }
 
   Widget _buildAppCard({
+    required BuildContext context,
     required String refNo,
     required String statusText,
     required Color statusColor,
@@ -286,6 +289,7 @@ class ClientApplicationsScreen extends StatelessWidget {
     required String location,
     required String subDate,
     required Color borderColor,
+    bool showEdit = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
@@ -316,14 +320,26 @@ class ClientApplicationsScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          refNo,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: AppTheme.primaryGreen,
+                        Expanded(
+                          child: Text(
+                            refNo,
+                            style: const TextStyle(
+                              color: AppTheme.primaryGreen,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
+                        if (showEdit)
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 16, color: AppTheme.accentGold),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              context.push('/client/edit-application/$refNo');
+                            },
+                          ),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
