@@ -8,6 +8,10 @@ import '../../../core/repositories/auxiliary_repository.dart';
 import '../bloc/applications/bco_applications_bloc.dart';
 import '../bloc/applications/bco_applications_event.dart';
 import '../bloc/applications/bco_applications_state.dart';
+import '../../../core/help/help_controller.dart';
+import '../../../core/help/help_step.dart';
+import '../../../core/help/help_tour_overlay.dart';
+import '../../../core/help/help_preferences.dart';
 
 class BcoApplicationsScreen extends StatefulWidget {
   const BcoApplicationsScreen({super.key});
@@ -17,312 +21,394 @@ class BcoApplicationsScreen extends StatefulWidget {
 }
 
 class _BcoApplicationsScreenState extends State<BcoApplicationsScreen> {
+  // ── Help tour ──────────────────────────────────────────────────────────────
+  final _helpController = HelpController();
+  final _keyHeader = GlobalKey();
+  final _keyFilters = GlobalKey();
+  final _keyList = GlobalKey();
+  final _keyBottomNav = GlobalKey();
+
+  List<HelpStep> get _helpSteps => [
+    const HelpStep(
+      emoji: '📋',
+      title: 'Applications',
+      description:
+          'This screen lists all building permit applications assigned to you. '
+          'Each card shows the application reference, type, location, status, '
+          'and submission date.',
+    ),
+    HelpStep(
+      emoji: '🏷️',
+      title: 'Status Filters',
+      description:
+          'Use these filter chips to narrow down applications by status. '
+          'Tap ALL to see every application, or choose IN-REVIEW, '
+          'AWAITING ACTION, or REJECTED to focus on a specific group.',
+      targetKey: _keyFilters,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '📂',
+      title: 'Application Cards',
+      description:
+          'Each card has a coloured left-border showing its status at a glance. '
+          'Tap any card to open the full application details — '
+          'including documents, inspections, and actions.',
+      targetKey: _keyList,
+    ),
+    HelpStep(
+      emoji: '🧭',
+      title: 'Bottom Navigation',
+      description:
+          'Use the bar at the bottom to switch between Home, Applications, '
+          'Invoices, and your Profile at any time.',
+      targetKey: _keyBottomNav,
+      cardPosition: HelpCardPosition.top,
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
     context.read<BcoApplicationsBloc>().add(
       FetchBcoApplications(status: 'ALL'),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final seen =
+          await HelpPreferences.hasSeenTour('tour_bco_applications');
+      if (!seen && mounted) {
+        await HelpPreferences.markTourSeen('tour_bco_applications');
+        _helpController.start(_helpSteps);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _helpController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: Column(
-        children: [
-          // Inspector Header
-          BlocBuilder<BcoAuthBloc, BcoAuthState>(
-            builder: (context, state) {
-              String name = 'Officer';
-              String roleName = 'BUILDING CONTROL OFFICER';
-              String adminUnitName = 'NBRB';
+    return HelpTourOverlay(
+      controller: _helpController,
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Column(
+          children: [
+            // Inspector Header
+            BlocBuilder<BcoAuthBloc, BcoAuthState>(
+              builder: (context, state) {
+                String name = 'Officer';
+                String roleName = 'BUILDING CONTROL OFFICER';
+                String adminUnitName = 'NBRB';
 
-              if (state is BcoAuthAuthenticated) {
-                final user = state.user;
-                name = user.names;
-                roleName = user.role;
-                if (user.administrativeUnitName.isNotEmpty) {
-                  adminUnitName = user.administrativeUnitName;
+                if (state is BcoAuthAuthenticated) {
+                  final user = state.user;
+                  name = user.names;
+                  roleName = user.role;
+                  if (user.administrativeUnitName.isNotEmpty) {
+                    adminUnitName = user.administrativeUnitName;
+                  }
                 }
-              }
 
-              return Container(
-                padding: const EdgeInsets.only(
-                  top: 60,
-                  bottom: 20,
-                  left: 25,
-                  right: 25,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF00331a), AppTheme.primaryGreen],
+                return Container(
+                  key: _keyHeader,
+                  padding: const EdgeInsets.only(
+                    top: 60,
+                    bottom: 20,
+                    left: 25,
+                    right: 25,
                   ),
-                  border: Border(
-                    bottom: BorderSide(color: AppTheme.accentGold, width: 4),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF00331a), AppTheme.primaryGreen],
+                    ),
+                    border: Border(
+                      bottom: BorderSide(color: AppTheme.accentGold, width: 4),
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              roleName.toUpperCase(),
-                              style: const TextStyle(
-                                color: AppTheme.accentGold,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Row(
-                            children: const [
-                              Icon(
-                                Icons.folder,
-                                size: 14,
-                                color: AppTheme.accentGold,
-                              ),
-                              SizedBox(width: 5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                'APPLICATIONS',
-                                style: TextStyle(
+                                roleName.toUpperCase(),
+                                style: const TextStyle(
+                                  color: AppTheme.accentGold,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                name,
+                                style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        children: [
-                          const TextSpan(text: "Location: "),
-                          TextSpan(
-                            text: adminUnitName,
-                            style: const TextStyle(color: AppTheme.accentGold),
+                          // Help button + APPLICATIONS pill
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              HelpIconButton(
+                                controller: _helpController,
+                                steps: _helpSteps,
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.folder,
+                                      size: 14,
+                                      color: AppTheme.accentGold,
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      'APPLICATIONS',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-
-          // Filters
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: BlocBuilder<BcoApplicationsBloc, BcoApplicationsState>(
-                builder: (context, state) {
-                  String activeFilter = 'ALL';
-                  if (state is BcoApplicationsLoaded) {
-                    activeFilter = state.currentFilter ?? 'ALL';
-                  }
-                  return Row(
-                    children: [
-                      _buildChip(context, 'ALL', activeFilter == 'ALL'),
-                      _buildChip(
-                        context,
-                        'IN-REVIEW',
-                        activeFilter == 'PENDING',
-                      ),
-                      _buildChip(
-                        context,
-                        'AWAITING ACTION',
-                        activeFilter == 'APPROVED',
-                      ),
-                      _buildChip(
-                        context,
-                        'REJECTED',
-                        activeFilter == 'REJECTED',
+                      const SizedBox(height: 20),
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          children: [
+                            const TextSpan(text: "Location: "),
+                            TextSpan(
+                              text: adminUnitName,
+                              style: const TextStyle(
+                                color: AppTheme.accentGold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  );
+                  ),
+                );
+              },
+            ),
+
+            // Filters
+            Container(
+              key: _keyFilters,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: BlocBuilder<BcoApplicationsBloc, BcoApplicationsState>(
+                  builder: (context, state) {
+                    String activeFilter = 'ALL';
+                    if (state is BcoApplicationsLoaded) {
+                      activeFilter = state.currentFilter ?? 'ALL';
+                    }
+                    return Row(
+                      children: [
+                        _buildChip(context, 'ALL', activeFilter == 'ALL'),
+                        _buildChip(
+                          context,
+                          'IN-REVIEW',
+                          activeFilter == 'PENDING',
+                        ),
+                        _buildChip(
+                          context,
+                          'AWAITING ACTION',
+                          activeFilter == 'APPROVED',
+                        ),
+                        _buildChip(
+                          context,
+                          'REJECTED',
+                          activeFilter == 'REJECTED',
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // List Area
+            Expanded(
+              child: BlocBuilder<BcoApplicationsBloc, BcoApplicationsState>(
+                builder: (context, state) {
+                  if (state is BcoApplicationsLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is BcoApplicationsError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${state.message}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  } else if (state is BcoApplicationsLoaded) {
+                    if (state.applications.isEmpty) {
+                      return const Center(
+                        child: Text('No applications found.'),
+                      );
+                    }
+                    return NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification scrollInfo) {
+                        if (!scrollInfo.metrics.outOfRange &&
+                            scrollInfo.metrics.pixels >=
+                                scrollInfo.metrics.maxScrollExtent - 200) {
+                          context.read<BcoApplicationsBloc>().add(
+                            LoadMoreBcoApplications(),
+                          );
+                        }
+                        return false;
+                      },
+                      child: ListView.builder(
+                        key: _keyList,
+                        padding: const EdgeInsets.all(15),
+                        itemCount:
+                            state.applications.length +
+                            (state.hasReachedMax ? 0 : 1),
+                        itemBuilder: (context, index) {
+                          if (index >= state.applications.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          final app = state.applications[index];
+                          String formattedDate = app.submittedDate;
+                          try {
+                            DateTime dt = DateTime.parse(app.submittedDate);
+                            List<String> months = [
+                              'Jan',
+                              'Feb',
+                              'Mar',
+                              'Apr',
+                              'May',
+                              'Jun',
+                              'Jul',
+                              'Aug',
+                              'Sep',
+                              'Oct',
+                              'Nov',
+                              'Dec',
+                            ];
+                            String monthStr = dt.month >= 1 && dt.month <= 12
+                                ? months[dt.month - 1]
+                                : dt.month.toString();
+                            formattedDate =
+                                '$monthStr ${dt.day.toString().padLeft(2, '0')}, ${dt.year}';
+                          } catch (_) {}
+
+                          Color statusColor = Colors.grey;
+                          Color statusBg = Colors.grey.shade200;
+                          Color borderColor = Colors.grey;
+
+                          if (app.status.toUpperCase() == 'IN-REVIEW') {
+                            statusColor = const Color(0xFFB8860B);
+                            statusBg = const Color(0xFFFFF9E6);
+                            borderColor = AppTheme.accentGold;
+                          } else if (app.status.toUpperCase().contains(
+                            'AWAITING',
+                          )) {
+                            statusColor = Colors.blue;
+                            statusBg = const Color(0xFFE8F4FD);
+                            borderColor = Colors.blue;
+                          } else if (app.status.toUpperCase() == 'APPROVED') {
+                            statusColor = AppTheme.primaryGreen;
+                            statusBg = const Color(0xFFE8F5E9);
+                            borderColor = AppTheme.primaryGreen;
+                          }
+
+                          return GestureDetector(
+                            onTap: () {
+                              context.push('/bco/applications/${app.id}');
+                            },
+                            child: _buildAppCard(
+                              refNo: app.id,
+                              statusText: app.status.toUpperCase(),
+                              statusColor: statusColor,
+                              statusBg: statusBg,
+                              type: app.type,
+                              location: app.location,
+                              subDate: formattedDate,
+                              borderColor: borderColor,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                  return const Center(child: Text('Initializing...'));
                 },
               ),
             ),
-          ),
-
-          // List Area
-          Expanded(
-            child: BlocBuilder<BcoApplicationsBloc, BcoApplicationsState>(
-              builder: (context, state) {
-                if (state is BcoApplicationsLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is BcoApplicationsError) {
-                  return Center(
-                    child: Text(
-                      'Error: ${state.message}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  );
-                } else if (state is BcoApplicationsLoaded) {
-                  if (state.applications.isEmpty) {
-                    return const Center(child: Text('No applications found.'));
-                  }
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: (ScrollNotification scrollInfo) {
-                      if (!scrollInfo.metrics.outOfRange &&
-                          scrollInfo.metrics.pixels >=
-                              scrollInfo.metrics.maxScrollExtent - 200) {
-                        context.read<BcoApplicationsBloc>().add(
-                          LoadMoreBcoApplications(),
-                        );
-                      }
-                      return false;
-                    },
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(15),
-                      itemCount:
-                          state.applications.length +
-                          (state.hasReachedMax ? 0 : 1),
-                      itemBuilder: (context, index) {
-                        if (index >= state.applications.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                        final app = state.applications[index];
-                        String formattedDate = app.submittedDate;
-                        try {
-                          DateTime dt = DateTime.parse(app.submittedDate);
-                          List<String> months = [
-                            'Jan',
-                            'Feb',
-                            'Mar',
-                            'Apr',
-                            'May',
-                            'Jun',
-                            'Jul',
-                            'Aug',
-                            'Sep',
-                            'Oct',
-                            'Nov',
-                            'Dec',
-                          ];
-                          String monthStr = dt.month >= 1 && dt.month <= 12
-                              ? months[dt.month - 1]
-                              : dt.month.toString();
-                          formattedDate =
-                              '$monthStr ${dt.day.toString().padLeft(2, '0')}, ${dt.year}';
-                        } catch (_) {}
-
-                        Color statusColor = Colors.grey;
-                        Color statusBg = Colors.grey.shade200;
-                        Color borderColor = Colors.grey;
-
-                        if (app.status.toUpperCase() == 'IN-REVIEW') {
-                          statusColor = const Color(0xFFB8860B);
-                          statusBg = const Color(0xFFFFF9E6);
-                          borderColor = AppTheme.accentGold;
-                        } else if (app.status.toUpperCase().contains(
-                          'AWAITING',
-                        )) {
-                          statusColor = Colors.blue;
-                          statusBg = const Color(0xFFE8F4FD);
-                          borderColor = Colors.blue;
-                        } else if (app.status.toUpperCase() == 'APPROVED') {
-                          statusColor = AppTheme.primaryGreen;
-                          statusBg = const Color(0xFFE8F5E9);
-                          borderColor = AppTheme.primaryGreen;
-                        }
-
-                        return GestureDetector(
-                          onTap: () {
-                            context.push('/bco/applications/${app.id}');
-                          },
-                          child: _buildAppCard(
-                            refNo: app.id,
-                            statusText: app.status.toUpperCase(),
-                            statusColor: statusColor,
-                            statusBg: statusBg,
-                            type: app.type,
-                            location: app.location,
-                            subDate: formattedDate,
-                            borderColor: borderColor,
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }
-                return const Center(child: Text('Initializing...'));
-              },
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          key: _keyBottomNav,
+          currentIndex: 1,
+          onTap: (index) {
+            if (index == 0) context.go('/bco/dashboard');
+            if (index == 1) return;
+            if (index == 2) context.go('/bco/invoices');
+            if (index == 3) context.go('/bco/profile');
+          },
+          selectedItemColor: AppTheme.primaryGreen,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.assignment_turned_in),
+              label: 'Applications',
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        onTap: (index) {
-          if (index == 0) context.go('/bco/dashboard');
-          if (index == 1) return;
-          if (index == 2) context.go('/bco/invoices');
-          if (index == 3) context.go('/bco/profile');
-        },
-        selectedItemColor: AppTheme.primaryGreen,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_turned_in),
-            label: 'Applications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Invoices',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
+            BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long),
+              label: 'Invoices',
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ],
+        ),
+      ), // Scaffold
+    ); // HelpTourOverlay
   }
 
   Widget _buildChip(BuildContext context, String label, bool active) {

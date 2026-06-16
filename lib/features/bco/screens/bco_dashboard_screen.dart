@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../auth/bloc/bco_auth_bloc.dart';
 import '../../auth/bloc/bco_auth_state.dart';
 import '../../auth/bloc/bco_auth_event.dart';
-import '../../../core/repositories/auxiliary_repository.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../bloc/invoices/bco_invoices_bloc.dart';
 import '../bloc/invoices/bco_invoices_event.dart';
@@ -13,6 +13,14 @@ import '../bloc/invoices/bco_invoices_state.dart';
 import '../bloc/counters/bco_counters_bloc.dart';
 import '../bloc/counters/bco_counters_event.dart';
 import '../bloc/counters/bco_counters_state.dart';
+import '../bloc/inspections/bco_inspections_bloc.dart';
+import '../bloc/inspections/bco_inspections_event.dart';
+import '../bloc/inspections/bco_inspections_state.dart';
+import '../models/bco_inspection_model.dart';
+import '../../../core/help/help_controller.dart';
+import '../../../core/help/help_step.dart';
+import '../../../core/help/help_tour_overlay.dart';
+import '../../../core/help/help_preferences.dart';
 
 class BcoDashboardScreen extends StatefulWidget {
   const BcoDashboardScreen({super.key});
@@ -22,19 +30,118 @@ class BcoDashboardScreen extends StatefulWidget {
 }
 
 class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
+  // ── Help tour ──
+  final _helpController = HelpController();
+  final _keyHeader       = GlobalKey();
+  final _keyInvoices     = GlobalKey();
+  final _keyOverview     = GlobalKey();
+  final _keyActions      = GlobalKey();
+  final _keyNextInspection = GlobalKey();
+  final _keyBottomNav    = GlobalKey();
+
+  List<HelpStep> get _helpSteps => [
+    HelpStep(
+      emoji: '👋',
+      title: 'Welcome to your Dashboard',
+      description:
+          'This is your BCO (Building Control Officer) command centre. '  
+          'Here you can monitor applications, invoices, inspections, '       
+          'and quickly access key tools.',
+    ),
+    HelpStep(
+      emoji: '🧑‍💼',
+      title: 'Your Profile Header',
+      description:
+          'Your name, role and location are shown here. '       
+          'Tap the LOGOUT button on the right to sign out of the app.',
+      targetKey: _keyHeader,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '💰',
+      title: 'Unpaid Invoices',
+      description:
+          'These cards show the total unpaid invoice amounts — '    
+          '1st Year invoices and Inspection Fees. '                  
+          'Tap a card to view the full invoice list.',
+      targetKey: _keyInvoices,
+    ),
+    HelpStep(
+      emoji: '📊',
+      title: 'Applications Overview',
+      description:
+          'These counters display a real-time summary of all applications '    
+          'by status: New, Pending, Approved and Deferred. '                    
+          'Tap any counter to open the Applications list.',
+      targetKey: _keyOverview,
+    ),
+    HelpStep(
+      emoji: '⚡',
+      title: 'Quick Actions',
+      description:
+          'Use these tiles to quickly jump to important tools — '     
+          'Stop Orders, Inspections calendar, Whistleblower reports, '  
+          'and Penalties.',
+      targetKey: _keyActions,
+    ),
+    HelpStep(
+      emoji: '📅',
+      title: 'Next Inspection',
+      description:
+          'Your nearest upcoming inspection is shown here. '     
+          'Tap START INSPECTION to open the inspection details.',
+      targetKey: _keyNextInspection,
+    ),
+    HelpStep(
+      emoji: '🧭',
+      title: 'Bottom Navigation',
+      description:
+          'Use the bar at the bottom to switch between Home, '      
+          'Applications, Invoices, and your Profile at any time.',
+      targetKey: _keyBottomNav,
+      cardPosition: HelpCardPosition.top,
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
     context.read<BcoInvoicesBloc>().add(FetchBcoInvoicesTotal());
     context.read<BcoCountersBloc>().add(FetchBcoCounters());
+    // Load PENDING inspections for the current month to find the next one
+    final now = DateTime.now();
+    final monthStart = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(DateTime(now.year, now.month, 1));
+    final monthEnd = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(DateTime(now.year, now.month + 1, 0));
+    context.read<BcoInspectionsBloc>().add(
+      FetchBcoInspections(start: monthStart, end: monthEnd),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final seen = await HelpPreferences.hasSeenTour('tour_bco_dashboard');
+      if (!seen && mounted) {
+        await HelpPreferences.markTourSeen('tour_bco_dashboard');
+        _helpController.start(_helpSteps);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _helpController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F0), // bg-field from wireframe
-      body: Column(
-        children: [
+    return HelpTourOverlay(
+      controller: _helpController,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF0F2F0),
+        body: Column(
+          children: [
           // Inspector Header
           BlocBuilder<BcoAuthBloc, BcoAuthState>(
             builder: (context, state) {
@@ -52,6 +159,7 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
               }
 
               return Container(
+                key: _keyHeader,
                 padding: const EdgeInsets.only(
                   top: 60,
                   bottom: 20,
@@ -71,7 +179,7 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -98,41 +206,52 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
                             ),
                           ],
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            context.read<BcoAuthBloc>().add(
-                              BcoAuthLogoutRequested(),
-                            );
-                            context.go('/bco/login');
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                        Row(
+                          children: [
+                            // Help button
+                            HelpIconButton(
+                              controller: _helpController,
+                              steps: _helpSteps,
                             ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              children: const [
-                                Icon(
-                                  Icons.logout,
-                                  color: Colors.white,
-                                  size: 18,
+                            const SizedBox(width: 10),
+                            // Logout button
+                            GestureDetector(
+                              onTap: () {
+                                context.read<BcoAuthBloc>().add(
+                                  BcoAuthLogoutRequested(),
+                                );
+                                context.go('/bco/login');
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'LOGOUT',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
+                                child: const Column(
+                                  children: [
+                                    Icon(
+                                      Icons.logout,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'LOGOUT',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -373,7 +492,7 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
                         if ([2, 3].contains(userRoleId))
                           _buildToolkitItem(
                             icon: '📅',
-                            label: 'Calendar',
+                            label: 'Inspections',
                             onTap: () {
                               context.push('/bco/calendar');
                             },
@@ -399,169 +518,10 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
 
                     const SizedBox(height: 25),
 
-                    // Inspection Planner (Moved from top to bottom)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'NEXT INSPECTION',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryGreen,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'TODAY, MARCH 5',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-
-                    // Inspection Card
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      margin: const EdgeInsets.only(bottom: 25),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        border: const Border(
-                          left: BorderSide(
-                            color: AppTheme.primaryGreen,
-                            width: 5,
-                          ),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 15,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                '#BIMS-OPS-992',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryGreen,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE6F4EA),
-                                  border: Border.all(
-                                    color: const Color(0xFFC3E6CB),
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'AI ENHANCED',
-                                  style: TextStyle(
-                                    color: Color(0xFF1E7E34),
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Commercial Plaza - Plot 19 Lumumba Ave',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF333333),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: const [
-                              Icon(
-                                Icons.location_on,
-                                size: 12,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                '0.8 KM Away',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(width: 15),
-                              Icon(
-                                Icons.access_time,
-                                size: 12,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                '10:30 AM',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 15),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                context.push('/bco/checklist');
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryGreen,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'START INSPECTION',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    // Inspection Planner — real data from API
+                    KeyedSubtree(
+                      key: _keyNextInspection,
+                      child: _buildNextInspectionSection(context),
                     ),
                   ],
                 );
@@ -571,6 +531,7 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        key: _keyBottomNav,
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) return;
@@ -595,6 +556,254 @@ class _BcoDashboardScreenState extends State<BcoDashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
+      ),  // end inner Scaffold
+    );    // end HelpTourOverlay
+  }
+
+  Widget _buildNextInspectionSection(BuildContext context) {
+    return BlocBuilder<BcoInspectionsBloc, BcoInspectionsState>(
+      builder: (context, state) {
+        BcoInspectionModel? nextInspection;
+
+        if (state is BcoInspectionsLoaded) {
+          final now = DateTime.now();
+          final pending =
+              state.inspections
+                  .where(
+                    (i) =>
+                        i.isPending &&
+                        i.start.isAfter(now.subtract(const Duration(hours: 1))),
+                  )
+                  .toList()
+                ..sort((a, b) => a.start.compareTo(b.start));
+          if (pending.isNotEmpty) nextInspection = pending.first;
+        }
+
+        if (state is BcoInspectionsLoading) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'NEXT INSPECTION',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+              SizedBox(height: 15),
+              Center(child: CircularProgressIndicator()),
+              SizedBox(height: 25),
+            ],
+          );
+        }
+
+        if (nextInspection == null) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'NEXT INSPECTION',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+              const SizedBox(height: 15),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.only(bottom: 25),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: const Color(0xFFEEEEEE)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'No upcoming inspections this month',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        final insp = nextInspection;
+        final dateLabel = DateFormat(
+          'EEE, dd MMM',
+        ).format(insp.start).toUpperCase();
+        final timeLabel = DateFormat('hh:mm a').format(insp.start);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'NEXT INSPECTION',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryGreen,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    dateLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            GestureDetector(
+              onTap: () =>
+                  context.push('/bco/inspections/${insp.inspectionRef}'),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                margin: const EdgeInsets.only(bottom: 25),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  border: const Border(
+                    left: BorderSide(color: AppTheme.primaryGreen, width: 5),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '#${insp.applicationKey}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryGreen,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            insp.inspectionStatus,
+                            style: const TextStyle(
+                              color: Colors.orange,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${insp.applicantName} — ${insp.inspectionType}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF333333),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            insp.location,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Icon(
+                          Icons.access_time,
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          timeLabel,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => context.push(
+                          '/bco/inspections/${insp.inspectionRef}',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'VIEW INSPECTION',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

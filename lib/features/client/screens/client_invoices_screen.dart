@@ -13,131 +13,235 @@ import '../../../core/widgets/search_bar_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../../core/help/help_controller.dart';
+import '../../../core/help/help_step.dart';
+import '../../../core/help/help_tour_overlay.dart';
+import '../../../core/help/help_preferences.dart';
 
-class ClientInvoicesScreen extends StatelessWidget {
+class ClientInvoicesScreen extends StatefulWidget {
   final int initialIndex;
 
   const ClientInvoicesScreen({super.key, this.initialIndex = 0});
 
   @override
+  State<ClientInvoicesScreen> createState() => _ClientInvoicesScreenState();
+}
+
+class _ClientInvoicesScreenState extends State<ClientInvoicesScreen> {
+  // ── Help tour ───────────────────────────────────────────────────────────────
+  final _helpController   = HelpController();
+  final _keyHeader        = GlobalKey();
+  final _keyTabs          = GlobalKey();
+  final _keySearchFilter  = GlobalKey();
+  final _keyInvoiceList   = GlobalKey();
+  final _keyBottomNav     = GlobalKey();
+
+  List<HelpStep> get _helpSteps => [
+    HelpStep(
+      emoji: '💰',
+      title: 'Invoices & PRNs',
+      description:
+          'This screen shows all your payment references (PRNs) and invoices. '
+          'Here you can view outstanding amounts, make payments, and download '
+          'receipts once a payment is confirmed.',
+      targetKey: _keyHeader,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '🗂️',
+      title: 'Invoice Tabs',
+      description:
+          'Switch between two invoice categories using these tabs:\n'
+          '• 1st Year Invoices — the initial assessment fees for a new permit\n'
+          '• Inspection Fees — charges raised after site inspections.',
+      targetKey: _keyTabs,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '🔍',
+      title: 'Search & Filter',
+      description:
+          'Use the search bar to look up invoices by PRN, application key, '
+          'or search code. Use the filter chips to show ALL invoices, only '
+          'PENDING ones (with the total unpaid amount), or PAID ones.',
+      targetKey: _keySearchFilter,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '🧾',
+      title: 'Invoice Cards',
+      description:
+          'Each card shows the PRN number, payment status, linked reference, '
+          'and total amount. Tap a card for full details.\n\n'
+          '• PENDING invoices show a 💸 PAY NOW button — tap it to initiate '
+          'a mobile money payment via *185#.\n'
+          '• PAID invoices show a 📄 DOWNLOAD RECEIPT button.',
+      targetKey: _keyInvoiceList,
+    ),
+    HelpStep(
+      emoji: '🧭',
+      title: 'Bottom Navigation',
+      description:
+          'Use this bar to switch between Home, Applications, Invoices, '
+          'and your Profile at any time.',
+      targetKey: _keyBottomNav,
+      cardPosition: HelpCardPosition.top,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final seen = await HelpPreferences.hasSeenTour('tour_client_invoices');
+      if (!seen && mounted) {
+        await HelpPreferences.markTourSeen('tour_client_invoices');
+        _helpController.start(_helpSteps);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _helpController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      initialIndex: initialIndex,
-      child: Scaffold(
-        backgroundColor: AppTheme.background,
-        body: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.only(
-                top: 60,
-                bottom: 0,
-                left: 20,
-                right: 20,
-              ),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryGreen,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.accentGold, width: 4),
+    return HelpTourOverlay(
+      controller: _helpController,
+      child: DefaultTabController(
+        length: 2,
+        initialIndex: widget.initialIndex,
+        child: Scaffold(
+          backgroundColor: AppTheme.background,
+          body: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.only(
+                  top: 60,
+                  bottom: 0,
+                  left: 20,
+                  right: 20,
+                ),
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: AppTheme.primaryGreen,
+                  border: Border(
+                    bottom: BorderSide(color: AppTheme.accentGold, width: 4),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      key: _keyHeader,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Invoices & PRNs',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Manage Payment References',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            HelpIconButton(
+                              controller: _helpController,
+                              steps: _helpSteps,
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                context.read<AuthBloc>().add(AuthLogoutRequested());
+                                context.go('/client/login');
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.logout, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    TabBar(
+                      key: _keyTabs,
+                      indicatorColor: AppTheme.accentGold,
+                      labelColor: Colors.white,
+                      unselectedLabelColor: Colors.white54,
+                      tabs: const [
+                        Tab(text: '1st Year Invoices'),
+                        Tab(text: 'Inspection Fees'),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Invoices & PRNs',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            'Manage Payment References',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          context.read<AuthBloc>().add(AuthLogoutRequested());
-                          context.go('/client/login');
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.logout, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  const TabBar(
-                    indicatorColor: AppTheme.accentGold,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.white54,
-                    tabs: [
-                      Tab(text: '1st Year Invoices'),
-                      Tab(text: 'Inspection Fees'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
 
-            // TabBarView Body
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _buildGeneralInvoicesView(context),
-                  _buildInspectionInvoicesView(context),
-                ],
+              // TabBarView Body
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildGeneralInvoicesView(context),
+                    _buildInspectionInvoicesView(context),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: 2, // Invoices index
-          onTap: (index) {
-            if (index == 0) context.go('/client/dashboard');
-            if (index == 1) context.go('/client/applications');
-            if (index == 2) return;
-            if (index == 3) context.go('/client/profile');
-          },
-          selectedItemColor: AppTheme.primaryGreen,
-          unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.description),
-              label: 'Applications',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.payment),
-              label: 'Invoices',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          ],
+            ],
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            key: _keyBottomNav,
+            currentIndex: 2, // Invoices index
+            onTap: (index) {
+              if (index == 0) context.go('/client/dashboard');
+              if (index == 1) context.go('/client/applications');
+              if (index == 2) return;
+              if (index == 3) context.go('/client/profile');
+            },
+            selectedItemColor: AppTheme.primaryGreen,
+            unselectedItemColor: Colors.grey,
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.description),
+                label: 'Applications',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.payment),
+                label: 'Invoices',
+              ),
+              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            ],
+          ),
         ),
       ),
-    );
+    ); // HelpTourOverlay
   }
 
   Widget _buildGeneralInvoicesView(BuildContext context) {
@@ -145,6 +249,7 @@ class ClientInvoicesScreen extends StatelessWidget {
       children: [
         // Search & Filter
         Container(
+          key: _keySearchFilter,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -208,6 +313,7 @@ class ClientInvoicesScreen extends StatelessWidget {
 
         // List body
         Expanded(
+          key: _keyInvoiceList,
           child: BlocBuilder<ClientInvoicesBloc, ClientInvoicesState>(
             builder: (context, state) {
               if (state is ClientInvoicesLoading) {

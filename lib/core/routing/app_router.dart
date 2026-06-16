@@ -5,6 +5,12 @@ import '../../features/home/home_screen.dart';
 import '../../features/home/screens/verify_permit_screen.dart';
 import '../../features/auth/screens/client_login_screen.dart';
 import '../../features/auth/screens/client_registration_screen.dart';
+import '../../features/auth/screens/client_forgot_password_screen.dart';
+import '../../features/auth/screens/client_reset_password_screen.dart';
+import '../../features/auth/screens/pro_forgot_password_screen.dart';
+import '../../features/auth/screens/pro_reset_password_screen.dart';
+import '../../features/auth/screens/bco_forgot_password_screen.dart';
+import '../../features/auth/screens/bco_reset_password_screen.dart';
 import '../../features/client/screens/client_dashboard_screen.dart';
 import '../../features/client/screens/client_profile_screen.dart';
 import '../../features/client/screens/client_applications_screen.dart';
@@ -35,12 +41,16 @@ import '../../features/bco/screens/bco_whistleblow_details_screen.dart';
 import '../../features/bco/screens/bco_penalties_screen.dart';
 import '../../features/bco/screens/bco_penalty_details_screen.dart';
 import '../../features/bco/screens/bco_create_penalty_screen.dart';
+import '../../features/bco/screens/bco_inspection_details_screen.dart';
 import '../../features/auth/screens/professional_login_screen.dart';
 import '../../features/auth/screens/professional_registration_screen.dart';
 import '../../features/professional/screens/professional_dashboard_screen.dart';
 import '../../features/professional/screens/professional_profile_screen.dart';
 import '../../features/professional/screens/professional_applications_screen.dart';
 import '../../features/professional/screens/professional_application_details_screen.dart';
+import '../../features/professional/screens/professional_attachments_screen.dart';
+import '../../features/professional/screens/professional_upload_attachment_screen.dart';
+import '../../features/professional/models/pro_attachment_model.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> rootNavigatorKey =
@@ -69,6 +79,20 @@ class AppRouter {
       GoRoute(
         path: '/client/register',
         builder: (context, state) => const ClientRegistrationScreen(),
+      ),
+      GoRoute(
+        path: '/client/forgot-password',
+        builder: (context, state) => const ClientForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/client/reset-password',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return ClientResetPasswordScreen(
+            identifier: extras['identifier'] as String? ?? '',
+            type: extras['type'] as String? ?? 'email',
+          );
+        },
       ),
       GoRoute(
         path: '/client/dashboard',
@@ -151,6 +175,19 @@ class AppRouter {
       GoRoute(
         path: '/bco/login',
         builder: (context, state) => const BcoLoginScreen(),
+      ),
+      GoRoute(
+        path: '/bco/forgot-password',
+        builder: (context, state) => const BcoForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/bco/reset-password',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return BcoResetPasswordScreen(
+            email: extras['email'] as String? ?? '',
+          );
+        },
       ),
       GoRoute(
         path: '/bco/dashboard',
@@ -244,6 +281,13 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/bco/inspections/:reference',
+        builder: (context, state) {
+          final reference = state.pathParameters['reference']!;
+          return BcoInspectionDetailsScreen(reference: reference);
+        },
+      ),
+      GoRoute(
         path: '/bco/camera',
         builder: (context, state) => const BcoCameraScreen(),
       ),
@@ -254,6 +298,19 @@ class AppRouter {
       GoRoute(
         path: '/professional/register',
         builder: (context, state) => const ProfessionalRegistrationScreen(),
+      ),
+      GoRoute(
+        path: '/professional/forgot-password',
+        builder: (context, state) => const ProForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/professional/reset-password',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return ProResetPasswordScreen(
+            email: extras['email'] as String? ?? '',
+          );
+        },
       ),
       GoRoute(
         path: '/professional/dashboard',
@@ -272,6 +329,17 @@ class AppRouter {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return ProfessionalApplicationDetailsScreen(applicationKey: id);
+        },
+      ),
+      GoRoute(
+        path: '/professional/attachments',
+        builder: (context, state) => const ProfessionalAttachmentsScreen(),
+      ),
+      GoRoute(
+        path: '/professional/attachments/upload',
+        builder: (context, state) {
+          final attachment = state.extra as ProAttachmentModel?;
+          return ProfessionalUploadAttachmentScreen(attachment: attachment);
         },
       ),
     ],

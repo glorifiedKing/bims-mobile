@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/bco_api_client.dart';
 import '../../../core/services/biometric_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../models/bco_user.dart';
 import 'bco_auth_event.dart';
 import 'bco_auth_state.dart';
@@ -65,6 +66,8 @@ class BcoAuthBloc extends Bloc<BcoAuthEvent, BcoAuthState> {
             final user = BcoUser.fromJson(userJson);
             await prefs.setString('bco_user_data', jsonEncode(userJson));
             emit(BcoAuthAuthenticated(token, user));
+            // Register FCM token with the BCO portal.
+            NotificationService.instance.sendTokenToApi(portal: Portal.bco);
           } else {
              emit(BcoAuthError('Failed to fetch account details'));
           }
@@ -119,6 +122,8 @@ class BcoAuthBloc extends Bloc<BcoAuthEvent, BcoAuthState> {
             final user = BcoUser.fromJson(userJson);
             await prefs.setString('bco_user_data', jsonEncode(userJson));
             emit(BcoAuthAuthenticated(token, user));
+            // Re-register FCM token after biometric token refresh.
+            NotificationService.instance.sendTokenToApi(portal: Portal.bco);
           } else {
              emit(BcoAuthError('Failed to fetch account details'));
           }

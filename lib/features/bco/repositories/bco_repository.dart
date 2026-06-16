@@ -13,6 +13,7 @@ import '../models/express_penalty_model.dart';
 import '../models/express_penalty_invoice_model.dart';
 import '../models/bco_application_attachment_model.dart';
 import '../models/bco_whistleblow_model.dart';
+import '../models/bco_inspection_model.dart';
 
 class BcoRepository {
   final BcoApiClient bcoApiClient;
@@ -56,8 +57,11 @@ class BcoRepository {
         throw Exception('Failed to fetch BCO applications');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
-      throw Exception('API Error: $msg');
+      final msg =
+          e.error?.toString().replaceFirst('Exception: ', '') ??
+          e.response?.data['message'] ??
+          'API Error';
+      throw Exception(msg);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -549,7 +553,7 @@ class BcoRepository {
         queryParams['administrative_unit_id'] = adminUnitId;
       }
       if (search != null && search.isNotEmpty) {
-        queryParams['search'] = search; 
+        queryParams['search'] = search;
       }
 
       final response = await bcoApiClient.dio.get(
@@ -597,6 +601,158 @@ class BcoRepository {
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
       throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  // ─── Inspections ───────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getInspections({
+    int page = 1,
+    int? inspectionType,
+    int? inspectionStatus,
+    String? start,
+    String? end,
+  }) async {
+    try {
+      final Map<String, dynamic> queryParams = {'page': page};
+      if (inspectionType != null)
+        queryParams['inspection_type'] = inspectionType;
+      if (inspectionStatus != null) queryParams['status'] = inspectionStatus;
+      if (start != null) queryParams['start'] = start;
+      if (end != null) queryParams['end'] = end;
+
+      final response = await bcoApiClient.dio.get(
+        ApiConstants.inspections,
+        queryParameters: queryParams,
+      );
+      if (response.statusCode == 200) {
+        final paginatedData = response.data['data'];
+        final List<dynamic> dataList = paginatedData is Map
+            ? (paginatedData['data'] ?? [])
+            : [];
+        final List<BcoInspectionModel> inspections = dataList
+            .map((json) => BcoInspectionModel.fromJson(json))
+            .toList();
+
+        bool hasReachedMax = false;
+        try {
+          final int currentPage = paginatedData['current_page'] ?? 1;
+          final int lastPage = paginatedData['last_page'] ?? 1;
+          hasReachedMax = currentPage >= lastPage;
+        } catch (_) {}
+
+        return {'inspections': inspections, 'hasReachedMax': hasReachedMax};
+      } else {
+        throw Exception('Failed to fetch inspections');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<BcoInspectionModel> getInspectionDetails(String reference) async {
+    try {
+      final response = await bcoApiClient.dio.get(
+        '${ApiConstants.inspections}/$reference',
+      );
+      if (response.statusCode == 200) {
+        return BcoInspectionModel.fromJson(response.data['data']);
+      } else {
+        throw Exception('Failed to fetch inspection details');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> createInspection(Map<String, dynamic> data) async {
+    try {
+      final response = await bcoApiClient.dio.post(
+        ApiConstants.inspections,
+        data: data,
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+          response.data['message'] ?? 'Failed to create inspection',
+        );
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> updateInspection(
+    String reference,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await bcoApiClient.dio.patch(
+        '${ApiConstants.inspections}/$reference',
+        data: data,
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+          response.data['message'] ?? 'Failed to update inspection',
+        );
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString() ?? e.response?.data['message'] ?? 'API Error';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> forgotPassword({required String email}) async {
+    try {
+      final response = await bcoApiClient.dio.post(
+        '/account/forgot-password',
+        data: {'email': email},
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to send reset code');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await bcoApiClient.dio.put(
+        '/account/reset-password',
+        data: {
+          'token': token,
+          'new_password': newPassword,
+          'new_password_confirmation': confirmPassword,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Password reset failed');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception(msg);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

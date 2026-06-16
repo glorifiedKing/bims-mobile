@@ -44,4 +44,10 @@ class ApiConstants {
   static const String landTenures = '/auxiliary/land-tenures';
   static const String applicationTypes = '/auxiliary/application-types';
   static const String buildingOperations = '/auxiliary/building-operations';
+  static const String inspections = '/inspections';
+  static const String inspectionTypes = '/inspections/types';
+  static const String inspectionStatuses = '/inspections/statuses';
+
+  // Firebase Cloud Messaging
+  static const String fcmToken = '/fcm-token';
 }

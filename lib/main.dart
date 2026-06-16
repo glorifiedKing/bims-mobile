@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'features/client/bloc/permit_details/client_permit_details_bloc.dart';
 import 'core/theme.dart';
+import 'firebase_options.dart';
 import 'core/routing/app_router.dart';
 import 'core/network/api_client.dart';
 import 'core/network/bco_api_client.dart';
 import 'core/network/pro_api_client.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/repositories/auxiliary_repository.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'core/services/notification_service.dart';
 import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/bloc/auth_event.dart';
+import 'features/auth/bloc/forgot_reset_password/forgot_reset_password_bloc.dart';
+import 'features/auth/bloc/pro_forgot_reset_password/pro_forgot_reset_password_bloc.dart';
+import 'features/auth/bloc/bco_forgot_reset_password/bco_forgot_reset_password_bloc.dart';
 import 'features/auth/bloc/bco_auth_bloc.dart';
 import 'features/auth/bloc/bco_auth_event.dart';
 import 'features/auth/bloc/professional_auth_bloc.dart';
@@ -38,6 +43,9 @@ import 'features/bco/bloc/create_penalty/bco_create_penalty_bloc.dart';
 import 'features/bco/bloc/camera/bco_camera_bloc.dart';
 import 'features/bco/bloc/whistleblows/bco_whistleblows_bloc.dart';
 import 'features/bco/bloc/whistleblow_details/bco_whistleblow_details_bloc.dart';
+import 'features/bco/bloc/inspections/bco_inspections_bloc.dart';
+import 'features/bco/bloc/inspection_details/bco_inspection_details_bloc.dart';
+import 'features/bco/bloc/create_inspection/bco_create_inspection_bloc.dart';
 import 'features/client/repositories/client_repository.dart';
 import 'features/client/bloc/applications/client_applications_bloc.dart';
 import 'features/client/bloc/applications/client_applications_event.dart';
@@ -63,12 +71,19 @@ import 'features/professional/bloc/documents/professional_documents_event.dart';
 import 'features/professional/bloc/applications/professional_applications_bloc.dart';
 import 'features/professional/bloc/applications/professional_applications_event.dart';
 import 'features/professional/bloc/application_details/professional_application_details_bloc.dart';
+import 'features/professional/bloc/attachments/professional_attachments_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Register FCM background handler before Firebase is initialized.
+  // This must be a top-level function.
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     // await FirebaseAuth.instance.signInAnonymously();
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
@@ -94,6 +109,11 @@ void main() async {
 
   // Trigger background sync without awaiting
   auxiliaryRepository.syncAuxiliaryData();
+
+  // Initialize Firebase Messaging (subscribe to topic, set up handlers).
+  await NotificationService.instance.initialize(
+    auxiliaryRepository: auxiliaryRepository,
+  );
 
   runApp(
     MultiRepositoryProvider(
@@ -198,12 +218,25 @@ void main() async {
           ),
           BlocProvider(create: (context) => BcoCameraBloc()),
           BlocProvider(
-            create: (context) => BcoWhistleblowsBloc(
+            create: (context) =>
+                BcoWhistleblowsBloc(repository: context.read<BcoRepository>()),
+          ),
+          BlocProvider(
+            create: (context) => BcoWhistleblowDetailsBloc(
               repository: context.read<BcoRepository>(),
             ),
           ),
           BlocProvider(
-            create: (context) => BcoWhistleblowDetailsBloc(
+            create: (context) =>
+                BcoInspectionsBloc(repository: context.read<BcoRepository>()),
+          ),
+          BlocProvider(
+            create: (context) => BcoInspectionDetailsBloc(
+              repository: context.read<BcoRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => BcoCreateInspectionBloc(
               repository: context.read<BcoRepository>(),
             ),
           ),
@@ -253,6 +286,21 @@ void main() async {
                   ..add(FetchClientProfile()),
           ),
           BlocProvider(
+            create: (context) => ForgotResetPasswordBloc(
+              repository: context.read<ClientRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ProForgotResetPasswordBloc(
+              repository: context.read<ProfessionalRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => BcoForgotResetPasswordBloc(
+              repository: context.read<BcoRepository>(),
+            ),
+          ),
+          BlocProvider(
             create: (context) => ProfessionalProfileBloc(
               repository: context.read<ProfessionalRepository>(),
             )..add(FetchProfessionalProfile()),
@@ -274,6 +322,11 @@ void main() async {
           ),
           BlocProvider(
             create: (context) => ProfessionalApplicationDetailsBloc(
+              repository: context.read<ProfessionalRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ProfessionalAttachmentsBloc(
               repository: context.read<ProfessionalRepository>(),
             ),
           ),

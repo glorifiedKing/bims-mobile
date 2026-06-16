@@ -5,6 +5,7 @@ import '../../../core/constants/api_constants.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import '../../../core/services/biometric_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/utils/exceptions.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
@@ -53,6 +54,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await prefs.setString('access_token', token);
         await BiometricService().updateSecureTokenIfEnabled(token);
         emit(AuthAuthenticated(token));
+        // Register FCM token with the client portal.
+        NotificationService.instance.sendTokenToApi(portal: Portal.client);
       } else {
         emit(AuthError('Login failed: Invalid credentials'));
       }
@@ -114,6 +117,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await prefs.setString('access_token', token);
         await BiometricService().updateSecureTokenIfEnabled(token);
         emit(AuthAuthenticated(token));
+        // Re-register FCM token after biometric token refresh.
+        NotificationService.instance.sendTokenToApi(portal: Portal.client);
       } else {
         emit(AuthError('Biometric login expired. Please log in manually.'));
       }

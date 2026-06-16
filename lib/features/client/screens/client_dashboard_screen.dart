@@ -14,6 +14,10 @@ import '../../../core/utils/currency_formatter.dart';
 import '../models/application_model.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../../core/help/help_controller.dart';
+import '../../../core/help/help_step.dart';
+import '../../../core/help/help_tour_overlay.dart';
+import '../../../core/help/help_preferences.dart';
 
 class ClientDashboardScreen extends StatefulWidget {
   const ClientDashboardScreen({super.key});
@@ -24,6 +28,91 @@ class ClientDashboardScreen extends StatefulWidget {
 
 class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
   int _selectedIndex = 0;
+
+  // ── Help tour ──────────────────────────────────────────────────────────────
+  final _helpController  = HelpController();
+  final _keyHeader       = GlobalKey();
+  final _keyInvoices     = GlobalKey();
+  final _keyQuickActions = GlobalKey();
+  final _keyActivity     = GlobalKey();
+  final _keyApplications = GlobalKey();
+  final _keyBottomNav    = GlobalKey();
+
+  List<HelpStep> get _helpSteps => [
+    HelpStep(
+      emoji: '🏠',
+      title: 'Welcome to Your Dashboard',
+      description:
+          'This is your home screen. It shows a summary of your unpaid '
+          'invoices, quick shortcuts, recent activity, and your latest '
+          'active application all in one place.',
+      targetKey: _keyHeader,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '💰',
+      title: 'Unpaid Invoices',
+      description:
+          'These two cards show how much you still owe — '
+          'one for General Invoices (1st year fees) and one for '
+          'Inspection Fees. Tap a card to go straight to that invoice list.',
+      targetKey: _keyInvoices,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '⚡',
+      title: 'Quick Actions',
+      description:
+          'Use these shortcuts to start a New Application, view Payments/PRNs, '
+          'check your Permits, or file a Whistle Blow report.',
+      targetKey: _keyQuickActions,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '📋',
+      title: 'Recent Activity',
+      description:
+          'This section shows the latest updates on your account — '
+          'reviewer comments, payments verified, and status changes.',
+      targetKey: _keyActivity,
+    ),
+    HelpStep(
+      emoji: '📁',
+      title: 'Active Applications',
+      description:
+          'Your most recent active application is shown here with its status '
+          'and a progress bar so you can track how far along it is.',
+      targetKey: _keyApplications,
+      cardPosition: HelpCardPosition.top,
+    ),
+    HelpStep(
+      emoji: '🧭',
+      title: 'Bottom Navigation',
+      description:
+          'Use this bar to switch between Home, Applications, Invoices, '
+          'and your Profile at any time.',
+      targetKey: _keyBottomNav,
+      cardPosition: HelpCardPosition.top,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final seen = await HelpPreferences.hasSeenTour('tour_client_dashboard');
+      if (!seen && mounted) {
+        await HelpPreferences.markTourSeen('tour_client_dashboard');
+        _helpController.start(_helpSteps);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _helpController.dispose();
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     if (index == 0) return; // Already on Home/Dashboard
@@ -45,12 +134,15 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return HelpTourOverlay(
+      controller: _helpController,
+      child: Scaffold(
       backgroundColor: AppTheme.background,
       body: Column(
         children: [
           // Header
           Container(
+            key: _keyHeader,
             padding: const EdgeInsets.only(
               top: 60,
               left: 25,
@@ -103,8 +195,14 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
                     );
                   },
                 ),
-                Stack(
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    HelpIconButton(
+                      controller: _helpController,
+                      steps: _helpSteps,
+                    ),
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () {
                         context.read<AuthBloc>().add(AuthLogoutRequested());
@@ -145,6 +243,7 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
                 ),
                 const SizedBox(height: 15),
                 Row(
+                  key: _keyInvoices,
                   children: [
                     Expanded(
                       child: BlocBuilder<ClientInvoicesBloc, ClientInvoicesState>(
@@ -204,6 +303,7 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
                 ),
                 const SizedBox(height: 15),
                 GridView.count(
+                  key: _keyQuickActions,
                   crossAxisCount: 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -255,6 +355,7 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
                 ),
                 const SizedBox(height: 15),
                 Container(
+                  key: _keyActivity,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(15),
@@ -294,6 +395,7 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
                 ),
                 const SizedBox(height: 15),
                 BlocBuilder<ClientApplicationsBloc, ClientApplicationsState>(
+                  key: _keyApplications,
                   builder: (context, state) {
                     if (state is ClientApplicationsLoading) {
                       return const Center(child: CircularProgressIndicator());
@@ -320,6 +422,7 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        key: _keyBottomNav,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         selectedItemColor: AppTheme.primaryGreen,
@@ -336,7 +439,8 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-    );
+    ), // Scaffold
+    ); // HelpTourOverlay
   }
 
   Widget _buildInvoiceDashboardCard({

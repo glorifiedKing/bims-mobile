@@ -6,6 +6,7 @@ import '../../../core/constants/api_constants.dart';
 import 'professional_auth_event.dart';
 import 'professional_auth_state.dart';
 import '../../../core/services/biometric_service.dart';
+import '../../../core/services/notification_service.dart';
 
 class ProfessionalAuthBloc
     extends Bloc<ProfessionalAuthEvent, ProfessionalAuthState> {
@@ -37,8 +38,9 @@ class ProfessionalAuthBloc
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('professional_access_token', token);
       await BiometricService().updateProSecureTokenIfEnabled(token);
-      
       emit(ProfessionalAuthAuthenticated(token));
+      // Register FCM token with the professional portal.
+      NotificationService.instance.sendTokenToApi(portal: Portal.professional);
     } on DioException catch (e) {
       emit(
         ProfessionalAuthError(e.response?.data['message'] ?? 'Login failed'),
@@ -92,8 +94,9 @@ class ProfessionalAuthBloc
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('professional_access_token', token);
         await BiometricService().updateProSecureTokenIfEnabled(token);
-        
         emit(ProfessionalAuthAuthenticated(token));
+        // Re-register FCM token after biometric token refresh.
+        NotificationService.instance.sendTokenToApi(portal: Portal.professional);
       } else {
         emit(ProfessionalAuthError('Biometric login expired. Please log in manually.'));
       }

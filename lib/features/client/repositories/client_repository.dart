@@ -391,6 +391,60 @@ class ClientRepository {
     }
   }
 
+  Future<void> forgotPassword({
+    required String type,
+    String? email,
+    String? phone,
+  }) async {
+    try {
+      final Map<String, dynamic> data = {
+        'type': type,
+      };
+      if (type == 'email') {
+        data['email'] = email;
+      } else {
+        data['phone'] = phone;
+      }
+      final response = await _dio.post(
+        '/account/forgot-password',
+        data: data,
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to send reset code');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '/account/reset-password',
+        data: {
+          'token': token,
+          'new_password': newPassword,
+          'new_password_confirmation': confirmPassword,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Password reset failed');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
   List<dynamic> _extractListFromResponse(dynamic responseData) {
     if (responseData == null) return [];
 

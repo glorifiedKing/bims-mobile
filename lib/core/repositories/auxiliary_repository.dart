@@ -15,6 +15,8 @@ import '../models/auxiliary/building_purpose.dart';
 import '../models/auxiliary/land_tenures.dart';
 import '../models/auxiliary/application_type.dart';
 import '../models/auxiliary/building_operation.dart';
+import '../models/auxiliary/inspection_type.dart';
+import '../models/auxiliary/inspection_status.dart';
 
 class AuxiliaryRepository {
   final BcoApiClient bcoApiClient;
@@ -30,12 +32,12 @@ class AuxiliaryRepository {
 
   Box get _box => Hive.box(_boxName);
 
-  Future<void> syncAuxiliaryData() async {
+  Future<void> syncAuxiliaryData({bool forceSync = false}) async {
     try {
       final lastSyncStr = _box.get('last_sync_timestamp');
       bool shouldSync = true;
 
-      if (lastSyncStr != null) {
+      if (!forceSync && lastSyncStr != null) {
         final lastSyncDate = DateTime.parse(lastSyncStr);
         final difference = DateTime.now().difference(lastSyncDate);
         if (difference.inDays < 30) {
@@ -218,6 +220,40 @@ class AuxiliaryRepository {
         print('Error fetching building operations: $e');
       }
 
+      // 11. fetch inspection types
+      List<Map<String, dynamic>> finalInspectionTypes = [];
+      try {
+        final itResponse = await bcoApiClient.dio.get(
+          ApiConstants.inspectionTypes,
+        );
+        List<dynamic> itData = itResponse.data['data']?['data'] ?? [];
+        for (var itJson in itData) {
+          finalInspectionTypes.add({
+            'id': itJson['id'],
+            'name': itJson['name'],
+          });
+        }
+      } catch (e) {
+        print('Error fetching inspection types: $e');
+      }
+
+      // 12. fetch inpection statuses
+      List<Map<String, dynamic>> finalInspectionStatuses = [];
+      try {
+        final itResponse = await bcoApiClient.dio.get(
+          ApiConstants.inspectionStatuses,
+        );
+        List<dynamic> itData = itResponse.data['data']?['data'] ?? [];
+        for (var itJson in itData) {
+          finalInspectionStatuses.add({
+            'id': itJson['id'],
+            'name': itJson['name'],
+          });
+        }
+      } catch (e) {
+        print('Error fetching inspection statuses: $e');
+      }
+
       // Save to Hive
       await _box.put('admin_unit_types', jsonEncode(finalAdminUnitTypes));
       await _box.put('admin_units', jsonEncode(finalAdminUnits));
@@ -234,6 +270,11 @@ class AuxiliaryRepository {
       await _box.put(
         'building_operations',
         jsonEncode(finalBuildingOperations),
+      );
+      await _box.put('inspection_types', jsonEncode(finalInspectionTypes));
+      await _box.put(
+        'inspection_statuses',
+        jsonEncode(finalInspectionStatuses),
       );
       await _box.put('last_sync_timestamp', DateTime.now().toIso8601String());
 
@@ -397,6 +438,34 @@ class AuxiliaryRepository {
       final List<dynamic> decoded = jsonDecode(data);
       return decoded
           .map((e) => BuildingOperation.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<InspectionType> getInspectionTypes() {
+    final data = _box.get('inspection_types');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => InspectionType.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<InspectionStatus> getInspectionStatuses() {
+    final data = _box.get('inspection_statuses');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => InspectionStatus.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       return [];

@@ -17,11 +17,92 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../auth/bloc/bco_auth_bloc.dart';
 import '../../auth/bloc/bco_auth_state.dart';
 import '../../../core/repositories/auxiliary_repository.dart';
+import '../../../core/help/help_controller.dart';
+import '../../../core/help/help_step.dart';
+import '../../../core/help/help_tour_overlay.dart';
+import '../../../core/help/help_preferences.dart';
 
-class BcoInvoicesScreen extends StatelessWidget {
+class BcoInvoicesScreen extends StatefulWidget {
   final int initialIndex;
 
   const BcoInvoicesScreen({super.key, this.initialIndex = 0});
+
+  @override
+  State<BcoInvoicesScreen> createState() => _BcoInvoicesScreenState();
+}
+
+class _BcoInvoicesScreenState extends State<BcoInvoicesScreen> {
+  // ── Help tour ──
+  final _helpController = HelpController();
+  final _keyHeader      = GlobalKey();
+  final _keyTabs        = GlobalKey();
+  final _keyFilters     = GlobalKey();
+  final _keyBottomNav   = GlobalKey();
+
+  List<HelpStep> get _helpSteps => [
+    const HelpStep(
+      emoji: '🧳',
+      title: 'Invoices',
+      description:
+          'This screen shows all invoices linked to building permits. '
+          'Switch between tabs to view 1st Year Invoices, '
+          'Inspection Fees, and (if applicable) Express Penalty Invoices.',
+    ),
+    HelpStep(
+      emoji: '📌',
+      title: 'Invoice Tabs',
+      description:
+          'The green tab bar lets you switch between different invoice categories. '
+          'Tap a tab to see that category\'s invoices — each loads independently.',
+      targetKey: _keyTabs,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '🔍',
+      title: 'Search & Filters',
+      description:
+          'Use the search bar to find a specific invoice by PRN or reference. '
+          'Filter chips (ALL / PENDING / PAID) let you quickly focus on '
+          'unpaid or already-paid invoices.',
+      targetKey: _keyFilters,
+      cardPosition: HelpCardPosition.bottom,
+    ),
+    HelpStep(
+      emoji: '💳',
+      title: 'Invoice Cards',
+      description:
+          'Each card shows the PRN number, payment status, amount, and a '
+          'DOWNLOAD button to get the invoice or receipt PDF. '
+          'Tap the card itself to see full invoice details.',
+    ),
+    HelpStep(
+      emoji: '🧭',
+      title: 'Bottom Navigation',
+      description:
+          'Use the bar at the bottom to switch between Home, Applications, '
+          'Invoices, and your Profile at any time.',
+      targetKey: _keyBottomNav,
+      cardPosition: HelpCardPosition.top,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final seen = await HelpPreferences.hasSeenTour('tour_bco_invoices');
+      if (!seen && mounted) {
+        await HelpPreferences.markTourSeen('tour_bco_invoices');
+        _helpController.start(_helpSteps);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _helpController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,16 +124,19 @@ class BcoInvoicesScreen extends StatelessWidget {
       }
     }
 
-    return DefaultTabController(
-      length: hasExpressPenaltyInvoices ? 3 : 2,
-      initialIndex: initialIndex,
-      child: Scaffold(
-        backgroundColor: AppTheme.background,
-        body: Column(
-          children: [
-            // Internal BCO Header Details
-            Container(
-              padding: const EdgeInsets.only(
+    return HelpTourOverlay(
+      controller: _helpController,
+      child: DefaultTabController(
+        length: hasExpressPenaltyInvoices ? 3 : 2,
+        initialIndex: widget.initialIndex,
+        child: Scaffold(
+          backgroundColor: AppTheme.background,
+          body: Column(
+            children: [
+              // Internal BCO Header Details
+              Container(
+                key: _keyHeader,
+                padding: const EdgeInsets.only(
                 top: 60,
                 bottom: 20,
                 left: 25,
@@ -97,34 +181,45 @@ class BcoInvoicesScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
-                              Icons.receipt_long,
-                              size: 14,
-                              color: AppTheme.accentGold,
+                      // Help button + INVOICES pill
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          HelpIconButton(
+                            controller: _helpController,
+                            steps: _helpSteps,
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
                             ),
-                            SizedBox(width: 5),
-                            Text(
-                              'INVOICES',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(15),
                             ),
-                          ],
-                        ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.receipt_long,
+                                  size: 14,
+                                  color: AppTheme.accentGold,
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'INVOICES',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -148,68 +243,72 @@ class BcoInvoicesScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // The Original TabBar
-            Container(
-              color: AppTheme.primaryGreen,
-              child: TabBar(
-                isScrollable: hasExpressPenaltyInvoices,
-                indicatorColor: AppTheme.accentGold,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white54,
-                tabs: [
-                  const Tab(text: '1st Year Invoices'),
-                  const Tab(text: 'Inspection Fees'),
-                  if (hasExpressPenaltyInvoices)
-                    const Tab(text: 'Express Penalty Invoices'),
-                ],
+              // The Original TabBar
+              Container(
+                key: _keyTabs,
+                color: AppTheme.primaryGreen,
+                child: TabBar(
+                  isScrollable: hasExpressPenaltyInvoices,
+                  indicatorColor: AppTheme.accentGold,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white54,
+                  tabs: [
+                    const Tab(text: '1st Year Invoices'),
+                    const Tab(text: 'Inspection Fees'),
+                    if (hasExpressPenaltyInvoices)
+                      const Tab(text: 'Express Penalty Invoices'),
+                  ],
+                ),
               ),
-            ),
-            // The Original TabBarView
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _buildGeneralInvoicesView(context),
-                  _buildInspectionInvoicesView(context),
-                  if (hasExpressPenaltyInvoices)
-                    _buildExpressPenaltyInvoicesView(context),
-                ],
+              // The Original TabBarView
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildGeneralInvoicesView(context),
+                    _buildInspectionInvoicesView(context),
+                    if (hasExpressPenaltyInvoices)
+                      _buildExpressPenaltyInvoicesView(context),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: 2,
-          onTap: (index) {
-            if (index == 0) context.go('/bco/dashboard');
-            if (index == 1) context.go('/bco/applications');
-            if (index == 2) return;
-            if (index == 3) context.go('/bco/profile');
-          },
-          selectedItemColor: AppTheme.primaryGreen,
-          unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_turned_in),
-              label: 'Applications',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long),
-              label: 'Invoices',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          ],
-        ),
-      ),
-    );
+            ],
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            key: _keyBottomNav,
+            currentIndex: 2,
+            onTap: (index) {
+              if (index == 0) context.go('/bco/dashboard');
+              if (index == 1) context.go('/bco/applications');
+              if (index == 2) return;
+              if (index == 3) context.go('/bco/profile');
+            },
+            selectedItemColor: AppTheme.primaryGreen,
+            unselectedItemColor: Colors.grey,
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment_turned_in),
+                label: 'Applications',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.receipt_long),
+                label: 'Invoices',
+              ),
+              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            ],
+          ),
+        ),    // Scaffold
+      ),      // DefaultTabController
+    );        // HelpTourOverlay
   }
 
   Widget _buildGeneralInvoicesView(BuildContext context) {
     return Column(
       children: [
         Container(
+          key: _keyFilters,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           decoration: const BoxDecoration(
             color: Colors.white,
