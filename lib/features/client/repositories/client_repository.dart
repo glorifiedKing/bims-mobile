@@ -16,6 +16,43 @@ class ClientRepository {
 
   ClientRepository({required Dio dio}) : _dio = dio;
 
+  Future<bool> verifyAttachment(String code) async {
+    try {
+      final response = await _dio.post(
+        '${ApiConstants.clientBaseUrl}/applications/verify-attachment',
+        data: {'code': code},
+      );
+      if (response.statusCode == 200) {
+        return true;
+      }
+      return false;
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('Verification Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<bool> verifyDevelopmentPermit(String permitNumber) async {
+    try {
+      final response = await _dio.get(
+        '${ApiConstants.clientBaseUrl}/applications/verify-development-permit',
+        queryParameters: {'permitNumber': permitNumber},
+      );
+      if (response.statusCode == 200) {
+        return true;
+      }
+      return false;
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('Verification Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+
   Future<Map<String, dynamic>> getApplications({
     int page = 1,
     String? status,
@@ -397,18 +434,13 @@ class ClientRepository {
     String? phone,
   }) async {
     try {
-      final Map<String, dynamic> data = {
-        'type': type,
-      };
+      final Map<String, dynamic> data = {'type': type};
       if (type == 'email') {
         data['email'] = email;
       } else {
         data['phone'] = phone;
       }
-      final response = await _dio.post(
-        '/account/forgot-password',
-        data: data,
-      );
+      final response = await _dio.post('/account/forgot-password', data: data);
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('Failed to send reset code');
       }
@@ -442,6 +474,62 @@ class ClientRepository {
       throw Exception(msg);
     } catch (e) {
       throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getSubcounties(String districtId) async {
+    try {
+      final response = await _dio.get(
+        '/location/sub-counties?districtId=$districtId',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data['data']['data'] as List;
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getParishes(String subcountyId) async {
+    try {
+      final response = await _dio.get(
+        '/location/parishes?subcountyId=$subcountyId',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data['data']['data'] as List;
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getVillages(String parishId) async {
+    try {
+      final response = await _dio.get('/location/villages?parishId=$parishId');
+      if (response.statusCode == 200) {
+        final data = response.data['data']['data'] as List;
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRoads(String villageId) async {
+    try {
+      final response = await _dio.get('/location/roads?villageId=$villageId');
+      if (response.statusCode == 200) {
+        final data = response.data['data']['data'] as List;
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
     }
   }
 

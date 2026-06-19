@@ -14,6 +14,7 @@ import '../models/auxiliary/whistle_blower_category.dart';
 import '../models/auxiliary/building_purpose.dart';
 import '../models/auxiliary/land_tenures.dart';
 import '../models/auxiliary/application_type.dart';
+import '../models/auxiliary/form_type.dart';
 import '../models/auxiliary/building_operation.dart';
 import '../models/auxiliary/inspection_type.dart';
 import '../models/auxiliary/inspection_status.dart';
@@ -188,16 +189,35 @@ class AuxiliaryRepository {
 
       // 9. fetch application types
       List<Map<String, dynamic>> finalApplicationTypes = [];
+      List<Map<String, dynamic>> finalFormTypes = [];
       try {
         final appResponse = await clientApiClient.dio.get(
           ApiConstants.applicationTypes,
         );
         List<dynamic> appData = appResponse.data['data']?['data'] ?? [];
+
         for (var appJson in appData) {
+          final applicationTypeSlug = appJson['slug'];
+
           finalApplicationTypes.add({
             'id': appJson['id'],
             'name': appJson['name'],
+            'slug': appJson['slug'],
           });
+
+          // fetch formtypes for every application type
+
+          try {
+            final ftResponse = await clientApiClient.dio.get(
+              '${ApiConstants.formTypes}?slug=$applicationTypeSlug',
+            );
+            List<dynamic> ftData = ftResponse.data['data']?['data'] ?? [];
+            for (var ftJson in ftData) {
+              finalFormTypes.add({'id': ftJson['id'], 'name': ftJson['name'], 'application_type_slug': applicationTypeSlug});
+            }
+          } catch (e) {
+            print('Error fetching form types: $e');
+          }
         }
       } catch (e) {
         print('Error fetching application types: $e');
@@ -267,6 +287,7 @@ class AuxiliaryRepository {
       await _box.put('building_purposes', jsonEncode(finalBuildingPurposes));
       await _box.put('land_tenures', jsonEncode(finalLandTenures));
       await _box.put('application_types', jsonEncode(finalApplicationTypes));
+      await _box.put('form_types', jsonEncode(finalFormTypes));
       await _box.put(
         'building_operations',
         jsonEncode(finalBuildingOperations),
@@ -424,6 +445,37 @@ class AuxiliaryRepository {
       final List<dynamic> decoded = jsonDecode(data);
       return decoded
           .map((e) => ApplicationType.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<FormType> getFormTypes(String applicationSlug) {
+    final data = _box.get('form_types');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      final allFormTypes = decoded
+          .map((e) => FormType.fromJsonFull(e as Map<String, dynamic>))
+          .toList();
+      return allFormTypes
+          .where((ft) => ft.applicationTypeSlug == applicationSlug)
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<FormType> getAllFormTypes() {
+    final data = _box.get('form_types');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => FormType.fromJsonFull(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       return [];

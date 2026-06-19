@@ -15,10 +15,12 @@ class ProfessionalAttachmentsScreen extends StatefulWidget {
   const ProfessionalAttachmentsScreen({super.key});
 
   @override
-  State<ProfessionalAttachmentsScreen> createState() => _ProfessionalAttachmentsScreenState();
+  State<ProfessionalAttachmentsScreen> createState() =>
+      _ProfessionalAttachmentsScreenState();
 }
 
-class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsScreen> {
+class _ProfessionalAttachmentsScreenState
+    extends State<ProfessionalAttachmentsScreen> {
   final _scrollController = ScrollController();
   String _selectedStatus = 'ALL';
   String _selectedType = 'ALL';
@@ -33,17 +35,22 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
 
   void _loadData() {
     context.read<ProfessionalAttachmentsBloc>().add(
-          FetchProfessionalAttachments(
-            status: _selectedStatus == 'ALL' ? null : _selectedStatus,
-            type: _selectedType == 'ALL' ? null : _selectedType,
-          ),
-        );
-    context.read<ProfessionalAttachmentsBloc>().add(FetchProfessionalAttachmentTypes());
+      FetchProfessionalAttachments(
+        status: _selectedStatus == 'ALL' ? null : _selectedStatus,
+        type: _selectedType == 'ALL' ? null : _selectedType,
+      ),
+    );
+    context.read<ProfessionalAttachmentsBloc>().add(
+      FetchProfessionalAttachmentTypes(),
+    );
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      context.read<ProfessionalAttachmentsBloc>().add(LoadMoreProfessionalAttachments());
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<ProfessionalAttachmentsBloc>().add(
+        LoadMoreProfessionalAttachments(),
+      );
     }
   }
 
@@ -60,8 +67,6 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
     _scrollController.dispose();
     super.dispose();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -179,10 +184,25 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
                   child: DropdownButtonFormField<String>(
                     value: _selectedStatus,
                     items: const [
-                      DropdownMenuItem(value: 'ALL', child: Text('All Statuses', style: TextStyle(fontSize: 12))),
-                      DropdownMenuItem(value: 'UNLINKED', child: Text('UNLINKED', style: TextStyle(fontSize: 12))),
-                      DropdownMenuItem(value: 'LINKED', child: Text('LINKED', style: TextStyle(fontSize: 12))),
-                      DropdownMenuItem(value: 'REVOKED', child: Text('REVOKED', style: TextStyle(fontSize: 12))),
+                      DropdownMenuItem(
+                        value: 'ALL',
+                        child: Text(
+                          'All Statuses',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'UNLINKED',
+                        child: Text('UNLINKED', style: TextStyle(fontSize: 12)),
+                      ),
+                      DropdownMenuItem(
+                        value: 'LINKED',
+                        child: Text('LINKED', style: TextStyle(fontSize: 12)),
+                      ),
+                      DropdownMenuItem(
+                        value: 'REVOKED',
+                        child: Text('REVOKED', style: TextStyle(fontSize: 12)),
+                      ),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -193,14 +213,24 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
                       }
                     },
                     decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                       isDense: true,
                       labelText: 'Status',
-                      labelStyle: const TextStyle(fontSize: 12, color: Colors.grey),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      labelStyle: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.primaryGreen),
+                        borderSide: const BorderSide(
+                          color: AppTheme.primaryGreen,
+                        ),
                       ),
                     ),
                   ),
@@ -211,15 +241,23 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
                   child: DropdownButtonFormField<String>(
                     value: _selectedType,
                     items: [
-                      const DropdownMenuItem(value: 'ALL', child: Text('All Types', style: TextStyle(fontSize: 12))),
-                      ..._types.map((type) => DropdownMenuItem(
-                            value: type.title,
-                            child: Text(
-                              type.title,
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          )),
+                      const DropdownMenuItem(
+                        value: 'ALL',
+                        child: Text(
+                          'All Types',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      ..._types.map(
+                        (type) => DropdownMenuItem(
+                          value: type.title,
+                          child: Text(
+                            type.title,
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -230,14 +268,24 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
                       }
                     },
                     decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                       isDense: true,
                       labelText: 'Type',
-                      labelStyle: const TextStyle(fontSize: 12, color: Colors.grey),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      labelStyle: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.primaryGreen),
+                        borderSide: const BorderSide(
+                          color: AppTheme.primaryGreen,
+                        ),
                       ),
                     ),
                   ),
@@ -248,93 +296,124 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
 
           // List Area
           Expanded(
-            child: BlocListener<ProfessionalAttachmentsBloc, ProfessionalAttachmentsState>(
-              listener: (context, state) {
-                if (state is AttachmentTypesLoaded) {
-                  setState(() {
-                    _types = state.types;
-                    if (_selectedType != 'ALL' && !_types.any((t) => t.title == _selectedType)) {
-                      _selectedType = 'ALL';
-                    }
-                  });
-                }
-              },
-              child: BlocBuilder<ProfessionalAttachmentsBloc, ProfessionalAttachmentsState>(
-                buildWhen: (previous, current) =>
-                    current is ProfessionalAttachmentsLoading ||
-                    current is ProfessionalAttachmentsLoaded ||
-                    current is ProfessionalAttachmentsError,
-                builder: (context, state) {
-                  if (state is ProfessionalAttachmentsLoading) {
-                    return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
-                  }
-
-                  if (state is ProfessionalAttachmentsError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Error: ${state.message}', style: const TextStyle(color: Colors.red)),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadData,
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  if (state is ProfessionalAttachmentsLoaded) {
-                    final attachments = state.attachments;
-
-                    if (attachments.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.folder_open, size: 64, color: Colors.grey),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'No attachments found',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _selectedStatus != 'ALL' || _selectedType != 'ALL'
-                                  ? 'Try changing your filters'
-                                  : 'Upload your architectural or structural plans',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: attachments.length + (state.hasReachedMax ? 0 : 1),
-                      itemBuilder: (context, index) {
-                        if (index >= attachments.length) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(color: AppTheme.primaryGreen),
-                            ),
-                          );
+            child:
+                BlocListener<
+                  ProfessionalAttachmentsBloc,
+                  ProfessionalAttachmentsState
+                >(
+                  listener: (context, state) {
+                    if (state is AttachmentTypesLoaded) {
+                      setState(() {
+                        _types = state.types;
+                        if (_selectedType != 'ALL' &&
+                            !_types.any((t) => t.title == _selectedType)) {
+                          _selectedType = 'ALL';
                         }
+                      });
+                    }
+                  },
+                  child:
+                      BlocBuilder<
+                        ProfessionalAttachmentsBloc,
+                        ProfessionalAttachmentsState
+                      >(
+                        buildWhen: (previous, current) =>
+                            current is ProfessionalAttachmentsLoading ||
+                            current is ProfessionalAttachmentsLoaded ||
+                            current is ProfessionalAttachmentsError,
+                        builder: (context, state) {
+                          if (state is ProfessionalAttachmentsLoading) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.primaryGreen,
+                              ),
+                            );
+                          }
 
-                        final attachment = attachments[index];
-                        return _buildAttachmentCard(attachment);
-                      },
-                    );
-                  }
+                          if (state is ProfessionalAttachmentsError) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Error: ${state.message}',
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: _loadData,
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
 
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
+                          if (state is ProfessionalAttachmentsLoaded) {
+                            final attachments = state.attachments;
+
+                            if (attachments.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.folder_open,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'No attachments found',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _selectedStatus != 'ALL' ||
+                                              _selectedType != 'ALL'
+                                          ? 'Try changing your filters'
+                                          : 'Upload your architectural or structural plans',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.all(16),
+                              itemCount:
+                                  attachments.length +
+                                  (state.hasReachedMax ? 0 : 1),
+                              itemBuilder: (context, index) {
+                                if (index >= attachments.length) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: CircularProgressIndicator(
+                                        color: AppTheme.primaryGreen,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                final attachment = attachments[index];
+                                return _buildAttachmentCard(attachment);
+                              },
+                            );
+                          }
+
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                ),
           ),
         ],
       ),
@@ -352,7 +431,7 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) context.go('/professional/dashboard');
-          if (index == 1) context.go('/professional/applications');
+          if (index == 1) context.go('/professional/attachments');
           if (index == 2) context.go('/professional/profile');
         },
         selectedItemColor: AppTheme.primaryGreen,
@@ -367,7 +446,7 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment, size: 28),
-            label: 'Applications',
+            label: 'Documents',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person, size: 28),
@@ -433,7 +512,10 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -474,11 +556,20 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
                     if (isUnlinked) ...[
                       OutlinedButton.icon(
                         onPressed: () => _shareCode(attachment.code),
-                        icon: const Icon(Icons.share, size: 16, color: AppTheme.primaryGreen),
-                        label: const Text('Share Code', style: TextStyle(color: AppTheme.primaryGreen)),
+                        icon: const Icon(
+                          Icons.share,
+                          size: 16,
+                          color: AppTheme.primaryGreen,
+                        ),
+                        label: const Text(
+                          'Share Code',
+                          style: TextStyle(color: AppTheme.primaryGreen),
+                        ),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppTheme.primaryGreen),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -492,11 +583,20 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
                             _loadData();
                           }
                         },
-                        icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                        label: const Text('Edit', style: TextStyle(color: Colors.white)),
+                        icon: const Icon(
+                          Icons.edit,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.accentGold,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ],
@@ -518,7 +618,11 @@ class _ProfessionalAttachmentsScreenState extends State<ProfessionalAttachmentsS
           width: 90,
           child: Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Colors.grey,
+            ),
           ),
         ),
         Expanded(

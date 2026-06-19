@@ -43,6 +43,7 @@ class ApiConstants {
   static const String buildingPurposes = '/auxiliary/building-purposes';
   static const String landTenures = '/auxiliary/land-tenures';
   static const String applicationTypes = '/auxiliary/application-types';
+  static const String formTypes = '/auxiliary/form-types';
   static const String buildingOperations = '/auxiliary/building-operations';
   static const String inspections = '/inspections';
   static const String inspectionTypes = '/inspections/types';
