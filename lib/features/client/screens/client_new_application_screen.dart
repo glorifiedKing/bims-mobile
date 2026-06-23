@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart' as dio;
 import '../../../core/theme.dart';
 import '../../../core/repositories/auxiliary_repository.dart';
 import '../../../core/network/public_repository.dart';
@@ -166,8 +167,16 @@ class _ClientNewApplicationScreenState
   bool _isDevelopmentPermitVerified = false;
   bool _isVerifyingDevelopmentPermit = false;
 
+  // Appeal to previous decision State
+  final TextEditingController _appealReferenceCtrl = TextEditingController();
+  final TextEditingController _reasonForAppealCtrl = TextEditingController();
+  final TextEditingController _remedySoughtCtrl = TextEditingController();
+  String? _appealDocumentPath;
+  String? _appealBuildingClassificationId;
+
   String? _longitude;
   String? _latitude;
+  String? _districtId;
   String? _landTenureId;
   String? _buildingClassification;
 
@@ -332,11 +341,15 @@ class _ClientNewApplicationScreenState
     }
   }
 
-  Future<void> _pickFile(Function(String) onFilePicked) async {
+  Future<void> _pickFile(
+    Function(String) onFilePicked, {
+    FileType fileType = FileType.custom,
+    List<String>? allowedExtensions,
+  }) async {
     try {
       FilePickerResult? result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        type: fileType,
+        allowedExtensions: allowedExtensions ?? ['pdf', 'jpg', 'jpeg', 'png'],
       );
 
       if (result != null && result.files.single.path != null) {
@@ -386,6 +399,19 @@ class _ClientNewApplicationScreenState
   }
 
   void _nextStep() {
+    if (!(_formKey.currentState?.validate() ?? true)) {
+      return;
+    }
+
+    if (_isAppeal) {
+      if (_currentStep == 1) {
+        setState(() {
+          _currentStep = 6;
+        });
+        return;
+      }
+    }
+
     if (_currentStep < 6) {
       // If we added a form key, we could validate per step. For now, we proceed.
       setState(() {
@@ -397,6 +423,15 @@ class _ClientNewApplicationScreenState
   }
 
   void _previousStep() {
+    if (_isAppeal) {
+      if (_currentStep == 6) {
+        setState(() {
+          _currentStep = 1;
+        });
+        return;
+      }
+    }
+
     if (_currentStep > 1) {
       setState(() {
         _currentStep--;
@@ -404,12 +439,49 @@ class _ClientNewApplicationScreenState
     }
   }
 
-  void _submitApplication() {
+  Future<void> _submitApplication() async {
     if (!_confirmed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please confirm the information provided is accurate'),
         ),
+      );
+      return;
+    }
+
+    if (_isAppeal) {
+      final appealPayload = {
+        "application_type": _applicationTypes
+            .where((t) => t.id.toString() == _applicationTypeId)
+            .firstOrNull
+            ?.slug,
+        "reference": _appealReferenceCtrl.text.trim(),
+        "administrative_unit_type": int.tryParse(_adminUnitTypeId!) ?? -1,
+        "administrative_unit_id": int.tryParse(_adminUnitId!) ?? -1,
+        "districtId": _districtId, // Using the dedicated district dropdown
+        "subCountyId": _subcountyId,
+        "parishId": _parishId,
+        "villageId": _villageId,
+        "streetRoadId": _roadId,
+        "reasonForAppeal": _reasonForAppealCtrl.text.trim(),
+        "remedySought": _remedySoughtCtrl.text.trim(),
+        "right": -1,
+        "buildingClassification": _appealBuildingClassificationId,
+      };
+
+      final formData = dio.FormData.fromMap(appealPayload);
+
+      if (_appealDocumentPath != null) {
+        formData.files.add(
+          MapEntry(
+            'document',
+            await dio.MultipartFile.fromFile(_appealDocumentPath!),
+          ),
+        );
+      }
+
+      context.read<ClientNewApplicationBloc>().add(
+        SubmitAppealApplication(formData),
       );
       return;
     }
@@ -468,22 +540,13 @@ class _ClientNewApplicationScreenState
       "blockNumber": _blockNumberCtrl.text.trim(),
       "builtupArea": _builtupAreaCtrl.text.trim(),
       "buildingsArea": _buildingsArea.isNotEmpty ? _buildingsArea : null,
-      "waterSupply": _waterSupply,
-      "sewerConnection": _sewerConnection,
-      "electricitySupply": _electricitySupply,
-      "internetSupply": _internetSupply,
+      "accessibilityWaterSupply": _waterSupply,
+      "accessibilitySewerConnection": _sewerConnection,
+      "accessibilityElectricitySupply": _electricitySupply,
+      "accessibilityInternetSupply": _internetSupply,
       "nameOfLandSurveyor": _surveyorId,
-      // File paths (will require multi-part form update in backend/bloc later if actual files are expected)
-      "certificateTitleFile": _certificateOfTitlePath,
-      "powerAttorneyFile": _powerOfAttorneyPath,
-      "salesAgreementFile": _salesAgreementPath,
-      "letterAdministrationFile": _letterOfAdministrationPath,
-      "lcLetter": _lcLetterPath,
-      "sketchPlan": _sketchPlanPath,
-      "certificateNema": _certificateNemaPath,
-      "trafficImpactAssessment": _trafficImpactAssessmentPath,
-      "geoTechReport": _geoTechReportPath,
-      "oldPermit": _oldPermitPath,
+      "declaration": _confirmed ? 1 : 0,
+      // File paths are attached as multi-part forms below
       "boundaryOpeningReport":
           _verifiedProCodes['boundaryOpeningReport'] == true
           ? _boundaryOpeningReportCodeCtrl.text.trim()
@@ -532,12 +595,39 @@ class _ClientNewApplicationScreenState
       "permitSerial": _permitSerialCtrl.text.trim(),
     };
 
+    final formData = dio.FormData.fromMap(payload);
+
+    Future<void> addFileIfPresent(String key, String? path) async {
+      if (path != null && path.isNotEmpty) {
+        formData.files.add(
+          MapEntry(key, await dio.MultipartFile.fromFile(path)),
+        );
+      }
+    }
+
+    await addFileIfPresent('certificateTitleFile', _certificateOfTitlePath);
+    await addFileIfPresent('powerAttorneyFile', _powerOfAttorneyPath);
+    await addFileIfPresent('salesAgreementFile', _salesAgreementPath);
+    await addFileIfPresent(
+      'letterAdministrationFile',
+      _letterOfAdministrationPath,
+    );
+    await addFileIfPresent('lcLetter', _lcLetterPath);
+    await addFileIfPresent('sketchPlan', _sketchPlanPath);
+    await addFileIfPresent('certificateNema', _certificateNemaPath);
+    await addFileIfPresent(
+      'trafficImpactAssessment',
+      _trafficImpactAssessmentPath,
+    );
+    await addFileIfPresent('geoTechReport', _geoTechReportPath);
+    await addFileIfPresent('oldPermit', _oldPermitPath);
+
     if (widget.applicationKey != null) {
       context.read<ClientNewApplicationBloc>().add(
-        UpdateApplication(widget.applicationKey!, payload),
+        UpdateApplication(widget.applicationKey!, formData),
       );
     } else {
-      context.read<ClientNewApplicationBloc>().add(SubmitApplication(payload));
+      context.read<ClientNewApplicationBloc>().add(SubmitApplication(formData));
     }
   }
 
@@ -814,17 +904,31 @@ class _ClientNewApplicationScreenState
 
   bool get _isOccupationPermit {
     if (_applicationTypeId == null) return false;
-    final type = _applicationTypes
-        .where((a) => a.id.toString() == _applicationTypeId)
-        .firstOrNull;
-    return type?.name.toLowerCase().contains('occupation') ?? false;
+    final type = _applicationTypes.firstWhere(
+      (t) => t.id.toString() == _applicationTypeId,
+      orElse: () => ApplicationType(id: -1, name: '', slug: ''),
+    );
+    return type.name.toLowerCase().contains('occupation permit');
   }
+
+  bool get _isAppeal {
+    final type = _applicationTypes.firstWhere(
+      (t) => t.id.toString() == _applicationTypeId,
+      orElse: () => ApplicationType(id: -1, name: '', slug: ''),
+    );
+    return type.name.toLowerCase().contains('appeal to previous decision');
+  }
+
+  Future<void> _fetchDetails(String key) async {}
 
   Widget _buildStep1() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildStepHeader('STEP 1 OF 6', 'Application & Authority'),
+        _buildStepHeader(
+          _isAppeal ? 'STEP 1 OF 2' : 'STEP 1 OF 6',
+          'Application & Authority',
+        ),
         _buildLabel('APPLICATION TYPE'),
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
@@ -858,6 +962,13 @@ class _ClientNewApplicationScreenState
               }
             });
           },
+          validator: (val) {
+            if (val == null) {
+              return 'Please select application type';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
         if (_formTypes.isNotEmpty) ...[
           _buildLabel('FORM TYPE'),
@@ -882,7 +993,7 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select Type'),
-          value: _adminUnitTypeId,
+          initialValue: _adminUnitTypeId,
           items: _adminUnitTypes
               .map(
                 (u) => DropdownMenuItem(
@@ -892,12 +1003,19 @@ class _ClientNewApplicationScreenState
               )
               .toList(),
           onChanged: _onAdminUnitTypeSelected,
+          validator: (val) {
+            if (val == null) {
+              return 'Please select authority type';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
         _buildLabel('SELECT AUTHORITY'),
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select authority...'),
-          value: _adminUnitId,
+          initialValue: _adminUnitId,
           items: _adminUnits
               .map(
                 (a) => DropdownMenuItem(
@@ -909,6 +1027,9 @@ class _ClientNewApplicationScreenState
           onChanged: (val) {
             setState(() {
               _adminUnitId = val;
+              _districtId = _adminUnits
+                  .firstWhere((a) => a.id.toString() == val)
+                  .districtId;
               _subcountyId = null;
               _parishId = null;
               _villageId = null;
@@ -918,8 +1039,231 @@ class _ClientNewApplicationScreenState
               _villages = [];
               _roads = [];
             });
-            if (val != null) _fetchSubcounties(val);
+            if (_districtId != null) _fetchSubcounties(_districtId!);
           },
+          validator: (val) {
+            if (val == null) {
+              return 'Please select authority';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+        if (_isAppeal) ...[
+          const SizedBox(height: 15),
+          const Text(
+            'APPEAL DETAILS',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryGreen,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildAppealFields(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAppealFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('REFERENCE'),
+        TextFormField(
+          controller: _appealReferenceCtrl,
+          decoration: _inputDec().copyWith(hintText: 'Enter reference'),
+          validator: (val) {
+            if (val!.isEmpty) {
+              return 'Please enter reference';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+
+        _buildLabel('SUBCOUNTY'),
+        DropdownButtonFormField<String>(
+          decoration: _inputDec(),
+          hint: const Text('Select Subcounty'),
+          value: _subcountyId,
+          items: _subcounties
+              .map(
+                (s) => DropdownMenuItem(
+                  value: s['subcountyId'].toString(),
+                  child: Text(
+                    s['subCountyName'].toString(),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (val) {
+            setState(() {
+              _subcountyId = val;
+              _parishId = null;
+              _villageId = null;
+              _roadId = null;
+              _parishes = [];
+              _villages = [];
+              _roads = [];
+            });
+            if (val != null) _fetchParishes(val);
+          },
+          validator: (val) {
+            if (val == null) {
+              return 'Please select subcounty';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+
+        _buildLabel('PARISH'),
+        DropdownButtonFormField<String>(
+          decoration: _inputDec(),
+          hint: const Text('Select Parish'),
+          value: _parishId,
+          items: _parishes
+              .map(
+                (p) => DropdownMenuItem(
+                  value: p['parishId'].toString(),
+                  child: Text(
+                    p['parishName'].toString(),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (val) {
+            setState(() {
+              _parishId = val;
+              _villageId = null;
+              _roadId = null;
+              _villages = [];
+              _roads = [];
+            });
+            if (val != null) _fetchVillages(val);
+          },
+          validator: (val) {
+            if (val == null) {
+              return 'Please select parish';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+
+        _buildLabel('VILLAGE'),
+        DropdownButtonFormField<String>(
+          decoration: _inputDec(),
+          hint: const Text('Select Village'),
+          value: _villageId,
+          validator: (value) => value == null ? 'Please select village' : null,
+          items: _villages
+              .map(
+                (v) => DropdownMenuItem(
+                  value: v['villageId'].toString(),
+                  child: Text(
+                    v['villageName'].toString(),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (val) {
+            setState(() {
+              _villageId = val;
+              _roadId = null;
+              _roads = [];
+            });
+            if (val != null) _fetchRoads(val);
+          },
+        ),
+
+        _buildLabel('ROAD'),
+        DropdownButtonFormField<String>(
+          decoration: _inputDec(),
+          hint: const Text('Select Road'),
+          value: _roadId,
+          validator: (value) => value == null ? 'Please select road' : null,
+          items: _roads
+              .map(
+                (r) => DropdownMenuItem(
+                  value: r['roadId'].toString(),
+                  child: Text(
+                    r['streetName'].toString(),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (val) {
+            setState(() {
+              _roadId = val;
+            });
+          },
+        ),
+
+        _buildLabel('REASON FOR APPEAL'),
+        TextFormField(
+          controller: _reasonForAppealCtrl,
+          maxLines: 3,
+          decoration: _inputDec().copyWith(
+            hintText: 'e.g. GCC Denied us our permit',
+          ),
+          validator: (val) {
+            if (val!.isEmpty) {
+              return 'Please enter reason for appeal';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+        _buildLabel('REMEDY SOUGHT'),
+        TextFormField(
+          controller: _remedySoughtCtrl,
+          maxLines: 3,
+          decoration: _inputDec().copyWith(hintText: 'e.g. re issue permit'),
+          validator: (val) {
+            if (val!.isEmpty) {
+              return 'Please enter remedy sought';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+        _buildLabel('BUILDING CLASSIFICATION'),
+        DropdownButtonFormField<String>(
+          decoration: _inputDec(),
+          hint: const Text('Select classification...'),
+          value: _appealBuildingClassificationId,
+          items: _buildingClassifications
+              .map(
+                (b) => DropdownMenuItem(
+                  value: b.id.toString(),
+                  child: Text(b.name, style: const TextStyle(fontSize: 13)),
+                ),
+              )
+              .toList(),
+          onChanged: (val) {
+            setState(() => _appealBuildingClassificationId = val);
+          },
+          validator: (val) {
+            if (val == null) {
+              return 'Please select building classification';
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+        _buildLabel('DOCUMENT (PDF)'),
+        _buildFilePickerRow(
+          'Document',
+          _appealDocumentPath,
+          (p) => setState(() => _appealDocumentPath = p),
+          fileType: FileType.custom,
+          allowedExtensions: ['pdf'],
         ),
       ],
     );
@@ -1029,8 +1373,10 @@ class _ClientNewApplicationScreenState
   Widget _buildFilePickerRow(
     String title,
     String? path,
-    Function(String) onPicked,
-  ) {
+    Function(String) onPicked, {
+    FileType fileType = FileType.custom,
+    List<String>? allowedExtensions,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
@@ -1045,7 +1391,11 @@ class _ClientNewApplicationScreenState
             ),
           ),
           ElevatedButton(
-            onPressed: () => _pickFile(onPicked),
+            onPressed: () => _pickFile(
+              onPicked,
+              fileType: fileType,
+              allowedExtensions: allowedExtensions,
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentGold,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
@@ -1068,7 +1418,16 @@ class _ClientNewApplicationScreenState
             Expanded(
               child: TextFormField(
                 controller: _developmentPermitCtrl,
-                decoration: _inputDec().copyWith(hintText: 'Enter permit number'),
+                decoration: _inputDec().copyWith(
+                  hintText: 'Enter permit number',
+                ),
+                validator: (val) {
+                  if (val == null) {
+                    return 'Please enter permit number';
+                  }
+                  return null;
+                },
+                autovalidateMode: AutovalidateMode.onUserInteraction,
               ),
             ),
             const SizedBox(width: 8),
@@ -1132,240 +1491,256 @@ class _ClientNewApplicationScreenState
           ],
         ),
         if (!_isDevelopmentPermitVerified) ...[
-        _buildLabel('PPC MINUTE NUMBER'),
-        TextFormField(
-          controller: _ppcMinuteNumberCtrl,
-          decoration: _inputDec().copyWith(hintText: 'e.g PPC-MIN-1234'),
-        ),
-        _buildLabel('DATE OF PPC MEETING'),
-        TextFormField(
-          controller: _ppcDateCtrl,
-          readOnly: true,
-          decoration: _inputDec().copyWith(
-            hintText: 'e.g 06/15/2026',
-            suffixIcon: const Icon(Icons.calendar_today, size: 16),
+          _buildLabel('PPC MINUTE NUMBER'),
+          TextFormField(
+            controller: _ppcMinuteNumberCtrl,
+            decoration: _inputDec().copyWith(hintText: 'e.g PPC-MIN-1234'),
           ),
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-            );
-            if (date != null) {
+          _buildLabel('DATE OF PPC MEETING'),
+          TextFormField(
+            controller: _ppcDateCtrl,
+            readOnly: true,
+            decoration: _inputDec().copyWith(
+              hintText: 'e.g 06/15/2026',
+              suffixIcon: const Icon(Icons.calendar_today, size: 16),
+            ),
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (date != null) {
+                setState(() {
+                  _ppcDateCtrl.text =
+                      "\${date.month.toString().padLeft(2, '0')}/\${date.day.toString().padLeft(2, '0')}/\${date.year}";
+                });
+              }
+            },
+          ),
+          _buildLabel('APPLICANT NAME'),
+          TextFormField(
+            controller: _ppcApplicantNameCtrl,
+            decoration: _inputDec().copyWith(hintText: 'e.g John Doe'),
+          ),
+          _buildLabel('APPROVED LAND-USE'),
+          DropdownButtonFormField<String>(
+            decoration: _inputDec(),
+            hint: const Text('Select land-use'),
+            value: _ppcApprovedLandUse,
+            items: const [
+              DropdownMenuItem(
+                value: 'Residential',
+                child: Text('Residential'),
+              ),
+              DropdownMenuItem(value: 'Commercial', child: Text('Commercial')),
+              DropdownMenuItem(
+                value: 'Institutional',
+                child: Text('Institutional'),
+              ),
+              DropdownMenuItem(value: 'Industrial', child: Text('Industrial')),
+              DropdownMenuItem(
+                value: 'Recreational',
+                child: Text('Recreational'),
+              ),
+              DropdownMenuItem(value: 'Mixed use', child: Text('Mixed use')),
+              DropdownMenuItem(value: 'Other', child: Text('Other')),
+            ],
+            onChanged: (val) {
+              setState(() => _ppcApprovedLandUse = val);
+            },
+          ),
+          _buildLabel('NUMBER OF LEVELS'),
+          TextFormField(
+            controller: _ppcNumLevelsCtrl,
+            keyboardType: TextInputType.number,
+            decoration: _inputDec().copyWith(hintText: 'e.g 1'),
+            validator: (val) {
+              if (val == null || val.isEmpty) {
+                return 'Please enter the number of levels';
+              }
+              if (int.parse(val) > 60) {
+                return 'Number of levels cannot exceed 60';
+              }
+              return null;
+            },
+          ),
+          _buildLabel('NUMBER OF BLOCKS'),
+          TextFormField(
+            controller: _ppcNumBlocksCtrl,
+            keyboardType: TextInputType.number,
+            decoration: _inputDec().copyWith(hintText: 'e.g 1'),
+          ),
+          _buildLabel('PHYSICAL PLANNER (CONSULTANT)'),
+          TextFormField(
+            controller: _ppcPhysicalPlannerCtrl,
+            decoration: _inputDec().copyWith(hintText: 'e.g Jane Doe'),
+          ),
+
+          _buildLabel('SUBCOUNTY'),
+          DropdownButtonFormField<String>(
+            decoration: _inputDec(),
+            hint: const Text('Select Subcounty'),
+            value: _subcountyId,
+            items: _subcounties
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s['subcountyId'].toString(),
+                    child: Text(
+                      s['subCountyName'].toString(),
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: (val) {
               setState(() {
-                _ppcDateCtrl.text =
-                    "\${date.month.toString().padLeft(2, '0')}/\${date.day.toString().padLeft(2, '0')}/\${date.year}";
+                _subcountyId = val;
+                _parishId = null;
+                _villageId = null;
+                _roadId = null;
+                _parishes = [];
+                _villages = [];
+                _roads = [];
               });
-            }
-          },
-        ),
-        _buildLabel('APPLICANT NAME'),
-        TextFormField(
-          controller: _ppcApplicantNameCtrl,
-          decoration: _inputDec().copyWith(hintText: 'e.g John Doe'),
-        ),
-        _buildLabel('APPROVED LAND-USE'),
-        DropdownButtonFormField<String>(
-          decoration: _inputDec(),
-          hint: const Text('Select land-use'),
-          value: _ppcApprovedLandUse,
-          items: const [
-            DropdownMenuItem(value: 'Residential', child: Text('Residential')),
-            DropdownMenuItem(value: 'Commercial', child: Text('Commercial')),
-            DropdownMenuItem(
-              value: 'Institutional',
-              child: Text('Institutional'),
-            ),
-            DropdownMenuItem(value: 'Industrial', child: Text('Industrial')),
-            DropdownMenuItem(
-              value: 'Recreational',
-              child: Text('Recreational'),
-            ),
-            DropdownMenuItem(value: 'Mixed use', child: Text('Mixed use')),
-            DropdownMenuItem(value: 'Other', child: Text('Other')),
-          ],
-          onChanged: (val) {
-            setState(() => _ppcApprovedLandUse = val);
-          },
-        ),
-        _buildLabel('NUMBER OF LEVELS'),
-        TextFormField(
-          controller: _ppcNumLevelsCtrl,
-          keyboardType: TextInputType.number,
-          decoration: _inputDec().copyWith(hintText: 'e.g 1'),
-        ),
-        _buildLabel('NUMBER OF BLOCKS'),
-        TextFormField(
-          controller: _ppcNumBlocksCtrl,
-          keyboardType: TextInputType.number,
-          decoration: _inputDec().copyWith(hintText: 'e.g 1'),
-        ),
-        _buildLabel('PHYSICAL PLANNER (CONSULTANT)'),
-        TextFormField(
-          controller: _ppcPhysicalPlannerCtrl,
-          decoration: _inputDec().copyWith(hintText: 'e.g Jane Doe'),
-        ),
-        _buildLabel('SUBCOUNTY'),
-        DropdownButtonFormField<String>(
-          decoration: _inputDec(),
-          hint: const Text('Select Subcounty'),
-          value: _subcountyId,
-          items: _subcounties
-              .map(
-                (s) => DropdownMenuItem(
-                  value: s['subcountyId'].toString(),
-                  child: Text(
-                    s['subCountyName'].toString(),
-                    style: const TextStyle(fontSize: 13),
+              if (val != null) _fetchParishes(val);
+            },
+          ),
+
+          _buildLabel('PARISH'),
+          DropdownButtonFormField<String>(
+            decoration: _inputDec(),
+            hint: const Text('Select Parish'),
+            value: _parishId,
+            items: _parishes
+                .map(
+                  (p) => DropdownMenuItem(
+                    value: p['parishId'].toString(),
+                    child: Text(
+                      p['parishName'].toString(),
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (val) {
-            setState(() {
-              _subcountyId = val;
-              _parishId = null;
-              _villageId = null;
-              _roadId = null;
-              _parishes = [];
-              _villages = [];
-              _roads = [];
-            });
-            if (val != null) _fetchParishes(val);
-          },
-        ),
+                )
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _parishId = val;
+                _villageId = null;
+                _roadId = null;
+                _villages = [];
+                _roads = [];
+              });
+              if (val != null) _fetchVillages(val);
+            },
+          ),
 
-        _buildLabel('PARISH'),
-        DropdownButtonFormField<String>(
-          decoration: _inputDec(),
-          hint: const Text('Select Parish'),
-          value: _parishId,
-          items: _parishes
-              .map(
-                (p) => DropdownMenuItem(
-                  value: p['parishId'].toString(),
-                  child: Text(
-                    p['parishName'].toString(),
-                    style: const TextStyle(fontSize: 13),
+          _buildLabel('VILLAGE'),
+          DropdownButtonFormField<String>(
+            decoration: _inputDec(),
+            hint: const Text('Select Village'),
+            value: _villageId,
+            validator: (value) =>
+                value == null ? 'Please select village' : null,
+            items: _villages
+                .map(
+                  (v) => DropdownMenuItem(
+                    value: v['villageId'].toString(),
+                    child: Text(
+                      v['villageName'].toString(),
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (val) {
-            setState(() {
-              _parishId = val;
-              _villageId = null;
-              _roadId = null;
-              _villages = [];
-              _roads = [];
-            });
-            if (val != null) _fetchVillages(val);
-          },
-        ),
+                )
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _villageId = val;
+                _roadId = null;
+                _roads = [];
+              });
+              if (val != null) _fetchRoads(val);
+            },
+          ),
 
-        _buildLabel('VILLAGE'),
-        DropdownButtonFormField<String>(
-          decoration: _inputDec(),
-          hint: const Text('Select Village'),
-          value: _villageId,
-          items: _villages
-              .map(
-                (v) => DropdownMenuItem(
-                  value: v['villageId'].toString(),
-                  child: Text(
-                    v['villageName'].toString(),
-                    style: const TextStyle(fontSize: 13),
+          _buildLabel('ROAD'),
+          DropdownButtonFormField<String>(
+            decoration: _inputDec(),
+            hint: const Text('Select Road'),
+            value: _roadId,
+            validator: (value) => value == null ? 'Please select road' : null,
+            items: _roads
+                .map(
+                  (r) => DropdownMenuItem(
+                    value: r['roadId'].toString(),
+                    child: Text(
+                      r['streetName'].toString(),
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (val) {
-            setState(() {
-              _villageId = val;
-              _roadId = null;
-              _roads = [];
-            });
-            if (val != null) _fetchRoads(val);
-          },
-        ),
+                )
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _roadId = val;
+              });
+            },
+          ),
+          const SizedBox(height: 15),
+          // const Text(
+          //   'Proof of Land ownership',
+          //   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          // ),
+          // _buildLabel('CERTIFICATE OF TITLE'),
+          // _buildFilePickerRow(
+          //   'Certificate of Title',
+          //   _certificateOfTitlePath,
+          //   (path) => setState(() => _certificateOfTitlePath = path),
+          // ),
+          // _buildLabel('POWER OF ATTORNEY'),
+          // _buildFilePickerRow(
+          //   'Power of Attorney',
+          //   _powerOfAttorneyPath,
+          //   (path) => setState(() => _powerOfAttorneyPath = path),
+          // ),
+          // _buildLabel('SALES AGREEMENT'),
+          // _buildFilePickerRow(
+          //   'Sales Agreement',
+          //   _salesAgreementPath,
+          //   (path) => setState(() => _salesAgreementPath = path),
+          // ),
+          // _buildLabel('LETTER OF ADMINISTRATION'),
+          // _buildFilePickerRow(
+          //   'Letter of Administration',
+          //   _letterOfAdministrationPath,
+          //   (path) => setState(() => _letterOfAdministrationPath = path),
+          // ),
 
-        _buildLabel('ROAD'),
-        DropdownButtonFormField<String>(
-          decoration: _inputDec(),
-          hint: const Text('Select Road'),
-          value: _roadId,
-          items: _roads
-              .map(
-                (r) => DropdownMenuItem(
-                  value: r['roadId'].toString(),
-                  child: Text(
-                    r['streetName'].toString(),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (val) {
-            setState(() {
-              _roadId = val;
-            });
-          },
-        ),
-        const SizedBox(height: 15),
-        // const Text(
-        //   'Proof of Land ownership',
-        //   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-        // ),
-        // _buildLabel('CERTIFICATE OF TITLE'),
-        // _buildFilePickerRow(
-        //   'Certificate of Title',
-        //   _certificateOfTitlePath,
-        //   (path) => setState(() => _certificateOfTitlePath = path),
-        // ),
-        // _buildLabel('POWER OF ATTORNEY'),
-        // _buildFilePickerRow(
-        //   'Power of Attorney',
-        //   _powerOfAttorneyPath,
-        //   (path) => setState(() => _powerOfAttorneyPath = path),
-        // ),
-        // _buildLabel('SALES AGREEMENT'),
-        // _buildFilePickerRow(
-        //   'Sales Agreement',
-        //   _salesAgreementPath,
-        //   (path) => setState(() => _salesAgreementPath = path),
-        // ),
-        // _buildLabel('LETTER OF ADMINISTRATION'),
-        // _buildFilePickerRow(
-        //   'Letter of Administration',
-        //   _letterOfAdministrationPath,
-        //   (path) => setState(() => _letterOfAdministrationPath = path),
-        // ),
+          // const SizedBox(height: 15),
+          // _buildLabel('BOUNDARY OPENING REPORT'),
+          // _buildFilePickerRow(
+          //   'Boundary Opening Report',
+          //   _boundaryOpeningReportPath,
+          //   (path) => setState(() => _boundaryOpeningReportPath = path),
+          // ),
 
-        // const SizedBox(height: 15),
-        // _buildLabel('BOUNDARY OPENING REPORT'),
-        // _buildFilePickerRow(
-        //   'Boundary Opening Report',
-        //   _boundaryOpeningReportPath,
-        //   (path) => setState(() => _boundaryOpeningReportPath = path),
-        // ),
-
-        // _buildLabel('REGISTERED LAND SURVEYOR'),
-        // // Hardcoded dummy dropdown for now, since we haven't mapped the API for surveyors
-        // DropdownButtonFormField<String>(
-        //   decoration: _inputDec(),
-        //   hint: const Text('Select Surveyor'),
-        //   value: _surveyorId,
-        //   items: const [
-        //     DropdownMenuItem(value: '1', child: Text('Timothy Mutabaazi')),
-        //     DropdownMenuItem(value: '2', child: Text('John Doe')),
-        //   ],
-        //   onChanged: (val) {
-        //     setState(() => _surveyorId = val);
-        //   },
-        // ),
-        // ),
-        ]
+          // _buildLabel('REGISTERED LAND SURVEYOR'),
+          // // Hardcoded dummy dropdown for now, since we haven't mapped the API for surveyors
+          // DropdownButtonFormField<String>(
+          //   decoration: _inputDec(),
+          //   hint: const Text('Select Surveyor'),
+          //   value: _surveyorId,
+          //   items: const [
+          //     DropdownMenuItem(value: '1', child: Text('Timothy Mutabaazi')),
+          //     DropdownMenuItem(value: '2', child: Text('John Doe')),
+          //   ],
+          //   onChanged: (val) {
+          //     setState(() => _surveyorId = val);
+          //   },
+          // ),
+          // ),
+        ],
       ],
     );
   }
@@ -2008,10 +2383,29 @@ class _ClientNewApplicationScreenState
               ),
               const SizedBox(height: 15),
               _buildSummaryRow(
-                'Application Type ID',
-                _applicationTypeId ?? 'N/A',
+                'Application Type',
+                _applicationTypes
+                        .where((t) => t.id.toString() == _applicationTypeId)
+                        .firstOrNull
+                        ?.name ??
+                    'N/A',
               ),
-              _buildSummaryRow('Authority ID', _adminUnitId ?? 'N/A'),
+              _buildSummaryRow(
+                'Authority Type',
+                _adminUnitTypes
+                        .where((t) => t.id.toString() == _adminUnitTypeId)
+                        .firstOrNull
+                        ?.name ??
+                    'N/A',
+              ),
+              _buildSummaryRow(
+                'Authority',
+                _adminUnits
+                        .where((a) => a.id.toString() == _adminUnitId)
+                        .firstOrNull
+                        ?.name ??
+                    'N/A',
+              ),
               _buildSummaryRow('Contact Person', _contactPersonCtrl.text),
               _buildSummaryRow('Contact Mobile', _contactMobileCtrl.text),
               _buildSummaryRow('Location', _locationCtrl.text),

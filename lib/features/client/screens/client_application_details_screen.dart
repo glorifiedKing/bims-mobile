@@ -43,226 +43,238 @@ class _ClientApplicationDetailsScreenState
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
-      body:
-          BlocConsumer<
-            ClientApplicationDetailsBloc,
-            ClientApplicationDetailsState
-          >(
-            listener: (context, state) {
-              if (state is ClientApplicationDetailsLoaded) {
-                if (state.downloadPdfPath != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Download complete. Opening file...'),
+      body: BlocConsumer<ClientApplicationDetailsBloc, ClientApplicationDetailsState>(
+        listener: (context, state) {
+          if (state is ClientApplicationDetailsLoaded) {
+            if (state.downloadPdfPath != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Download complete. Opening file...'),
+                ),
+              );
+              OpenFilex.open(state.downloadPdfPath!);
+            } else if (state.downloadPdfError != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Download failed: ${state.downloadPdfError}'),
+                  backgroundColor: AppTheme.danger,
+                ),
+              );
+            }
+          }
+        },
+        builder: (context, state) {
+          if (state is ClientApplicationDetailsLoading ||
+              state is ClientApplicationDetailsInitial) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is ClientApplicationDetailsError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 50,
                     ),
-                  );
-                  OpenFilex.open(state.downloadPdfPath!);
-                } else if (state.downloadPdfError != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Download failed: ${state.downloadPdfError}',
+                    const SizedBox(height: 10),
+                    Text(
+                      'Error: ${state.message}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<ClientApplicationDetailsBloc>().add(
+                          FetchClientApplicationDetails(widget.applicationKey),
+                        );
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } else if (state is ClientApplicationDetailsLoaded) {
+            final details = state.application;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: state.isDownloadingPdf
+                              ? null
+                              : () {
+                                  context
+                                      .read<ClientApplicationDetailsBloc>()
+                                      .add(
+                                        DownloadClientApplicationPdf(
+                                          details.applicationKey,
+                                        ),
+                                      );
+                                },
+                          icon: state.isDownloadingPdf
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.download, size: 20),
+                          label: Text(
+                            state.isDownloadingPdf
+                                ? 'DOWNLOADING...'
+                                : 'DOWNLOAD PDF',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
                       ),
-                      backgroundColor: AppTheme.danger,
-                    ),
-                  );
-                }
-              }
-            },
-            builder: (context, state) {
-              if (state is ClientApplicationDetailsLoading ||
-                  state is ClientApplicationDetailsInitial) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is ClientApplicationDetailsError) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 50,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Error: ${state.message}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<ClientApplicationDetailsBloc>().add(
-                              FetchClientApplicationDetails(
-                                widget.applicationKey,
+                      if (details.paymentStatus.toUpperCase() != 'PAID') ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              context.push(
+                                '/client/edit-application/${details.applicationKey}',
+                              );
+                            },
+                            icon: const Icon(Icons.edit, size: 20),
+                            label: const Text('EDIT'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentGold,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                            );
-                          },
-                          child: const Text('Retry'),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              context.push(
+                                '/client/assess-pay/${details.applicationKey}',
+                              );
+                            },
+                            icon: const Icon(Icons.payment, size: 20),
+                            label: const Text('PAY'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
-                );
-              } else if (state is ClientApplicationDetailsLoaded) {
-                final details = state.application;
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  const SizedBox(height: 15),
+                  _buildSectionCard(
+                    title: 'General Information',
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: state.isDownloadingPdf
-                                  ? null
-                                  : () {
-                                      context
-                                          .read<ClientApplicationDetailsBloc>()
-                                          .add(
-                                            DownloadClientApplicationPdf(
-                                              details.applicationKey,
-                                            ),
-                                          );
-                                    },
-                              icon: state.isDownloadingPdf
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.download, size: 20),
-                              label: Text(
-                                state.isDownloadingPdf
-                                    ? 'DOWNLOADING...'
-                                    : 'DOWNLOAD PDF',
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryGreen,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 15),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (details.status?.toUpperCase() != 'PAID') ...[
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  context.push('/client/edit-application/${details.applicationKey}');
-                                },
-                                icon: const Icon(Icons.edit, size: 20),
-                                label: const Text('EDIT'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.accentGold,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                      _buildDetailRow('Tracking No', details.applicationKey),
+                      _buildDetailRow('Type', details.applicationType),
+                      _buildDetailRow(
+                        'Classification',
+                        details.buildingClassification,
                       ),
-                      const SizedBox(height: 15),
-                      _buildSectionCard(
-                        title: 'General Information',
-                        children: [
-                          _buildDetailRow(
-                            'Tracking No',
-                            details.applicationKey,
-                          ),
-                          _buildDetailRow('Type', details.applicationType),
-                          _buildDetailRow(
-                            'Classification',
-                            details.buildingClassification,
-                          ),
-                          _buildDetailRow(
-                            'Operation',
-                            details.buildingOperation,
-                          ),
-                          _buildDetailRow('Purpose', details.buildingPurpose),
-                          _buildDetailRow(
-                            'Admin Unit Type',
-                            details.administrativeUnitType,
-                          ),
-                          _buildDetailRow(
-                            'Location',
-                            details.administrativeUnitName,
-                          ),
-                          _buildDetailRow(
-                            'Area (sqm)',
-                            details.totalSquareMetres.toString(),
-                          ),
-                          _buildDetailRow('Created', details.created),
-                          _buildDetailRow('Updated', details.updated),
-                        ],
+                      _buildDetailRow('Operation', details.buildingOperation),
+                      _buildDetailRow('Purpose', details.buildingPurpose),
+                      _buildDetailRow(
+                        'Admin Unit Type',
+                        details.administrativeUnitType,
                       ),
-                      const SizedBox(height: 15),
-                      _buildSectionCard(
-                        title: 'Applicant Details',
-                        children: [
-                          _buildDetailRow('Name', details.applicant.name),
-                          _buildDetailRow('Phone', details.applicant.phone),
-                          _buildDetailRow('Email', details.applicant.email),
-                          _buildDetailRow(
-                            'TIN',
-                            details.applicant.tin.isEmpty
-                                ? 'N/A'
-                                : details.applicant.tin,
-                          ),
-                          _buildDetailRow(
-                            'NIN',
-                            details.applicant.nin.isEmpty
-                                ? 'N/A'
-                                : details.applicant.nin,
-                          ),
-                        ],
+                      _buildDetailRow(
+                        'Location',
+                        details.administrativeUnitName,
                       ),
-                      const SizedBox(height: 15),
-                      _buildSectionCard(
-                        title: 'Engaged Professionals',
-                        children: [
-                          if (details.professionalsEngaged.architect != null)
-                            ..._buildProfessionalDetails(
-                              'Architect',
-                              details.professionalsEngaged.architect!,
-                            ),
-                          if (details.professionalsEngaged.quantitySurveyor !=
-                              null)
-                            ..._buildProfessionalDetails(
-                              'Quantity Surveyor',
-                              details.professionalsEngaged.quantitySurveyor!,
-                            ),
-                          // Add other professionals as needed from lists
-                        ],
+                      _buildDetailRow(
+                        'Area (sqm)',
+                        details.totalSquareMetres.toString(),
+                      ),
+                      _buildDetailRow('Created', details.created),
+                      _buildDetailRow('Updated', details.updated),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  _buildSectionCard(
+                    title: 'Applicant Details',
+                    children: [
+                      _buildDetailRow('Name', details.applicant.name),
+                      _buildDetailRow('Phone', details.applicant.phone),
+                      _buildDetailRow('Email', details.applicant.email),
+                      _buildDetailRow(
+                        'TIN',
+                        details.applicant.tin.isEmpty
+                            ? 'N/A'
+                            : details.applicant.tin,
+                      ),
+                      _buildDetailRow(
+                        'NIN',
+                        details.applicant.nin.isEmpty
+                            ? 'N/A'
+                            : details.applicant.nin,
                       ),
                     ],
                   ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+                  const SizedBox(height: 15),
+                  _buildSectionCard(
+                    title: 'Engaged Professionals',
+                    children: [
+                      if (details.professionalsEngaged.architect != null)
+                        ..._buildProfessionalDetails(
+                          'Architect',
+                          details.professionalsEngaged.architect!,
+                        ),
+                      if (details.professionalsEngaged.quantitySurveyor != null)
+                        ..._buildProfessionalDetails(
+                          'Quantity Surveyor',
+                          details.professionalsEngaged.quantitySurveyor!,
+                        ),
+                      // Add other professionals as needed from lists
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 

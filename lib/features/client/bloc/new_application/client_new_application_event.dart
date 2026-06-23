@@ -8,7 +8,7 @@ abstract class ClientNewApplicationEvent extends Equatable {
 }
 
 class SubmitApplication extends ClientNewApplicationEvent {
-  final Map<String, dynamic> data;
+  final dynamic data;
 
   const SubmitApplication(this.data);
 
@@ -18,10 +18,19 @@ class SubmitApplication extends ClientNewApplicationEvent {
 
 class UpdateApplication extends ClientNewApplicationEvent {
   final String id;
-  final Map<String, dynamic> data;
+  final dynamic data;
 
   const UpdateApplication(this.id, this.data);
 
   @override
   List<Object?> get props => [id, data];
+}
+
+class SubmitAppealApplication extends ClientNewApplicationEvent {
+  final dynamic data; // dynamic to support FormData
+
+  const SubmitAppealApplication(this.data);
+
+  @override
+  List<Object?> get props => [data];
 }

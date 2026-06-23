@@ -18,6 +18,7 @@ class ApplicationDetailModel {
   final String updated;
   final String? expires;
   final String? status;
+  final String paymentStatus;
   final Applicant applicant;
   final ProfessionalsEngaged professionalsEngaged;
   final List<dynamic>
@@ -43,6 +44,7 @@ class ApplicationDetailModel {
     required this.updated,
     this.expires,
     this.status,
+    required this.paymentStatus,
     required this.applicant,
     required this.professionalsEngaged,
     required this.auditTrail,
@@ -69,6 +71,7 @@ class ApplicationDetailModel {
       updated: json['updated'] ?? '',
       expires: json['expires'],
       status: json['status'],
+      paymentStatus: json['payment_status'] ?? 'UNPAID',
       applicant: Applicant.fromJson(json['applicant'] ?? {}),
       professionalsEngaged: ProfessionalsEngaged.fromJson(
         json['professionals_engaged'] ?? {},

@@ -23,12 +23,12 @@ class ClientApplicationsScreen extends StatefulWidget {
 
 class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
   // ── Help tour ───────────────────────────────────────────────────────────────
-  final _helpController  = HelpController();
-  final _keyHeader       = GlobalKey();
-  final _keyFilters      = GlobalKey();
-  final _keyList         = GlobalKey();
-  final _keyFab          = GlobalKey();
-  final _keyBottomNav    = GlobalKey();
+  final _helpController = HelpController();
+  final _keyHeader = GlobalKey();
+  final _keyFilters = GlobalKey();
+  final _keyList = GlobalKey();
+  final _keyFab = GlobalKey();
+  final _keyBottomNav = GlobalKey();
 
   List<HelpStep> get _helpSteps => [
     HelpStep(
@@ -85,7 +85,9 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final seen = await HelpPreferences.hasSeenTour('tour_client_applications');
+      final seen = await HelpPreferences.hasSeenTour(
+        'tour_client_applications',
+      );
       if (!seen && mounted) {
         await HelpPreferences.markTourSeen('tour_client_applications');
         _helpController.start(_helpSteps);
@@ -178,7 +180,10 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child:
-                    BlocBuilder<ClientApplicationsBloc, ClientApplicationsState>(
+                    BlocBuilder<
+                      ClientApplicationsBloc,
+                      ClientApplicationsState
+                    >(
                       builder: (context, state) {
                         String activeFilter = 'ALL';
                         if (state is ClientApplicationsLoaded) {
@@ -189,18 +194,13 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                             _buildChip(context, 'ALL', activeFilter == 'ALL'),
                             _buildChip(
                               context,
-                              'IN-REVIEW',
+                              'PENDING',
                               activeFilter == 'PENDING',
                             ),
                             _buildChip(
                               context,
-                              'AWAITING ACTION',
+                              'APPROVED',
                               activeFilter == 'APPROVED',
-                            ),
-                            _buildChip(
-                              context,
-                              'REJECTED',
-                              activeFilter == 'REJECTED',
                             ),
                           ],
                         );
@@ -225,7 +225,9 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                     );
                   } else if (state is ClientApplicationsLoaded) {
                     if (state.applications.isEmpty) {
-                      return const Center(child: Text('No applications found.'));
+                      return const Center(
+                        child: Text('No applications found.'),
+                      );
                     }
                     return NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification scrollInfo) {
@@ -307,7 +309,14 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                               location: app.location,
                               subDate: formattedDate,
                               borderColor: borderColor,
-                              showEdit: app.status.toUpperCase() != 'PAID',
+                              showEdit: app.status.toUpperCase().contains(
+                                'PENDING',
+                              ),
+                              showAssessPay:
+                                  app.paymentStatus.toUpperCase() != 'PAID',
+                              onAssessPayTap: () {
+                                context.push('/client/assess-pay/${app.id}');
+                              },
                             ),
                           );
                         },
@@ -347,7 +356,10 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
               icon: Icon(Icons.description),
               label: 'Applications',
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Invoices'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.payment),
+              label: 'Invoices',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
@@ -395,6 +407,8 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
     required String subDate,
     required Color borderColor,
     bool showEdit = false,
+    bool showAssessPay = false,
+    VoidCallback? onAssessPayTap,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
@@ -437,7 +451,11 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                         ),
                         if (showEdit)
                           IconButton(
-                            icon: const Icon(Icons.edit, size: 16, color: AppTheme.accentGold),
+                            icon: const Icon(
+                              Icons.edit,
+                              size: 16,
+                              color: AppTheme.accentGold,
+                            ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                             onPressed: () {
@@ -505,6 +523,29 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                             ),
                           ),
                         ),
+                        if (showAssessPay) ...[
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: onAssessPayTap,
+                            icon: const Icon(Icons.payment, size: 14),
+                            label: const Text('ASSESS & PAY'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentGold,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

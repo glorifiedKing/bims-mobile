@@ -2,11 +2,13 @@ class AdminUnit {
   final int id;
   final String name;
   final int typeId;
+  final String districtId;
 
   AdminUnit({
     required this.id,
     required this.name,
     required this.typeId,
+    required this.districtId,
   });
 
   factory AdminUnit.fromJson(Map<String, dynamic> json, int typeId) {
@@ -14,6 +16,7 @@ class AdminUnit {
       id: json['id'],
       name: json['name'],
       typeId: typeId,
+      districtId: json['districtId'],
     );
   }
 
@@ -22,14 +25,11 @@ class AdminUnit {
       id: json['id'],
       name: json['name'],
       typeId: json['typeId'],
+      districtId: json['districtId'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'typeId': typeId,
-    };
+    return {'id': id, 'name': name, 'typeId': typeId, 'districtId': districtId};
   }
 }

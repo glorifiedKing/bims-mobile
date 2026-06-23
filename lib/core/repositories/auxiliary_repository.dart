@@ -18,6 +18,7 @@ import '../models/auxiliary/form_type.dart';
 import '../models/auxiliary/building_operation.dart';
 import '../models/auxiliary/inspection_type.dart';
 import '../models/auxiliary/inspection_status.dart';
+import '../models/auxiliary/payment_mode.dart';
 
 class AuxiliaryRepository {
   final BcoApiClient bcoApiClient;
@@ -54,7 +55,7 @@ class AuxiliaryRepository {
       // print('Started synchronizing auxiliary data...');
 
       // 1. Fetch Admin Unit Types
-      final typesResponse = await bcoApiClient.dio.get(
+      final typesResponse = await clientApiClient.dio.get(
         ApiConstants.adminUnitTypes,
       );
       List<dynamic> typesData = typesResponse.data['data']?['data'] ?? [];
@@ -68,7 +69,7 @@ class AuxiliaryRepository {
 
         // 2. Fetch Admin Units for this type
         try {
-          final unitsResponse = await bcoApiClient.dio.get(
+          final unitsResponse = await clientApiClient.dio.get(
             '${ApiConstants.adminUnitsList}?type=$typeId',
           );
           List<dynamic> unitsData = unitsResponse.data['data']?['data'] ?? [];
@@ -77,6 +78,7 @@ class AuxiliaryRepository {
               'id': unitJson['id'],
               'name': unitJson['name'],
               'typeId': typeId,
+              'districtId': unitJson['districtId'] ?? unitJson['dID'],
             });
           }
         } catch (e) {
@@ -213,7 +215,11 @@ class AuxiliaryRepository {
             );
             List<dynamic> ftData = ftResponse.data['data']?['data'] ?? [];
             for (var ftJson in ftData) {
-              finalFormTypes.add({'id': ftJson['id'], 'name': ftJson['name'], 'application_type_slug': applicationTypeSlug});
+              finalFormTypes.add({
+                'id': ftJson['id'],
+                'name': ftJson['name'],
+                'application_type_slug': applicationTypeSlug,
+              });
             }
           } catch (e) {
             print('Error fetching form types: $e');
@@ -274,6 +280,24 @@ class AuxiliaryRepository {
         print('Error fetching inspection statuses: $e');
       }
 
+      // 13. fetch payment modes
+      List<Map<String, dynamic>> finalPaymentModes = [];
+      try {
+        final pmResponse = await clientApiClient.dio.get(
+          ApiConstants.paymentModes,
+        );
+        List<dynamic> pmData = pmResponse.data['data']?['data'] ?? [];
+        for (var pmJson in pmData) {
+          finalPaymentModes.add({
+            'id': pmJson['id'],
+            'name': pmJson['name'],
+            'description': pmJson['description'],
+          });
+        }
+      } catch (e) {
+        print('Error fetching payment modes: $e');
+      }
+
       // Save to Hive
       await _box.put('admin_unit_types', jsonEncode(finalAdminUnitTypes));
       await _box.put('admin_units', jsonEncode(finalAdminUnits));
@@ -297,6 +321,7 @@ class AuxiliaryRepository {
         'inspection_statuses',
         jsonEncode(finalInspectionStatuses),
       );
+      await _box.put('payment_modes', jsonEncode(finalPaymentModes));
       await _box.put('last_sync_timestamp', DateTime.now().toIso8601String());
 
       // print('Successfully synchronized auxiliary data.');
@@ -518,6 +543,20 @@ class AuxiliaryRepository {
       final List<dynamic> decoded = jsonDecode(data);
       return decoded
           .map((e) => InspectionStatus.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  List<PaymentMode> getPaymentModes() {
+    final data = _box.get('payment_modes');
+    if (data == null) return [];
+
+    try {
+      final List<dynamic> decoded = jsonDecode(data);
+      return decoded
+          .map((e) => PaymentMode.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       return [];

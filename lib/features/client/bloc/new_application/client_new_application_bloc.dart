@@ -8,6 +8,7 @@ class ClientNewApplicationBloc extends Bloc<ClientNewApplicationEvent, ClientNew
 
   ClientNewApplicationBloc({required this.repository}) : super(ClientNewApplicationInitial()) {
     on<SubmitApplication>(_onSubmitApplication);
+    on<SubmitAppealApplication>(_onSubmitAppealApplication);
     on<UpdateApplication>(_onUpdateApplication);
   }
 
@@ -18,6 +19,19 @@ class ClientNewApplicationBloc extends Bloc<ClientNewApplicationEvent, ClientNew
     emit(ClientNewApplicationLoading());
     try {
       await repository.submitApplication(event.data);
+      emit(ClientNewApplicationSuccess());
+    } catch (e) {
+      emit(ClientNewApplicationError(e.toString()));
+    }
+  }
+
+  Future<void> _onSubmitAppealApplication(
+    SubmitAppealApplication event,
+    Emitter<ClientNewApplicationState> emit,
+  ) async {
+    emit(ClientNewApplicationLoading());
+    try {
+      await repository.submitAppealApplication(event.data);
       emit(ClientNewApplicationSuccess());
     } catch (e) {
       emit(ClientNewApplicationError(e.toString()));

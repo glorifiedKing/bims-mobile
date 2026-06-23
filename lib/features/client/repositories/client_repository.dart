@@ -10,6 +10,7 @@ import '../models/permit_model.dart';
 import '../models/permit_detail_model.dart';
 import '../models/client_profile_model.dart';
 import '../models/inspection_invoice_model.dart';
+import '../models/assessment_model.dart' as import_assessment;
 
 class ClientRepository {
   final Dio _dio;
@@ -47,6 +48,43 @@ class ClientRepository {
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
       throw Exception('Verification Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<import_assessment.AssessmentModel> getAssessment(String applicationKey) async {
+    try {
+      final response = await _dio.get(
+        '${ApiConstants.clientBaseUrl}/applications/$applicationKey/assessment',
+      );
+      if (response.statusCode == 200) {
+        return import_assessment.AssessmentModel.fromJson(response.data);
+      } else {
+        throw Exception('Failed to fetch assessment');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<String> generatePrn(String applicationKey, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post(
+        '${ApiConstants.clientBaseUrl}/applications/$applicationKey/generate-prn',
+        data: data,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data['prn']?.toString() ?? response.data['data']?['prn']?.toString() ?? '';
+      } else {
+        throw Exception('Failed to generate PRN');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception('API Error: $msg');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -142,7 +180,7 @@ class ClientRepository {
     }
   }
 
-  Future<void> submitApplication(Map<String, dynamic> data) async {
+  Future<void> submitApplication(dynamic data) async {
     try {
       final response = await _dio.post(
         ApiConstants.createApplication,
@@ -163,7 +201,28 @@ class ClientRepository {
     }
   }
 
-  Future<void> updateApplication(String id, Map<String, dynamic> data) async {
+  Future<void> submitAppealApplication(dynamic data) async {
+    try {
+      final response = await _dio.post(
+        '${ApiConstants.createApplication}/appeal',
+        data: data,
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to submit appeal application');
+      }
+    } on DioException catch (e) {
+      final msg =
+          e.error?.toString().replaceFirst('Exception: ', '') ??
+          e.response?.data['message'] ??
+          'API Error';
+
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<void> updateApplication(String id, dynamic data) async {
     try {
       final response = await _dio.put(
         '${ApiConstants.getApplications}/$id',

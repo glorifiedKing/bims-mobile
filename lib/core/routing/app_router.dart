@@ -22,6 +22,7 @@ import '../../features/client/screens/client_new_application_screen.dart';
 import '../../features/client/screens/client_permits_screen.dart';
 import '../../features/client/screens/client_permit_details_screen.dart';
 import '../../features/client/screens/client_edit_profile_screen.dart';
+import '../../features/client/screens/client_assess_pay_screen.dart';
 import '../../features/whistle_blow/screens/whistle_blow_screen.dart';
 import '../../features/auth/screens/bco_login_screen.dart';
 import '../../features/bco/screens/bco_dashboard_screen.dart';
@@ -121,6 +122,13 @@ class AppRouter {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return ClientApplicationDetailsScreen(applicationKey: id);
+        },
+      ),
+      GoRoute(
+        path: '/client/assess-pay/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ClientAssessPayScreen(applicationKey: id);
         },
       ),
       GoRoute(

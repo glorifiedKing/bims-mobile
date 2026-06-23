@@ -35,6 +35,7 @@ class ApiConstants {
   static const String validateTin = '/auxiliary/validate-tin';
   static const String wbCategories = '/auxiliary/feedback-types';
   static const String userRoles = '/auxiliary/user-roles';
+  static const String paymentModes = '/auxiliary/payment-modes';
   static const String buildingClassifications =
       '/auxiliary/building-classifications';
   static const String epsTypes = '/auxiliary/eps-types';

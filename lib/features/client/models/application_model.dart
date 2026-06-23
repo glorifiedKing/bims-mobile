@@ -7,6 +7,7 @@ class ApplicationModel {
   submittedDate; // This could be parsed to DateTime in the future if needed
   final String estCompletion;
   final double progress; // 0.0 to 1.0
+  final String paymentStatus;
 
   ApplicationModel({
     required this.id,
@@ -16,6 +17,7 @@ class ApplicationModel {
     required this.submittedDate,
     required this.estCompletion,
     required this.progress,
+    required this.paymentStatus,
   });
 
   factory ApplicationModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class ApplicationModel {
           json['id']?.toString() ??
           '',
       status: json['status'] ?? 'Unknown',
+      paymentStatus: json['payment_status'] ?? 'UNPAID',
       location:
           json['location'] ??
           json['administrative_unit_name'] ??
@@ -57,6 +60,7 @@ class ApplicationModel {
       'submittedDate': submittedDate,
       'estCompletion': estCompletion,
       'progress': progress,
+      'paymentStatus': paymentStatus,
     };
   }
 }
