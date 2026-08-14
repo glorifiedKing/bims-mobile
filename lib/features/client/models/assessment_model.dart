@@ -2,15 +2,16 @@ class AssessmentModel {
   final ApplicationAssessmentInfo application;
   final AssessmentDetails assessment;
 
-  AssessmentModel({
-    required this.application,
-    required this.assessment,
-  });
+  AssessmentModel({required this.application, required this.assessment});
 
   factory AssessmentModel.fromJson(Map<String, dynamic> json) {
     return AssessmentModel(
-      application: ApplicationAssessmentInfo.fromJson(json['application'] ?? {}),
-      assessment: AssessmentDetails.fromJson(json['assessement'] ?? json['assessment'] ?? {}),
+      application: ApplicationAssessmentInfo.fromJson(
+        json['application'] ?? {},
+      ),
+      assessment: AssessmentDetails.fromJson(
+        json['assessement'] ?? json['assessment'] ?? {},
+      ),
     );
   }
 }
@@ -43,8 +44,12 @@ class ApplicationAssessmentInfo {
       nameOfApplicant: json['nameOfApplicant']?.toString() ?? '',
       buildingOperation: json['buildingOperation']?.toString() ?? '',
       buildingPurpose: json['buildingPurpose']?.toString() ?? '',
-      administrativeUnit: (json['administrativie_unit'] ?? json['administrative_unit'])?.toString() ?? '',
-      administrativeUnitType: json['administrative_unit_type']?.toString() ?? '',
+      administrativeUnit:
+          (json['administrativie_unit'] ?? json['administrative_unit'])
+              ?.toString() ??
+          '',
+      administrativeUnitType:
+          json['administrative_unit_type']?.toString() ?? '',
       totalSQM: json['totalSQM'],
     );
   }
@@ -69,12 +74,25 @@ class AssessmentDetails {
 
   factory AssessmentDetails.fromJson(Map<String, dynamic> json) {
     return AssessmentDetails(
-      assessmentType: (json['assessementType'] ?? json['assessmentType'])?.toString() ?? '',
+      assessmentType:
+          (json['assessementType'] ?? json['assessmentType'])?.toString() ?? '',
       rateScrutinyPerSQM: json['rateScrutinyPerSQM']?.toString() ?? '',
       rateInspectionPerSQM: json['rateInspectionPerSQM']?.toString() ?? '',
       scrutinyFees: json['scrutinyFees'],
       inspectionFees: json['inspectionFees'],
       totalDue: json['totalDue'],
     );
+  }
+
+  double get totalFees =>
+      _toDouble(rateScrutinyPerSQM) +
+      _toDouble(rateInspectionPerSQM) +
+      _toDouble(scrutinyFees) +
+      _toDouble(inspectionFees);
+
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? 0.0;
   }
 }

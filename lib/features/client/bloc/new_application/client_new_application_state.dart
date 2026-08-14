@@ -11,7 +11,13 @@ class ClientNewApplicationInitial extends ClientNewApplicationState {}
 
 class ClientNewApplicationLoading extends ClientNewApplicationState {}
 
-class ClientNewApplicationSuccess extends ClientNewApplicationState {}
+class ClientNewApplicationSuccess extends ClientNewApplicationState {
+  final String aid;
+  const ClientNewApplicationSuccess(this.aid);
+
+  @override
+  List<Object?> get props => [aid];
+}
 
 class ClientNewApplicationError extends ClientNewApplicationState {
   final String message;

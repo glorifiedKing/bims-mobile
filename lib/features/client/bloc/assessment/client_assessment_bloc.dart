@@ -3,10 +3,12 @@ import '../../repositories/client_repository.dart';
 import 'client_assessment_event.dart';
 import 'client_assessment_state.dart';
 
-class ClientAssessmentBloc extends Bloc<ClientAssessmentEvent, ClientAssessmentState> {
+class ClientAssessmentBloc
+    extends Bloc<ClientAssessmentEvent, ClientAssessmentState> {
   final ClientRepository repository;
 
-  ClientAssessmentBloc({required this.repository}) : super(ClientAssessmentInitial()) {
+  ClientAssessmentBloc({required this.repository})
+    : super(ClientAssessmentInitial()) {
     on<FetchAssessment>(_onFetchAssessment);
     on<GeneratePrn>(_onGeneratePrn);
   }
@@ -17,7 +19,9 @@ class ClientAssessmentBloc extends Bloc<ClientAssessmentEvent, ClientAssessmentS
   ) async {
     emit(ClientAssessmentLoading());
     try {
-      final assessmentModel = await repository.getAssessment(event.applicationKey);
+      final assessmentModel = await repository.getAssessment(
+        event.applicationKey,
+      );
       emit(ClientAssessmentLoaded(assessmentModel));
     } catch (e) {
       emit(ClientAssessmentError(e.toString()));
@@ -30,7 +34,10 @@ class ClientAssessmentBloc extends Bloc<ClientAssessmentEvent, ClientAssessmentS
   ) async {
     emit(ClientAssessmentLoading());
     try {
-      final prn = await repository.generatePrn(event.applicationKey, event.data);
+      final prn = await repository.generatePrn(
+        event.applicationKey,
+        event.data,
+      );
       emit(ClientAssessmentPrnGenerated(prn));
     } catch (e) {
       emit(ClientAssessmentError(e.toString()));

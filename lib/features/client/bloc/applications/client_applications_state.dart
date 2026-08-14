@@ -35,3 +35,9 @@ class ClientApplicationsError extends ClientApplicationsState {
 
   ClientApplicationsError(this.message);
 }
+
+class ClientApplicationsActionSuccess extends ClientApplicationsState {
+  final String message;
+
+  ClientApplicationsActionSuccess(this.message);
+}

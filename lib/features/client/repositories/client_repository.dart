@@ -10,6 +10,7 @@ import '../models/permit_model.dart';
 import '../models/permit_detail_model.dart';
 import '../models/client_profile_model.dart';
 import '../models/inspection_invoice_model.dart';
+import '../../../core/utils/exceptions.dart';
 import '../models/assessment_model.dart' as import_assessment;
 
 class ClientRepository {
@@ -53,7 +54,9 @@ class ClientRepository {
     }
   }
 
-  Future<import_assessment.AssessmentModel> getAssessment(String applicationKey) async {
+  Future<import_assessment.AssessmentModel> getAssessment(
+    String applicationKey,
+  ) async {
     try {
       final response = await _dio.get(
         '${ApiConstants.clientBaseUrl}/applications/$applicationKey/assessment',
@@ -71,25 +74,35 @@ class ClientRepository {
     }
   }
 
-  Future<String> generatePrn(String applicationKey, Map<String, dynamic> data) async {
+  Future<String> generatePrn(
+    String applicationKey,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final response = await _dio.post(
         '${ApiConstants.clientBaseUrl}/applications/$applicationKey/generate-prn',
         data: data,
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data['prn']?.toString() ?? response.data['data']?['prn']?.toString() ?? '';
+        final code = response.data['code'] ?? 200;
+        if (code != 200) {
+          final reason = response.data['message'] ?? 'Failed to generate PRN';
+          throw Exception(reason);
+        }
+        return response.data['prn']?.toString() ??
+            response.data['data']?['prn']?.toString() ??
+            '';
       } else {
         throw Exception('Failed to generate PRN');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
-      throw Exception('API Error: $msg');
+      final cleanMessage = ApiErrorHandler.parseError(e);
+      // final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      throw Exception(cleanMessage);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
-
 
   Future<Map<String, dynamic>> getApplications({
     int page = 1,
@@ -119,7 +132,9 @@ class ClientRepository {
             final int lastPage = pageData['last_page'] ?? 1;
             hasReachedMax = currentPage >= lastPage;
           }
-        } catch (_) {}
+        } catch (_) {
+          hasReachedMax = true;
+        }
 
         return {'applications': apps, 'hasReachedMax': hasReachedMax};
       } else {
@@ -150,7 +165,7 @@ class ClientRepository {
         throw Exception('Failed to fetch application details');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['message'] ?? e.message ?? 'Unknown Error';
+      final msg = ApiErrorHandler.parseError(e);
       throw Exception('API Error: $msg');
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -180,7 +195,7 @@ class ClientRepository {
     }
   }
 
-  Future<void> submitApplication(dynamic data) async {
+  Future<String> submitApplication(dynamic data) async {
     try {
       final response = await _dio.post(
         ApiConstants.createApplication,
@@ -189,11 +204,21 @@ class ClientRepository {
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('Failed to submit application');
       }
+      final code = response.data['code'] ?? 200;
+      if (code != 200 && code != 201) {
+        final reason =
+            response.data['message'] ?? 'Failed to create application';
+        throw Exception(reason);
+      }
+
+      final applicationKey =
+          response.data['application_key']?.toString() ??
+          response.data['data']?['application_key']?.toString() ??
+          '';
+
+      return applicationKey;
     } on DioException catch (e) {
-      final msg =
-          e.error?.toString().replaceFirst('Exception: ', '') ??
-          e.response?.data['message'] ??
-          'API Error';
+      final msg = ApiErrorHandler.parseError(e);
 
       throw Exception(msg);
     } catch (e) {
@@ -201,7 +226,7 @@ class ClientRepository {
     }
   }
 
-  Future<void> submitAppealApplication(dynamic data) async {
+  Future<String> submitAppealApplication(dynamic data) async {
     try {
       final response = await _dio.post(
         '${ApiConstants.createApplication}/appeal',
@@ -210,11 +235,21 @@ class ClientRepository {
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('Failed to submit appeal application');
       }
+      final code = response.data['code'] ?? 200;
+      if (code != 200 && code != 201) {
+        final reason =
+            response.data['message'] ?? 'Failed to create application';
+        throw Exception(reason);
+      }
+
+      final applicationKey =
+          response.data['application_key']?.toString() ??
+          response.data['data']?['application_key']?.toString() ??
+          '';
+
+      return applicationKey;
     } on DioException catch (e) {
-      final msg =
-          e.error?.toString().replaceFirst('Exception: ', '') ??
-          e.response?.data['message'] ??
-          'API Error';
+      final msg = ApiErrorHandler.parseError(e);
 
       throw Exception(msg);
     } catch (e) {
@@ -222,14 +257,39 @@ class ClientRepository {
     }
   }
 
-  Future<void> updateApplication(String id, dynamic data) async {
+  Future<String> updateApplication(String id, dynamic data) async {
     try {
-      final response = await _dio.put(
-        '${ApiConstants.getApplications}/$id',
+      final response = await _dio.post(
+        '${ApiConstants.getApplications}/$id/edit',
         data: data,
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('Failed to update application');
+      }
+      final applicationKey =
+          response.data['application_key']?.toString() ??
+          response.data['data']?['application_key']?.toString() ??
+          '';
+
+      return applicationKey;
+    } on DioException catch (e) {
+      final msg = ApiErrorHandler.parseError(e);
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<String> deleteApplication(String id) async {
+    try {
+      final response = await _dio.delete(
+        '${ApiConstants.clientBaseUrl}/applications/$id',
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return response.data['message']?.toString() ??
+            'Application deleted successfully';
+      } else {
+        throw Exception('Failed to delete application');
       }
     } on DioException catch (e) {
       final msg =

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme.dart';
 import '../bloc/invoice_details/client_invoice_details_bloc.dart';
 import '../bloc/invoice_details/client_invoice_details_event.dart';
@@ -18,12 +20,23 @@ class ClientInvoiceDetailsScreen extends StatefulWidget {
 
 class _ClientInvoiceDetailsScreenState
     extends State<ClientInvoiceDetailsScreen> {
+  final _keyBottomNav = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     context.read<ClientInvoiceDetailsBloc>().add(
       FetchClientInvoiceDetails(widget.prn),
     );
+  }
+
+  Future<void> _launchExternalUrl(String? url) async {
+    if (url == null || url.toString().trim().isEmpty) return;
+
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -101,24 +114,68 @@ class _ClientInvoiceDetailsScreenState
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: statusColor.withOpacity(0.3)),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        const Text(
-                          'STATUS',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'STATUS',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              statusText,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          statusText,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor,
-                          ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: details.paid
+                              ? [
+                                  OutlinedButton.icon(
+                                    onPressed: () => _launchExternalUrl(
+                                      details.documents?['receipt'],
+                                    ),
+                                    icon: const Icon(
+                                      Icons.download_rounded,
+                                      size: 16,
+                                    ),
+                                    label: const Text('RECEIPT'),
+                                  ),
+                                ]
+                              : [
+                                  OutlinedButton.icon(
+                                    onPressed: () => _launchExternalUrl(
+                                      details.documents?['invoice'],
+                                    ),
+                                    icon: const Icon(
+                                      Icons.download_rounded,
+                                      size: 16,
+                                    ),
+                                    label: const Text('INVOICE PDF'),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      final uri = Uri.parse('tel:*185%23');
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri);
+                                      }
+                                    },
+                                    icon: const Icon(Icons.payment, size: 16),
+                                    label: const Text('PAY'),
+                                  ),
+                                ],
                         ),
                       ],
                     ),
@@ -136,17 +193,20 @@ class _ClientInvoiceDetailsScreenState
                       _buildDetailRow(
                         'Assessment Amount',
                         CurrencyFormatter.formatUgx(
-                            double.tryParse(details.assessmentAmount) ?? 0),
+                          double.tryParse(details.assessmentAmount) ?? 0,
+                        ),
                       ),
                       _buildDetailRow(
                         'Inspection Fees',
                         CurrencyFormatter.formatUgx(
-                            double.tryParse(details.inspectionFees) ?? 0),
+                          double.tryParse(details.inspectionFees) ?? 0,
+                        ),
                       ),
                       _buildDetailRow(
                         'Landscaping Fees',
                         CurrencyFormatter.formatUgx(
-                            double.tryParse(details.landscapingFees) ?? 0),
+                          double.tryParse(details.landscapingFees) ?? 0,
+                        ),
                       ),
                       _buildDetailRow('Created', details.created),
                       _buildDetailRow('Expires', details.expires),
@@ -215,6 +275,29 @@ class _ClientInvoiceDetailsScreenState
           }
           return const SizedBox.shrink();
         },
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        key: _keyBottomNav,
+        currentIndex: 2, // Invoices index
+        onTap: (index) {
+          if (index == 0) context.go('/client/dashboard');
+          if (index == 1) context.go('/client/applications');
+          if (index == 2) return;
+          if (index == 3) context.go('/client/profile');
+        },
+        selectedItemColor: AppTheme.primaryGreen,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.description),
+            label: 'Applications',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Invoices'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
       ),
     );
   }

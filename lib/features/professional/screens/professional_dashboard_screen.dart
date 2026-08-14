@@ -303,19 +303,19 @@ class _ProfessionalDashboardScreenState
                       mainAxisSpacing: 15,
                       childAspectRatio: 1.2,
                       children: [
-                        _buildToolBox(
-                          icon: '🔗',
-                          label: 'LINK PROJECT',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Scan Client QR Code to Link Project',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                        // _buildToolBox(
+                        //   icon: '🔗',
+                        //   label: 'LINK PROJECT',
+                        //   onTap: () {
+                        //     ScaffoldMessenger.of(context).showSnackBar(
+                        //       const SnackBar(
+                        //         content: Text(
+                        //           'Scan Client QR Code to Link Project',
+                        //         ),
+                        //       ),
+                        //     );
+                        //   },
+                        // ),
                         _buildToolBox(
                           icon: '📐',
                           label: 'DOCUMENTS',

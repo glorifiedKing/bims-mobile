@@ -24,6 +24,7 @@ class _ClientAssessPayScreenState extends State<ClientAssessPayScreen> {
   final _formKey = GlobalKey<FormState>();
   String? _selectedPaymentModeId;
   List<PaymentMode> _paymentModes = [];
+  double totalDue = 0.0;
 
   @override
   void initState() {
@@ -40,8 +41,11 @@ class _ClientAssessPayScreenState extends State<ClientAssessPayScreen> {
         GeneratePrn(
           applicationKey: widget.applicationKey,
           data: {
-            'amount': assessment.assessment.totalDue,
+            'totalDue': assessment.assessment.totalDue <= 0.0
+                ? assessment.assessment.totalFees
+                : assessment.assessment.totalDue,
             'paymentMode': _selectedPaymentModeId,
+            'inspectionFees': assessment.assessment.inspectionFees,
           },
         ),
       );
@@ -79,7 +83,7 @@ class _ClientAssessPayScreenState extends State<ClientAssessPayScreen> {
               const SnackBar(content: Text('PRN Generated Successfully!')),
             );
             // Redirect to invoice details with PRN
-            context.go('/client/invoices/${state.prn}');
+            context.go('/client/invoices/${Uri.encodeComponent(state.prn)}');
           }
         },
         builder: (context, state) {
@@ -179,7 +183,12 @@ class _ClientAssessPayScreenState extends State<ClientAssessPayScreen> {
                 ),
                 Text(
                   CurrencyFormatter.formatUgx(
-                    double.tryParse(model.assessment.totalDue.toString()) ?? 0,
+                    double.tryParse(
+                          model.assessment.totalDue > 0.0
+                              ? model.assessment.totalDue.toString()
+                              : model.assessment.totalFees.toString(),
+                        ) ??
+                        0,
                   ),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -189,7 +198,7 @@ class _ClientAssessPayScreenState extends State<ClientAssessPayScreen> {
                 ),
               ],
             ),
-            if (model.assessment.totalDue <= 0.0) ...[
+            if ((model.assessment.totalFees) <= 0.0) ...[
               const SizedBox(height: 32),
               const Center(
                 child: Text(
@@ -198,7 +207,7 @@ class _ClientAssessPayScreenState extends State<ClientAssessPayScreen> {
                 ),
               ),
             ],
-            if (model.assessment.totalDue > 0.0) ...[
+            if ((model.assessment.totalFees) > 0.0) ...[
               const SizedBox(height: 32),
               const Text(
                 'PAYMENT MODE',
@@ -231,7 +240,7 @@ class _ClientAssessPayScreenState extends State<ClientAssessPayScreen> {
                 items: _paymentModes.map((mode) {
                   return DropdownMenuItem(
                     value: mode.id.toString(),
-                    child: Text(mode.name),
+                    child: Text(mode.description),
                   );
                 }).toList(),
                 validator: (val) =>

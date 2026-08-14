@@ -30,13 +30,13 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
   int _selectedIndex = 0;
 
   // ── Help tour ──────────────────────────────────────────────────────────────
-  final _helpController  = HelpController();
-  final _keyHeader       = GlobalKey();
-  final _keyInvoices     = GlobalKey();
+  final _helpController = HelpController();
+  final _keyHeader = GlobalKey();
+  final _keyInvoices = GlobalKey();
   final _keyQuickActions = GlobalKey();
-  final _keyActivity     = GlobalKey();
+  final _keyActivity = GlobalKey();
   final _keyApplications = GlobalKey();
-  final _keyBottomNav    = GlobalKey();
+  final _keyBottomNav = GlobalKey();
 
   List<HelpStep> get _helpSteps => [
     HelpStep(
@@ -68,14 +68,14 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
       targetKey: _keyQuickActions,
       cardPosition: HelpCardPosition.bottom,
     ),
-    HelpStep(
-      emoji: '📋',
-      title: 'Recent Activity',
-      description:
-          'This section shows the latest updates on your account — '
-          'reviewer comments, payments verified, and status changes.',
-      targetKey: _keyActivity,
-    ),
+    // HelpStep(
+    //   emoji: '📋',
+    //   title: 'Recent Activity',
+    //   description:
+    //       'This section shows the latest updates on your account — '
+    //       'reviewer comments, payments verified, and status changes.',
+    //   targetKey: _keyActivity,
+    // ),
     HelpStep(
       emoji: '📁',
       title: 'Active Applications',
@@ -137,309 +137,327 @@ class _ClientDashboardScreenState extends State<ClientDashboardScreen> {
     return HelpTourOverlay(
       controller: _helpController,
       child: Scaffold(
-      backgroundColor: AppTheme.background,
-      body: Column(
-        children: [
-          // Header
-          Container(
-            key: _keyHeader,
-            padding: const EdgeInsets.only(
-              top: 60,
-              left: 25,
-              right: 25,
-              bottom: 20,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [AppTheme.primaryGreen, Color(0xFF00331A)],
+        backgroundColor: AppTheme.background,
+        body: Column(
+          children: [
+            // Header
+            Container(
+              key: _keyHeader,
+              padding: const EdgeInsets.only(
+                top: 60,
+                left: 25,
+                right: 25,
+                bottom: 20,
               ),
-              border: Border(
-                bottom: BorderSide(color: AppTheme.accentGold, width: 4),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppTheme.primaryGreen, Color(0xFF00331A)],
+                ),
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.accentGold, width: 4),
+                ),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                BlocBuilder<ClientProfileBloc, ClientProfileState>(
-                  builder: (context, profileState) {
-                    String firstName = 'Client';
-                    if (profileState is ClientProfileLoaded) {
-                      final parts = profileState.profile.names.trim().split(
-                        ' ',
-                      );
-                      if (parts.isNotEmpty) {
-                        firstName = parts.first;
-                      }
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _getGreeting(),
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 13,
-                          ),
-                        ),
-                        Text(
-                          firstName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    HelpIconButton(
-                      controller: _helpController,
-                      steps: _helpSteps,
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        context.read<AuthBloc>().add(AuthLogoutRequested());
-                        context.go('/client/login');
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.logout,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Main Content
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                // Unpaid Invoices Section
-                const Text(
-                  'UNPAID INVOICES',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryGreen,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  key: _keyInvoices,
-                  children: [
-                    Expanded(
-                      child: BlocBuilder<ClientInvoicesBloc, ClientInvoicesState>(
-                        builder: (context, state) {
-                          String amount = 'UGX 0';
-                          if (state is ClientInvoicesLoaded && state.totalUnpaid != null && state.totalUnpaid != '0.00' && state.totalUnpaid != '0') {
-                            try {
-                              amount = CurrencyFormatter.formatUgx(double.parse(state.totalUnpaid!));
-                            } catch (_) {}
-                          }
-                          return _buildInvoiceDashboardCard(
-                            title: 'General Invoices',
-                            amount: amount,
-                            icon: '📄',
-                            color: const Color(0xFFE8F5E9),
-                            onTap: () => context.push('/client/invoices'),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: BlocBuilder<ClientInspectionInvoicesBloc, ClientInspectionInvoicesState>(
-                        builder: (context, state) {
-                          String amount = 'UGX 0';
-                          if (state is ClientInspectionInvoicesLoaded && state.totalUnpaid != null && state.totalUnpaid != '0.00' && state.totalUnpaid != '0') {
-                            try {
-                              amount = CurrencyFormatter.formatUgx(double.parse(state.totalUnpaid!));
-                            } catch (_) {}
-                          }
-                          return _buildInvoiceDashboardCard(
-                            title: 'Inspection Fees',
-                            amount: amount,
-                            icon: '🏗️',
-                            color: const Color(0xFFFFF8E1),
-                            onTap: () => context.push(
-                              '/client/invoices',
-                              extra: {'tabIndex': 1},
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 25),
-
-                // Quick Actions Section
-                const Text(
-                  'QUICK ACTIONS',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryGreen,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                GridView.count(
-                  key: _keyQuickActions,
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 1.2,
-                  children: [
-                    _buildActionItem(
-                      icon: '🏗️',
-                      label: 'New Application',
-                      onTap: () {
-                        context.push('/client/new-application');
-                      },
-                    ),
-                    _buildActionItem(
-                      icon: '💳',
-                      label: 'Payments / PRN',
-                      onTap: () {
-                        context.push('/client/invoices');
-                      },
-                    ),
-                    _buildActionItem(
-                      icon: '📜',
-                      label: 'My Permits',
-                      onTap: () {
-                        context.push('/client/permits');
-                      },
-                    ),
-                    _buildActionItem(
-                      icon: '📢',
-                      label: 'Whistle Blow',
-                      onTap: () {
-                        context.push('/whistle-blow');
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 25),
-
-                // Recent Activity
-                const Text(
-                  'RECENT ACTIVITY',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryGreen,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Container(
-                  key: _keyActivity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      _buildActivityRow(
-                        color: AppTheme.accentGold,
-                        text: 'Reviewer added comments to KLA-2026-045',
-                      ),
-                      const Divider(height: 1, color: Color(0xFFF0F0F0)),
-                      _buildActivityRow(
-                        color: Colors.green,
-                        text: 'Payment of 85,000 UGX verified',
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 25),
-
-                // Active Applications Section (Moved from top)
-                const Text(
-                  'ACTIVE APPLICATIONS',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryGreen,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                BlocBuilder<ClientApplicationsBloc, ClientApplicationsState>(
-                  key: _keyApplications,
-                  builder: (context, state) {
-                    if (state is ClientApplicationsLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is ClientApplicationsError) {
-                      return Text(
-                        'Error: ${state.message}',
-                        style: const TextStyle(color: Colors.red),
-                      );
-                    } else if (state is ClientApplicationsLoaded) {
-                      if (state.applications.isEmpty) {
-                        return const Center(
-                          child: Text('No active applications.'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  BlocBuilder<ClientProfileBloc, ClientProfileState>(
+                    builder: (context, profileState) {
+                      String firstName = 'Client';
+                      if (profileState is ClientProfileLoaded) {
+                        final parts = profileState.profile.names.trim().split(
+                          ' ',
                         );
+                        if (parts.isNotEmpty) {
+                          firstName = parts.first;
+                        }
                       }
-                      final app = state.applications.first;
-                      return _buildStatusCard(app);
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ],
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(),
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            firstName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      HelpIconButton(
+                        controller: _helpController,
+                        steps: _helpSteps,
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          context.read<AuthBloc>().add(AuthLogoutRequested());
+                          context.go('/client/login');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.logout, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        key: _keyBottomNav,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: AppTheme.primaryGreen,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description),
-            label: 'Applications',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Invoices'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    ), // Scaffold
+
+            // Main Content
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  // Unpaid Invoices Section
+                  const Text(
+                    'UNPAID INVOICES',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryGreen,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    key: _keyInvoices,
+                    children: [
+                      Expanded(
+                        child:
+                            BlocBuilder<
+                              ClientInvoicesBloc,
+                              ClientInvoicesState
+                            >(
+                              builder: (context, state) {
+                                String amount = 'UGX 0';
+                                if (state is ClientInvoicesLoaded &&
+                                    state.totalUnpaid != null &&
+                                    state.totalUnpaid != '0.00' &&
+                                    state.totalUnpaid != '0') {
+                                  try {
+                                    amount = CurrencyFormatter.formatUgx(
+                                      double.parse(state.totalUnpaid!),
+                                    );
+                                  } catch (_) {}
+                                }
+                                return _buildInvoiceDashboardCard(
+                                  title: 'General Invoices',
+                                  amount: amount,
+                                  icon: '📄',
+                                  color: const Color(0xFFE8F5E9),
+                                  onTap: () => context.push('/client/invoices'),
+                                );
+                              },
+                            ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child:
+                            BlocBuilder<
+                              ClientInspectionInvoicesBloc,
+                              ClientInspectionInvoicesState
+                            >(
+                              builder: (context, state) {
+                                String amount = 'UGX 0';
+                                if (state is ClientInspectionInvoicesLoaded &&
+                                    state.totalUnpaid != null &&
+                                    state.totalUnpaid != '0.00' &&
+                                    state.totalUnpaid != '0') {
+                                  try {
+                                    amount = CurrencyFormatter.formatUgx(
+                                      double.parse(state.totalUnpaid!),
+                                    );
+                                  } catch (_) {}
+                                }
+                                return _buildInvoiceDashboardCard(
+                                  title: 'Inspection Fees',
+                                  amount: amount,
+                                  icon: '🏗️',
+                                  color: const Color(0xFFFFF8E1),
+                                  onTap: () => context.push(
+                                    '/client/invoices',
+                                    extra: {'tabIndex': 1},
+                                  ),
+                                );
+                              },
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+
+                  // Quick Actions Section
+                  const Text(
+                    'QUICK ACTIONS',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryGreen,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  GridView.count(
+                    key: _keyQuickActions,
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
+                    childAspectRatio: 1.2,
+                    children: [
+                      _buildActionItem(
+                        icon: '🏗️',
+                        label: 'New Application',
+                        onTap: () {
+                          context.push('/client/new-application');
+                        },
+                      ),
+                      _buildActionItem(
+                        icon: '💳',
+                        label: 'Payments / PRN',
+                        onTap: () {
+                          context.push('/client/invoices');
+                        },
+                      ),
+                      _buildActionItem(
+                        icon: '📜',
+                        label: 'My Permits',
+                        onTap: () {
+                          context.push('/client/permits');
+                        },
+                      ),
+                      _buildActionItem(
+                        icon: '📢',
+                        label: 'Whistle Blow',
+                        onTap: () {
+                          context.push('/whistle-blow');
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+
+                  // Recent Activity
+                  // const Text(
+                  //   'RECENT ACTIVITY',
+                  //   style: TextStyle(
+                  //     fontSize: 14,
+                  //     fontWeight: FontWeight.bold,
+                  //     color: AppTheme.primaryGreen,
+                  //     letterSpacing: 1,
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 15),
+                  // Container(
+                  //   key: _keyActivity,
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.white,
+                  //     borderRadius: BorderRadius.circular(15),
+                  //     boxShadow: [
+                  //       BoxShadow(
+                  //         color: Colors.black.withOpacity(0.05),
+                  //         blurRadius: 10,
+                  //         offset: const Offset(0, 4),
+                  //       ),
+                  //     ],
+                  //   ),
+                  //   child: Column(
+                  //     children: [
+                  //       _buildActivityRow(
+                  //         color: AppTheme.accentGold,
+                  //         text: 'Reviewer added comments to KLA-2026-045',
+                  //       ),
+                  //       const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                  //       _buildActivityRow(
+                  //         color: Colors.green,
+                  //         text: 'Payment of 85,000 UGX verified',
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
+                  //const SizedBox(height: 25),
+
+                  // Active Applications Section (Moved from top)
+                  const Text(
+                    'ACTIVE APPLICATIONS',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryGreen,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  BlocBuilder<ClientApplicationsBloc, ClientApplicationsState>(
+                    key: _keyApplications,
+                    builder: (context, state) {
+                      if (state is ClientApplicationsLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (state is ClientApplicationsError) {
+                        return Text(
+                          'Error: ${state.message}',
+                          style: const TextStyle(color: Colors.red),
+                        );
+                      } else if (state is ClientApplicationsLoaded) {
+                        if (state.applications.isEmpty) {
+                          return const Center(
+                            child: Text('No active applications.'),
+                          );
+                        }
+                        final app = state.applications.first;
+                        return _buildStatusCard(app);
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          key: _keyBottomNav,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          selectedItemColor: AppTheme.primaryGreen,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.description),
+              label: 'Applications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.payment),
+              label: 'Invoices',
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ],
+        ),
+      ), // Scaffold
     ); // HelpTourOverlay
   }
 

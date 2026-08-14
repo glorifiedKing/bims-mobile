@@ -212,7 +212,27 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
             // List Area
             Expanded(
               key: _keyList,
-              child: BlocBuilder<ClientApplicationsBloc, ClientApplicationsState>(
+              child: BlocConsumer<ClientApplicationsBloc, ClientApplicationsState>(
+                listener: (context, state) {
+                  if (state is ClientApplicationsActionSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else if (state is ClientApplicationsError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error: ${state.message}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                buildWhen: (previous, current) {
+                  return current is! ClientApplicationsActionSuccess;
+                },
                 builder: (context, state) {
                   if (state is ClientApplicationsLoading) {
                     return const Center(child: CircularProgressIndicator());
@@ -309,11 +329,43 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                               location: app.location,
                               subDate: formattedDate,
                               borderColor: borderColor,
-                              showEdit: app.status.toUpperCase().contains(
-                                'PENDING',
-                              ),
+                              showEdit:
+                                  app.paymentStatus.toUpperCase() != 'PAID',
+                              showDelete:
+                                  app.paymentStatus.toUpperCase() != 'PAID',
                               showAssessPay:
                                   app.paymentStatus.toUpperCase() != 'PAID',
+                              onDeleteTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Delete Application'),
+                                    content: const Text(
+                                      'Are you sure you want to delete this application?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          context
+                                              .read<ClientApplicationsBloc>()
+                                              .add(
+                                                DeleteClientApplication(app.id),
+                                              );
+                                        },
+                                        child: const Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                               onAssessPayTap: () {
                                 context.push('/client/assess-pay/${app.id}');
                               },
@@ -407,7 +459,9 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
     required String subDate,
     required Color borderColor,
     bool showEdit = false,
+    bool showDelete = false,
     bool showAssessPay = false,
+    VoidCallback? onDeleteTap,
     VoidCallback? onAssessPayTap,
   }) {
     return Container(
@@ -461,6 +515,17 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                             onPressed: () {
                               context.push('/client/edit-application/$refNo');
                             },
+                          ),
+                        if (showDelete)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              size: 16,
+                              color: Colors.red,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: onDeleteTap,
                           ),
                         const SizedBox(width: 8),
                         Container(

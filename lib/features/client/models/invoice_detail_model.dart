@@ -9,6 +9,7 @@ class InvoiceDetailModel {
   final String created;
   final String expires;
   final String datePaid;
+  final Map<String, dynamic>? documents;
   final InvoiceApplication application;
   final InvoiceBuilding building;
   final InvoiceAdministrativeUnit administrativeUnit;
@@ -25,6 +26,7 @@ class InvoiceDetailModel {
     required this.created,
     required this.expires,
     required this.datePaid,
+    this.documents,
     required this.application,
     required this.building,
     required this.administrativeUnit,
@@ -39,10 +41,11 @@ class InvoiceDetailModel {
       assessmentAmount: json['assessment_amount'] ?? '0.00',
       inspectionFees: json['inspection_fees'] ?? '0.00',
       landscapingFees: json['landscaping_fees'] ?? '0.00',
-      paid: json['paid'] ?? false,
+      paid: json['paid'] ?? json['date_paid'] != null,
       created: json['created'] ?? '',
       expires: json['expires'] ?? '',
       datePaid: json['date_paid'] ?? '',
+      documents: json['documents'] as Map<String, dynamic>?,
       application: InvoiceApplication.fromJson(json['application'] ?? {}),
       building: InvoiceBuilding.fromJson(json['building'] ?? {}),
       administrativeUnit: InvoiceAdministrativeUnit.fromJson(

@@ -23,6 +23,7 @@ class ApplicationDetailModel {
   final ProfessionalsEngaged professionalsEngaged;
   final List<dynamic>
   auditTrail; // Adjust type if audit trail structure is known later
+  final Map<String, dynamic>? rawData;
 
   ApplicationDetailModel({
     required this.applicationKey,
@@ -48,6 +49,7 @@ class ApplicationDetailModel {
     required this.applicant,
     required this.professionalsEngaged,
     required this.auditTrail,
+    this.rawData,
   });
 
   factory ApplicationDetailModel.fromJson(Map<String, dynamic> json) {
@@ -77,6 +79,7 @@ class ApplicationDetailModel {
         json['professionals_engaged'] ?? {},
       ),
       auditTrail: json['audit_trail'] ?? [],
+      rawData: json['rawData'],
     );
   }
 }

@@ -94,6 +94,11 @@ class _ClientApplicationDetailsScreenState
                       },
                       child: const Text('Retry'),
                     ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => context.go('/client/applications'),
+                      child: const Text('Back to Applications'),
+                    ),
                   ],
                 ),
               ),

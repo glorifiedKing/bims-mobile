@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:dio/dio.dart' as dio;
 import '../../../core/theme.dart';
 import '../../../core/repositories/auxiliary_repository.dart';
@@ -19,6 +20,9 @@ import '../../../core/models/auxiliary/form_type.dart';
 import '../bloc/new_application/client_new_application_bloc.dart';
 import '../bloc/new_application/client_new_application_event.dart';
 import '../bloc/new_application/client_new_application_state.dart';
+import '../bloc/profile/client_profile_bloc.dart';
+import '../bloc/profile/client_profile_state.dart';
+import '../models/client_profile_model.dart';
 import '../repositories/client_repository.dart';
 
 class ClientNewApplicationScreen extends StatefulWidget {
@@ -63,6 +67,7 @@ class _ClientNewApplicationScreenState
   String? _villageId;
   String? _roadId;
 
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _contactPersonCtrl = TextEditingController();
   final TextEditingController _contactMobileCtrl = TextEditingController();
   final TextEditingController _contactEmailCtrl = TextEditingController();
@@ -95,6 +100,9 @@ class _ClientNewApplicationScreenState
   final TextEditingController _ppcPhysicalPlannerCtrl = TextEditingController();
   String? _ppcApprovedLandUse;
   String? _surveyorId;
+  String? _architectId;
+  String? _structuralEngineerId;
+  String? _quantitySurveyorId;
 
   // Land Tenure Conditional Fields
   final TextEditingController _folioCtrl = TextEditingController();
@@ -188,6 +196,7 @@ class _ClientNewApplicationScreenState
   void initState() {
     super.initState();
     _loadAuxiliaryData();
+    _populateProfileDetailsIfAvailable();
     if (widget.applicationKey != null) {
       _fetchApplicationDetails();
     }
@@ -201,64 +210,231 @@ class _ClientNewApplicationScreenState
       final repo = context.read<ClientRepository>();
       final details = await repo.getApplicationDetails(widget.applicationKey!);
 
+      final rData = details.rawData;
+      List<Map<String, dynamic>> fetchedSubcounties = [];
+      List<Map<String, dynamic>> fetchedParishes = [];
+      List<Map<String, dynamic>> fetchedVillages = [];
+      List<Map<String, dynamic>> fetchedRoads = [];
+
+      if (rData != null) {
+        final districtId = rData['ug_districts']?.toString();
+        if (districtId != null) {
+          fetchedSubcounties = await repo.getSubcounties(districtId);
+        }
+        final subcountyId = rData['ug_subcounties']?.toString();
+        if (subcountyId != null) {
+          fetchedParishes = await repo.getParishes(subcountyId);
+        }
+        final parishId = rData['ug_parishes']?.toString();
+        if (parishId != null) {
+          fetchedVillages = await repo.getVillages(parishId);
+        }
+        final villageId = rData['ug_villages']?.toString();
+        if (villageId != null) {
+          fetchedRoads = await repo.getRoads(villageId);
+        }
+      }
+
       setState(() {
-        // Pre-fill dropdowns by matching strings to Auxiliary Models
-        _applicationTypeId = _applicationTypes
-            .where((e) => e.name == details.applicationType)
-            .firstOrNull
-            ?.id
-            .toString();
-
-        _adminUnitTypeId = _adminUnitTypes
-            .where((e) => e.name == details.administrativeUnitType)
-            .firstOrNull
-            ?.id
-            .toString();
-
-        if (_adminUnitTypeId != null) {
-          _adminUnits = context.read<AuxiliaryRepository>().getAdminUnits(
-            int.parse(_adminUnitTypeId!),
-          );
-          _adminUnitId = _adminUnits
-              .where((e) => e.name == details.administrativeUnitName)
+        if (rData != null) {
+          _applicationTypeId = _applicationTypes
+              .where((e) => e.slug == rData['application_type']?.toString())
               .firstOrNull
               ?.id
               .toString();
+          if (_applicationTypeId != null) {
+            final appType = _applicationTypes
+                .where((a) => a.id.toString() == _applicationTypeId)
+                .firstOrNull;
+            if (appType != null) {
+              _formTypes = context.read<AuxiliaryRepository>().getFormTypes(
+                appType.slug,
+              );
+            }
+          }
+          _formTypeId = rData['form_type']?.toString();
+          _developmentPermitCtrl.text =
+              rData['development_permit']?.toString() ?? '';
+
+          _adminUnitTypeId = rData['administrative_unit_type']?.toString();
+          if (_adminUnitTypeId != null) {
+            _adminUnits = context.read<AuxiliaryRepository>().getAdminUnits(
+              int.parse(_adminUnitTypeId!),
+            );
+          }
+          _adminUnitId = rData['administrative_unit_id']?.toString();
+
+          final rawDistrictId = rData['ug_districts']?.toString();
+
+          final districtExists = _adminUnits.any(
+            (e) => e.districtId == rawDistrictId,
+          );
+          _districtId = districtExists ? rawDistrictId : null;
+          if (_districtId != null) {
+            _subcounties = fetchedSubcounties;
+          }
+          final rawSubcountyId = rData['ug_subcounties']?.toString();
+
+          final subcountyExists = fetchedSubcounties.any(
+            (s) => s['subcountyId']?.toString() == rawSubcountyId,
+          );
+          _subcountyId = subcountyExists ? rawSubcountyId : null;
+          if (_subcountyId != null) {
+            _parishes = fetchedParishes;
+          }
+
+          final rawParishId = rData['ug_parishes']?.toString();
+          _parishes = fetchedParishes;
+          final parishExists = fetchedParishes.any(
+            (p) => p['parishId']?.toString() == rawParishId,
+          );
+          _parishId = parishExists ? rawParishId : null;
+          if (_parishId != null) {
+            _villages = fetchedVillages;
+          }
+
+          final rawVillageId = rData['ug_villages']?.toString();
+          _villages = fetchedVillages;
+          final villageExists = fetchedVillages.any(
+            (v) => v['villageId']?.toString() == rawVillageId,
+          );
+          _villageId = villageExists ? rawVillageId : null;
+          if (_villageId != null) {
+            _roads = fetchedRoads;
+          }
+
+          final rawRoadId = rData['ug_streetroads']?.toString();
+          _roads = fetchedRoads;
+          final roadExists = fetchedRoads.any(
+            (r) => r['roadId']?.toString() == rawRoadId,
+          );
+          _roadId = roadExists ? rawRoadId : null;
+
+          _contactPersonCtrl.text =
+              rData['contactPerson']?.toString() ?? details.applicant.name;
+          _contactMobileCtrl.text =
+              rData['contactMobilePhone']?.toString() ??
+              details.applicant.phone;
+          _contactEmailCtrl.text =
+              rData['contactEmail']?.toString() ?? details.applicant.email;
+          _contractorCtrl.text = rData['contractor']?.toString() ?? '';
+          _countyCtrl.text = rData['county']?.toString() ?? '';
+          _plotNumberCtrl.text = rData['plotNo']?.toString() ?? '';
+          _blockNumberCtrl.text = rData['blockNo']?.toString() ?? '';
+          _landTenureId = rData['landtenure']?.toString();
+          _locationCtrl.text =
+              rData['location']?.toString() ?? details.location ?? '';
+          _squareMetresCtrl.text =
+              rData['squareMetres']?.toString() ??
+              details.totalSquareMetres.toString();
+          _descIntendedUseCtrl.text =
+              rData['descIntendedUse']?.toString() ??
+              details.descIntendedUse ??
+              '';
+          _physicalAddressCtrl.text =
+              rData['physicalAddress']?.toString() ?? '';
+          _postalAddressCtrl.text = rData['postalAddress']?.toString() ?? '';
+          _longitude = rData['longitude']?.toString() ?? details.longitude;
+          _latitude = rData['latitude']?.toString() ?? details.latitude;
+
+          _buildingClassification =
+              rData['buildingClassificationName']?.toString() ??
+              details.buildingClassification;
+
+          _appealBuildingClassificationId = _buildingClassifications
+              .where(
+                (e) =>
+                    e.name == rData['buildingClassificationName']?.toString(),
+              )
+              .firstOrNull
+              ?.id
+              .toString();
+
+          _buildingOperationId = rData['BuildingOperation']?.toString();
+          _buildingNameCtrl.text =
+              rData['buildingName']?.toString() ?? details.buildingName ?? '';
+          _architectId = rData['nameOfArchitect']?.toString();
+          _structuralEngineerId = rData['nameOfStructuralEngineer']?.toString();
+          _surveyorId = rData['nameOfLandSurveyor']?.toString();
+          _quantitySurveyorId = rData['nameOfQuantitySurveyor']?.toString();
+          _buildingPurposeId = rData['building_purposes']?.toString();
+          _heightCtrl.text =
+              rData['height']?.toString() ?? details.height ?? '';
+          _waterSupply = rData['accessibilityWaterSupply']?.toString();
+          _sewerConnection = rData['accessibilitySewerConnection']?.toString();
+          _electricitySupply = rData['accessibilityElectricitySupply']
+              ?.toString();
+          _internetSupply = rData['accessibilityInternetSupply']?.toString();
+          _appealReferenceCtrl.value = TextEditingValue(
+            text: rData['appeal_reference']?.toString() ?? '',
+          );
+          _reasonForAppealCtrl.value = TextEditingValue(
+            text: rData['reasonForAppeal']?.toString() ?? '',
+          );
+          _remedySoughtCtrl.value = TextEditingValue(
+            text: rData['remedySought']?.toString() ?? '',
+          );
+        } else {
+          // Fallback to old details processing
+          _applicationTypeId = _applicationTypes
+              .where((e) => e.name == details.applicationType)
+              .firstOrNull
+              ?.id
+              .toString();
+
+          _adminUnitTypeId = _adminUnitTypes
+              .where((e) => e.name == details.administrativeUnitType)
+              .firstOrNull
+              ?.id
+              .toString();
+
+          if (_adminUnitTypeId != null) {
+            _adminUnits = context.read<AuxiliaryRepository>().getAdminUnits(
+              int.parse(_adminUnitTypeId!),
+            );
+            _adminUnitId = _adminUnits
+                .where((e) => e.name == details.administrativeUnitName)
+                .firstOrNull
+                ?.id
+                .toString();
+          }
+
+          _buildingPurposeId = _buildingPurposes
+              .where((e) => e.name == details.buildingPurpose)
+              .firstOrNull
+              ?.id
+              .toString();
+
+          _buildingOperationId = _buildingOperations
+              .where((e) => e.name == details.buildingOperation)
+              .firstOrNull
+              ?.id
+              .toString();
+
+          _buildingClassification = _buildingClassifications
+              .where((e) => e.name == details.buildingClassification)
+              .firstOrNull
+              ?.name;
+
+          // Text Fields
+          _contactPersonCtrl.text = details.applicant.name;
+          _contactMobileCtrl.text = details.applicant.phone;
+          _contactEmailCtrl.text = details.applicant.email;
+          _squareMetresCtrl.text = details.totalSquareMetres.toString();
+
+          if (details.location != null) _locationCtrl.text = details.location!;
+          if (details.buildingName != null) {
+            _buildingNameCtrl.text = details.buildingName!;
+          }
+          if (details.height != null) _heightCtrl.text = details.height!;
+          if (details.descIntendedUse != null) {
+            _descIntendedUseCtrl.text = details.descIntendedUse!;
+          }
+
+          _latitude = details.latitude;
+          _longitude = details.longitude;
+          _landTenureId = details.landtenure;
         }
-
-        _buildingPurposeId = _buildingPurposes
-            .where((e) => e.name == details.buildingPurpose)
-            .firstOrNull
-            ?.id
-            .toString();
-
-        _buildingOperationId = _buildingOperations
-            .where((e) => e.name == details.buildingOperation)
-            .firstOrNull
-            ?.id
-            .toString();
-
-        _buildingClassification = _buildingClassifications
-            .where((e) => e.name == details.buildingClassification)
-            .firstOrNull
-            ?.name;
-
-        // Text Fields
-        _contactPersonCtrl.text = details.applicant.name;
-        _contactMobileCtrl.text = details.applicant.phone;
-        _contactEmailCtrl.text = details.applicant.email;
-        _squareMetresCtrl.text = details.totalSquareMetres.toString();
-
-        if (details.location != null) _locationCtrl.text = details.location!;
-        if (details.buildingName != null)
-          _buildingNameCtrl.text = details.buildingName!;
-        if (details.height != null) _heightCtrl.text = details.height!;
-        if (details.descIntendedUse != null)
-          _descIntendedUseCtrl.text = details.descIntendedUse!;
-
-        _latitude = details.latitude;
-        _longitude = details.longitude;
-        _landTenureId = details.landtenure;
       });
     } catch (e) {
       if (mounted) {
@@ -275,6 +451,17 @@ class _ClientNewApplicationScreenState
     }
   }
 
+  void _scrollToTop() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   void _loadAuxiliaryData() {
     final auxRepo = context.read<AuxiliaryRepository>();
     setState(() {
@@ -285,6 +472,42 @@ class _ClientNewApplicationScreenState
       _landTenures = auxRepo.getLandTenures();
       _buildingClassifications = auxRepo.getBuildingClassifications();
     });
+  }
+
+  void _populateProfileDetailsIfAvailable() {
+    final state = context.read<ClientProfileBloc>().state;
+    if (state is ClientProfileLoaded) {
+      _populateProfileDetails(state.profile);
+    }
+  }
+
+  void _populateProfileDetails(ClientProfileModel profile) {
+    if (profile.ninNumber.isNotEmpty && _ninCtrl.text.trim().isEmpty) {
+      _ninCtrl.text = profile.ninNumber;
+    }
+
+    if (profile.names.isNotEmpty && _applicantNameCtrl.text.trim().isEmpty) {
+      _applicantNameCtrl.text = profile.names;
+    }
+
+    if (profile.names.isNotEmpty && _contactPersonCtrl.text.trim().isEmpty) {
+      _contactPersonCtrl.text = profile.names;
+    }
+
+    if (profile.email.isNotEmpty && _contactEmailCtrl.text.trim().isEmpty) {
+      _contactEmailCtrl.text = profile.email;
+    }
+
+    if (profile.phone.isNotEmpty && _contactMobileCtrl.text.trim().isEmpty) {
+      _contactMobileCtrl.text = profile.phone;
+    }
+
+    if (profile.phone.isNotEmpty && _phoneMobileCtrl.text.trim().isEmpty) {
+      _phoneMobileCtrl.text = profile.phone;
+    }
+    if (profile.accountType.isNotEmpty) {
+      _legalStatus = profile.accountType;
+    }
   }
 
   void _onAdminUnitTypeSelected(String? val) {
@@ -400,6 +623,12 @@ class _ClientNewApplicationScreenState
 
   void _nextStep() {
     if (!(_formKey.currentState?.validate() ?? true)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please check the form fields and try again.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
@@ -408,6 +637,7 @@ class _ClientNewApplicationScreenState
         setState(() {
           _currentStep = 6;
         });
+        _scrollToTop();
         return;
       }
     }
@@ -417,6 +647,7 @@ class _ClientNewApplicationScreenState
       setState(() {
         _currentStep++;
       });
+      _scrollToTop();
     } else {
       _submitApplication();
     }
@@ -428,6 +659,7 @@ class _ClientNewApplicationScreenState
         setState(() {
           _currentStep = 1;
         });
+        _scrollToTop();
         return;
       }
     }
@@ -436,7 +668,17 @@ class _ClientNewApplicationScreenState
       setState(() {
         _currentStep--;
       });
+      _scrollToTop();
     }
+  }
+
+  List<BuildingClassification> get _visibleBuildingClassifications {
+    if (_isClassC) {
+      return _buildingClassifications
+          .where((c) => c.name.trim().toLowerCase() == 'class c')
+          .toList();
+    }
+    return _buildingClassifications;
   }
 
   Future<void> _submitApplication() async {
@@ -480,25 +722,35 @@ class _ClientNewApplicationScreenState
         );
       }
 
-      context.read<ClientNewApplicationBloc>().add(
-        SubmitAppealApplication(formData),
-      );
+      if (widget.applicationKey != null) {
+        context.read<ClientNewApplicationBloc>().add(
+          UpdateApplication(widget.applicationKey!, formData),
+        );
+      } else {
+        context.read<ClientNewApplicationBloc>().add(
+          SubmitAppealApplication(formData),
+        );
+      }
       return;
     }
 
     final payload = {
-      "application_type": _applicationTypeId,
+      "application_type": _applicationTypes
+          .where((t) => t.id.toString() == _applicationTypeId)
+          .firstOrNull
+          ?.slug,
       "administrative_unit_type": _adminUnitTypeId,
       "administrative_unit_id": _adminUnitId,
-      "subcountyId": _subcountyId != null ? int.tryParse(_subcountyId!) : null,
+      "districtId": _districtId,
+      "subCountyId": _subcountyId != null ? int.tryParse(_subcountyId!) : null,
       "parishId": _parishId != null ? int.tryParse(_parishId!) : null,
       "villageId": _villageId != null ? int.tryParse(_villageId!) : null,
-      "roadId": _roadId != null ? int.tryParse(_roadId!) : null,
+      "streetRoadId": _roadId != null ? int.tryParse(_roadId!) : null,
       "contactPerson": _contactPersonCtrl.text.trim(),
       "contactMobilePhone": _contactMobileCtrl.text.trim(),
       "contactEmail": _contactEmailCtrl.text.trim(),
       "landtenure": _landTenureId != null ? int.tryParse(_landTenureId!) : null,
-      "buildingPurpose": _buildingPurposeId != null
+      "building_purpose": _buildingPurposeId != null
           ? int.tryParse(_buildingPurposeId!)
           : null,
       "location": _locationCtrl.text.trim(),
@@ -526,6 +778,7 @@ class _ClientNewApplicationScreenState
       "faxNumber": _faxNumberCtrl.text.trim(),
       "contractor": _contractorCtrl.text.trim(),
       "development_permit": _developmentPermitCtrl.text.trim(),
+      "developmentPermissionNumber": _developmentPermitCtrl.text.trim(),
       "ppcMinuteNumber": _ppcMinuteNumberCtrl.text.trim(),
       "ppcDate": _ppcDateCtrl.text.trim(),
       "ppcApplicantName": _ppcApplicantNameCtrl.text.trim(),
@@ -652,148 +905,161 @@ class _ClientNewApplicationScreenState
     _faxNumberCtrl.dispose();
     _contractorCtrl.dispose();
     _developmentPermitCtrl.dispose();
+    _scrollController.dispose();
 
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ClientNewApplicationBloc, ClientNewApplicationState>(
+    return BlocListener<ClientProfileBloc, ClientProfileState>(
       listener: (context, state) {
-        if (state is ClientNewApplicationSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                widget.applicationKey != null
-                    ? 'Application Updated successfully!'
-                    : 'Application Submitted successfully!',
-              ),
-            ),
-          );
-          context.go('/client/applications');
-        } else if (state is ClientNewApplicationError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${state.message}'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 10),
-            ),
-          );
+        if (state is ClientProfileLoaded) {
+          _populateProfileDetails(state.profile);
         }
       },
-      child: Scaffold(
-        backgroundColor: AppTheme.background,
-        appBar: AppBar(
-          backgroundColor: AppTheme.primaryGreen,
-          title: Text(
-            widget.applicationKey != null
-                ? 'EDIT APPLICATION'
-                : 'NEW APPLICATION',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          iconTheme: const IconThemeData(color: Colors.white),
-          centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(4),
-            child: Container(color: AppTheme.accentGold, height: 4),
-          ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Form(key: _formKey, child: _buildCurrentStep()),
+      child: BlocListener<ClientNewApplicationBloc, ClientNewApplicationState>(
+        listener: (context, state) {
+          if (state is ClientNewApplicationSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  widget.applicationKey != null
+                      ? 'Application Updated successfully!'
+                      : 'Application Submitted successfully!',
+                ),
+              ),
+            );
+            context.go('/client/applications/${state.aid}');
+          } else if (state is ClientNewApplicationError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${state.message}'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 10),
+              ),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppTheme.background,
+          appBar: AppBar(
+            backgroundColor: AppTheme.primaryGreen,
+            title: Text(
+              widget.applicationKey != null
+                  ? 'EDIT APPLICATION'
+                  : 'NEW APPLICATION',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
+            iconTheme: const IconThemeData(color: Colors.white),
+            centerTitle: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(4),
+              child: Container(color: AppTheme.accentGold, height: 4),
+            ),
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Form(key: _formKey, child: _buildCurrentStep()),
+                ),
+              ),
 
-            // Next/Back Buttons
-            BlocBuilder<ClientNewApplicationBloc, ClientNewApplicationState>(
-              builder: (context, state) {
-                if (state is ClientNewApplicationLoading || _isLoadingDetails) {
+              // Next/Back Buttons
+              BlocBuilder<ClientNewApplicationBloc, ClientNewApplicationState>(
+                builder: (context, state) {
+                  if (state is ClientNewApplicationLoading ||
+                      _isLoadingDetails) {
+                    return Container(
+                      padding: const EdgeInsets.all(20),
+                      color: Colors.white,
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
                   return Container(
                     padding: const EdgeInsets.all(20),
-                    color: Colors.white,
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                return Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
-                  ),
-                  child: Row(
-                    children: [
-                      if (_currentStep > 1)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: ElevatedButton(
-                              onPressed: _previousStep,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE0E6E0),
-                                foregroundColor: AppTheme.primaryGreen,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+                    ),
+                    child: Row(
+                      children: [
+                        if (_currentStep > 1)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: ElevatedButton(
+                                onPressed: _previousStep,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE0E6E0),
+                                  foregroundColor: AppTheme.primaryGreen,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 15,
+                                  ),
                                 ),
+                                child: const Text('BACK'),
                               ),
-                              child: const Text('BACK'),
+                            ),
+                          ),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _nextStep,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            child: Text(
+                              _currentStep == 6 ? 'SUBMIT' : 'CONTINUE',
                             ),
                           ),
                         ),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _nextStep,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                          ),
-                          child: Text(
-                            _currentStep == 6 ? 'SUBMIT' : 'CONTINUE',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
-            // Bottom Nav
-            BottomNavigationBar(
-              currentIndex: 1, // Focus Applications conceptually
-              onTap: (index) {
-                if (index == 0) context.go('/client/dashboard');
-                if (index == 1) context.go('/client/applications');
-                if (index == 2) context.go('/client/invoices');
-                if (index == 3) context.go('/client/profile');
-              },
-              selectedItemColor: AppTheme.primaryGreen,
-              unselectedItemColor: Colors.grey,
-              showUnselectedLabels: true,
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.description),
-                  label: 'Applications',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.payment),
-                  label: 'Invoices',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
-            ),
-          ],
+              // Bottom Nav
+              BottomNavigationBar(
+                currentIndex: 1, // Focus Applications conceptually
+                onTap: (index) {
+                  if (index == 0) context.go('/client/dashboard');
+                  if (index == 1) context.go('/client/applications');
+                  if (index == 2) context.go('/client/invoices');
+                  if (index == 3) context.go('/client/profile');
+                },
+                selectedItemColor: AppTheme.primaryGreen,
+                unselectedItemColor: Colors.grey,
+                showUnselectedLabels: true,
+                type: BottomNavigationBarType.fixed,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.description),
+                    label: 'Applications',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.payment),
+                    label: 'Invoices',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person),
+                    label: 'Profile',
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -933,7 +1199,7 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select application...'),
-          value: _applicationTypeId,
+          initialValue: _applicationTypeId,
           items: _applicationTypes
               .map(
                 (a) => DropdownMenuItem(
@@ -1086,7 +1352,7 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select Subcounty'),
-          value: _subcountyId,
+          initialValue: _subcountyId,
           items: _subcounties
               .map(
                 (s) => DropdownMenuItem(
@@ -1111,7 +1377,7 @@ class _ClientNewApplicationScreenState
             if (val != null) _fetchParishes(val);
           },
           validator: (val) {
-            if (val == null) {
+            if (val!.isEmpty) {
               return 'Please select subcounty';
             }
             return null;
@@ -1123,7 +1389,7 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select Parish'),
-          value: _parishId,
+          initialValue: _parishId,
           items: _parishes
               .map(
                 (p) => DropdownMenuItem(
@@ -1146,7 +1412,7 @@ class _ClientNewApplicationScreenState
             if (val != null) _fetchVillages(val);
           },
           validator: (val) {
-            if (val == null) {
+            if (val!.isEmpty) {
               return 'Please select parish';
             }
             return null;
@@ -1158,7 +1424,7 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select Village'),
-          value: _villageId,
+          initialValue: _villageId,
           validator: (value) => value == null ? 'Please select village' : null,
           items: _villages
               .map(
@@ -1185,7 +1451,7 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select Road'),
-          value: _roadId,
+          initialValue: _roadId,
           validator: (value) => value == null ? 'Please select road' : null,
           items: _roads
               .map(
@@ -1237,12 +1503,17 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select classification...'),
-          value: _appealBuildingClassificationId,
-          items: _buildingClassifications
+          initialValue:
+              _visibleBuildingClassifications.any(
+                (c) => c.id.toString() == _appealBuildingClassificationId,
+              )
+              ? _appealBuildingClassificationId
+              : null,
+          items: _visibleBuildingClassifications
               .map(
-                (b) => DropdownMenuItem(
-                  value: b.id.toString(),
-                  child: Text(b.name, style: const TextStyle(fontSize: 13)),
+                (c) => DropdownMenuItem(
+                  value: c.id.toString(),
+                  child: Text(c.name, style: const TextStyle(fontSize: 13)),
                 ),
               )
               .toList(),
@@ -1250,7 +1521,7 @@ class _ClientNewApplicationScreenState
             setState(() => _appealBuildingClassificationId = val);
           },
           validator: (val) {
-            if (val == null) {
+            if (val!.isEmpty) {
               return 'Please select building classification';
             }
             return null;
@@ -1264,6 +1535,7 @@ class _ClientNewApplicationScreenState
           (p) => setState(() => _appealDocumentPath = p),
           fileType: FileType.custom,
           allowedExtensions: ['pdf'],
+          isRequired: () => true,
         ),
       ],
     );
@@ -1304,10 +1576,20 @@ class _ClientNewApplicationScreenState
           ),
           _buildLabel('ADDRESS OF APPLICANT'),
           TextFormField(
-            controller: _applicantAddressCtrl,
+            controller: _physicalAddressCtrl,
             decoration: _inputDec().copyWith(hintText: 'Enter address'),
+            validator: (v) => v!.isEmpty ? 'address is required' : null,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
           ),
         ],
+        _buildLabel('POSTAL ADDRESS'),
+        TextFormField(
+          controller: _postalAddressCtrl,
+          validator: (value) =>
+              value!.isEmpty ? 'Postal address is required' : null,
+          decoration: _inputDec().copyWith(hintText: 'Enter postal address'),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
         _buildLabel('CONTACT PERSON (IF DIFFERENT)'),
         TextFormField(
           controller: _contactPersonCtrl,
@@ -1339,15 +1621,14 @@ class _ClientNewApplicationScreenState
           _buildLabel('PHYSICAL ADDRESS'),
           TextFormField(
             controller: _physicalAddressCtrl,
+            validator: (value) =>
+                value!.isEmpty ? 'Physical address is required' : null,
             decoration: _inputDec().copyWith(
               hintText: 'Enter physical address',
             ),
+            autovalidateMode: AutovalidateMode.onUserInteraction,
           ),
-          _buildLabel('POSTAL ADDRESS'),
-          TextFormField(
-            controller: _postalAddressCtrl,
-            decoration: _inputDec().copyWith(hintText: 'Enter postal address'),
-          ),
+
           _buildLabel('TELEPHONE (FIXED LINE)'),
           TextFormField(
             controller: _phoneFixedLineCtrl,
@@ -1374,36 +1655,66 @@ class _ClientNewApplicationScreenState
     String title,
     String? path,
     Function(String) onPicked, {
+    bool Function()? isRequired,
     FileType fileType = FileType.custom,
     List<String>? allowedExtensions,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              path == null
-                  ? 'No file selected'
-                  : path.split('\\').last.split('/').last,
-              style: const TextStyle(fontSize: 12),
-              overflow: TextOverflow.ellipsis,
+    return FormField<String>(
+      validator: (_) {
+        final required = isRequired?.call() ?? false;
+
+        if (required && (path == null || path.isEmpty)) {
+          return '$title is required';
+        }
+
+        return null;
+      },
+      builder: (field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    path == null || path.isEmpty
+                        ? 'No file selected'
+                        : path.split('\\').last.split('/').last,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    await _pickFile(
+                      (filePath) {
+                        onPicked(filePath);
+                        field.didChange(filePath);
+                      },
+                      fileType: fileType,
+                      allowedExtensions: allowedExtensions,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.accentGold,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 0,
+                    ),
+                  ),
+                  child: const Text('UPLOAD', style: TextStyle(fontSize: 11)),
+                ),
+              ],
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => _pickFile(
-              onPicked,
-              fileType: fileType,
-              allowedExtensions: allowedExtensions,
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accentGold,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-            ),
-            child: const Text('UPLOAD', style: TextStyle(fontSize: 11)),
-          ),
-        ],
-      ),
+            if (field.hasError)
+              Text(
+                field.errorText!,
+                style: TextStyle(
+                  color: Theme.of(field.context).colorScheme.error,
+                  fontSize: 12,
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -1422,7 +1733,7 @@ class _ClientNewApplicationScreenState
                   hintText: 'Enter permit number',
                 ),
                 validator: (val) {
-                  if (val == null) {
+                  if (val!.isEmpty) {
                     return 'Please enter permit number';
                   }
                   return null;
@@ -1513,8 +1824,7 @@ class _ClientNewApplicationScreenState
               );
               if (date != null) {
                 setState(() {
-                  _ppcDateCtrl.text =
-                      "\${date.month.toString().padLeft(2, '0')}/\${date.day.toString().padLeft(2, '0')}/\${date.year}";
+                  _ppcDateCtrl.text = DateFormat('MM/dd/yyyy').format(date);
                 });
               }
             },
@@ -1556,15 +1866,15 @@ class _ClientNewApplicationScreenState
             controller: _ppcNumLevelsCtrl,
             keyboardType: TextInputType.number,
             decoration: _inputDec().copyWith(hintText: 'e.g 1'),
-            validator: (val) {
-              if (val == null || val.isEmpty) {
-                return 'Please enter the number of levels';
-              }
-              if (int.parse(val) > 60) {
-                return 'Number of levels cannot exceed 60';
-              }
-              return null;
-            },
+            // validator: (val) {
+            //   if (val == null || val.isEmpty) {
+            //     return 'Please enter the number of levels';
+            //   }
+            //   if (int.parse(val) > 60) {
+            //     return 'Number of levels cannot exceed 60';
+            //   }
+            //   return null;
+            // },
           ),
           _buildLabel('NUMBER OF BLOCKS'),
           TextFormField(
@@ -1824,6 +2134,10 @@ class _ClientNewApplicationScreenState
                 return 'Site Area cannot exceed 30 sq meters for Class C';
               }
             }
+            if (value!.isEmpty) {
+              return 'Site Area is required';
+            }
+
             return null;
           },
         ),
@@ -1839,6 +2153,10 @@ class _ClientNewApplicationScreenState
                 return 'Building Height cannot exceed 3 meters for Class C';
               }
             }
+            if (value!.isEmpty) {
+              return 'Building Height is required';
+            }
+
             return null;
           },
         ),
@@ -1962,7 +2280,9 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select purpose...'),
-          value: _buildingPurposeId,
+          initialValue: _buildingPurposeId,
+          validator: (value) =>
+              value == null ? 'Building purpose is required' : null,
           items: _buildingPurposes
               .map(
                 (b) => DropdownMenuItem(
@@ -1979,7 +2299,9 @@ class _ClientNewApplicationScreenState
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select operation...'),
-          value: _buildingOperationId,
+          initialValue: _buildingOperationId,
+          validator: (value) =>
+              value == null ? 'Building operation is required' : null,
           items: _buildingOperations
               .map(
                 (o) => DropdownMenuItem(
@@ -1992,15 +2314,20 @@ class _ClientNewApplicationScreenState
             setState(() => _buildingOperationId = val);
           },
         ),
-        _buildLabel('USE CLASS'),
+        _buildLabel('BUILDING CLASSIFICATION'),
         DropdownButtonFormField<String>(
           decoration: _inputDec(),
           hint: const Text('Select use class'),
-          value: _buildingClassification,
-          items: _buildingClassifications
+          initialValue:
+              _visibleBuildingClassifications.any(
+                (c) => c.name == _buildingClassification,
+              )
+              ? _buildingClassification
+              : null,
+          items: _visibleBuildingClassifications
               .map(
                 (c) => DropdownMenuItem(
-                  value: c.name, // The JSON uses string e.g. "CLASS A"
+                  value: c.name,
                   child: Text(c.name, style: const TextStyle(fontSize: 13)),
                 ),
               )
@@ -2008,6 +2335,8 @@ class _ClientNewApplicationScreenState
           onChanged: (val) {
             setState(() => _buildingClassification = val);
           },
+          validator: (value) =>
+              value!.isEmpty ? 'Please select use class' : null,
         ),
         _buildLabel('DESCRIPTION OF INTENDED USE'),
         TextFormField(
@@ -2022,8 +2351,9 @@ class _ClientNewApplicationScreenState
   Widget _buildProCodeField(
     String label,
     TextEditingController controller,
-    String key,
-  ) {
+    String key, {
+    String? Function(String?)? validator,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2033,6 +2363,7 @@ class _ClientNewApplicationScreenState
             Expanded(
               child: TextFormField(
                 controller: controller,
+                validator: validator,
                 decoration: _inputDec().copyWith(
                   hintText: 'Enter Pro link code...',
                 ),
@@ -2195,6 +2526,7 @@ class _ClientNewApplicationScreenState
               'Old Permit',
               _oldPermitPath,
               (p) => setState(() => _oldPermitPath = p),
+              isRequired: () => true,
             ),
           ],
 
@@ -2202,6 +2534,9 @@ class _ClientNewApplicationScreenState
             'AS BUILT DRAWINGS (Required)',
             _asBuiltDrawingsCodeCtrl,
             'asBuiltDrawings',
+            validator: (v) {
+              return _isClassA || _isClassC ? 'as built required' : null;
+            },
           ),
           _buildProCodeField(
             'CERTIFICATE OF PRACTICAL COMPLETION (Required)',
@@ -2241,6 +2576,7 @@ class _ClientNewApplicationScreenState
               'LC Letter',
               _lcLetterPath,
               (p) => setState(() => _lcLetterPath = p),
+              isRequired: () => true,
             ),
           ],
 
@@ -2250,6 +2586,7 @@ class _ClientNewApplicationScreenState
               'Sketch Plan',
               _sketchPlanPath,
               (p) => setState(() => _sketchPlanPath = p),
+              isRequired: () => true,
             ),
           ],
 
@@ -2260,6 +2597,8 @@ class _ClientNewApplicationScreenState
             'Land Title',
             _certificateOfTitlePath,
             (p) => setState(() => _certificateOfTitlePath = p),
+            isRequired: () =>
+                _powerOfAttorneyPath == null || _powerOfAttorneyPath!.isEmpty,
           ),
 
           _buildLabel(
@@ -2269,6 +2608,9 @@ class _ClientNewApplicationScreenState
             'Power of Attorney',
             _powerOfAttorneyPath,
             (p) => setState(() => _powerOfAttorneyPath = p),
+            isRequired: () =>
+                _certificateOfTitlePath == null ||
+                _certificateOfTitlePath!.isEmpty,
           ),
 
           if (_isClassA || _isClassC) ...[
@@ -2279,6 +2621,9 @@ class _ClientNewApplicationScreenState
               'Sales Agreement',
               _salesAgreementPath,
               (p) => setState(() => _salesAgreementPath = p),
+              isRequired: () =>
+                  _certificateOfTitlePath == null ||
+                  _certificateOfTitlePath!.isEmpty,
             ),
 
             _buildLabel(
@@ -2321,11 +2666,21 @@ class _ClientNewApplicationScreenState
               'BOUNDARY OPENING REPORT (Required)',
               _boundaryOpeningReportCodeCtrl,
               'boundaryOpeningReport',
+              validator: (value) {
+                return value!.isEmpty
+                    ? 'boundary opening report is required'
+                    : null;
+              },
             ),
             _buildProCodeField(
               'ARCHITECTURAL DRAWINGS (Required)',
               _architecturalDrawingsCodeCtrl,
               'architecturalDrawings',
+              validator: (value) {
+                return value!.isEmpty
+                    ? 'architectural drawings is required'
+                    : null;
+              },
             ),
             _buildProCodeField(
               _isClassC
@@ -2333,6 +2688,11 @@ class _ClientNewApplicationScreenState
                   : 'CIVIL/STRUCTURAL ENG DRAWINGS (Required)',
               _servicesDrawingsCodeCtrl,
               'servicesDrawings',
+              validator: (v) {
+                return _isClassA || _isClassB
+                    ? 'civil/structural required'
+                    : null;
+              },
             ),
           ],
 
@@ -2341,11 +2701,21 @@ class _ClientNewApplicationScreenState
               'MECHANICAL ENGINEERING DRAWINGS (Required)',
               _mechanicalDrawingsCodeCtrl,
               'mechanicalDrawings',
+              validator: (value) {
+                return value!.isEmpty
+                    ? 'mechanical engineering drawings is required'
+                    : null;
+              },
             ),
             _buildProCodeField(
               'ELECTRICAL ENGINEERING DRAWINGS (Required)',
               _electricalDrawingsCodeCtrl,
               'electricalDrawings',
+              validator: (value) {
+                return value!.isEmpty
+                    ? 'electrical engineering drawings is required'
+                    : null;
+              },
             ),
           ],
         ],
@@ -2357,7 +2727,10 @@ class _ClientNewApplicationScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildStepHeader('STEP 6 OF 6', 'Review & Submit'),
+        _buildStepHeader(
+          _isAppeal ? 'STEP 2 OF 2' : 'STEP 6 OF 6',
+          'Review & Submit',
+        ),
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
@@ -2391,6 +2764,14 @@ class _ClientNewApplicationScreenState
                     'N/A',
               ),
               _buildSummaryRow(
+                'Form Type',
+                _formTypes
+                        .where((t) => t.id.toString() == _formTypeId)
+                        .firstOrNull
+                        ?.name ??
+                    'N/A',
+              ),
+              _buildSummaryRow(
                 'Authority Type',
                 _adminUnitTypes
                         .where((t) => t.id.toString() == _adminUnitTypeId)
@@ -2408,7 +2789,6 @@ class _ClientNewApplicationScreenState
               ),
               _buildSummaryRow('Contact Person', _contactPersonCtrl.text),
               _buildSummaryRow('Contact Mobile', _contactMobileCtrl.text),
-              _buildSummaryRow('Location', _locationCtrl.text),
             ],
           ),
         ),

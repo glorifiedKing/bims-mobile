@@ -17,6 +17,7 @@ class ClientApplicationsBloc
     on<FetchClientApplications>(_onFetchClientApplications);
     on<LoadMoreClientApplications>(_onLoadMoreClientApplications);
     on<ChangeClientApplicationsFilter>(_onChangeClientApplicationsFilter);
+    on<DeleteClientApplication>(_onDeleteClientApplication);
   }
 
   Future<void> _onChangeClientApplicationsFilter(
@@ -115,6 +116,26 @@ class ClientApplicationsBloc
         emit(ClientApplicationsError(e.toString()));
       } finally {
         _isFetching = false;
+      }
+    }
+  }
+
+  Future<void> _onDeleteClientApplication(
+    DeleteClientApplication event,
+    Emitter<ClientApplicationsState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is ClientApplicationsLoaded) {
+      try {
+        final message = await _repository.deleteApplication(event.applicationKey);
+        emit(ClientApplicationsActionSuccess(message));
+        final updatedApps =
+            currentState.applications
+                .where((app) => app.id != event.applicationKey)
+                .toList();
+        emit(currentState.copyWith(applications: updatedApps));
+      } catch (e) {
+        emit(ClientApplicationsError(e.toString()));
       }
     }
   }

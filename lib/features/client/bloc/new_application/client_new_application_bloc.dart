@@ -3,10 +3,12 @@ import '../../repositories/client_repository.dart';
 import 'client_new_application_event.dart';
 import 'client_new_application_state.dart';
 
-class ClientNewApplicationBloc extends Bloc<ClientNewApplicationEvent, ClientNewApplicationState> {
+class ClientNewApplicationBloc
+    extends Bloc<ClientNewApplicationEvent, ClientNewApplicationState> {
   final ClientRepository repository;
 
-  ClientNewApplicationBloc({required this.repository}) : super(ClientNewApplicationInitial()) {
+  ClientNewApplicationBloc({required this.repository})
+    : super(ClientNewApplicationInitial()) {
     on<SubmitApplication>(_onSubmitApplication);
     on<SubmitAppealApplication>(_onSubmitAppealApplication);
     on<UpdateApplication>(_onUpdateApplication);
@@ -18,8 +20,8 @@ class ClientNewApplicationBloc extends Bloc<ClientNewApplicationEvent, ClientNew
   ) async {
     emit(ClientNewApplicationLoading());
     try {
-      await repository.submitApplication(event.data);
-      emit(ClientNewApplicationSuccess());
+      final aid = await repository.submitApplication(event.data);
+      emit(ClientNewApplicationSuccess(aid));
     } catch (e) {
       emit(ClientNewApplicationError(e.toString()));
     }
@@ -31,8 +33,8 @@ class ClientNewApplicationBloc extends Bloc<ClientNewApplicationEvent, ClientNew
   ) async {
     emit(ClientNewApplicationLoading());
     try {
-      await repository.submitAppealApplication(event.data);
-      emit(ClientNewApplicationSuccess());
+      final aid = await repository.submitAppealApplication(event.data);
+      emit(ClientNewApplicationSuccess(aid));
     } catch (e) {
       emit(ClientNewApplicationError(e.toString()));
     }
@@ -44,8 +46,8 @@ class ClientNewApplicationBloc extends Bloc<ClientNewApplicationEvent, ClientNew
   ) async {
     emit(ClientNewApplicationLoading());
     try {
-      await repository.updateApplication(event.id, event.data);
-      emit(ClientNewApplicationSuccess());
+      final aid = await repository.updateApplication(event.id, event.data);
+      emit(ClientNewApplicationSuccess(aid));
     } catch (e) {
       emit(ClientNewApplicationError(e.toString()));
     }

@@ -477,7 +477,7 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
         currentIndex: 2,
         onTap: (index) {
           if (index == 0) context.go('/professional/dashboard');
-          if (index == 1) context.push('/professional/applications');
+          if (index == 1) context.push('/professional/documents');
         },
         selectedItemColor: AppTheme.primaryGreen,
         unselectedItemColor: const Color(0xFF999999),
@@ -491,7 +491,7 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment, size: 28),
-            label: 'Applications',
+            label: 'Documents',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person, size: 28),
