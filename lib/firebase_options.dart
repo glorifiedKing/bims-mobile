@@ -66,10 +66,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDp8jmhsAHZ56_6fPhShbVLSFqsUyH_qS8',
-    appId: '1:1052277485580:ios:87de5e047f6babc7b03e29',
+    appId: '1:1052277485580:ios:480d3368b8c53789b03e29',
     messagingSenderId: '1052277485580',
     projectId: 'bims-mobile-7d6d6',
     storageBucket: 'bims-mobile-7d6d6.firebasestorage.app',
-    iosBundleId: 'com.nbrb.bimsmobile',
+    iosBundleId: 'nbrb.go.ug.bimsMobileApp',
   );
 }
