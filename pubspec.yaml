@@ -50,6 +50,7 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
+  remove_alpha_ios: true
   image_path: "assets/images/BIMS_logo_m.png"
 flutter_native_splash:
   color: "#FFFFFF"
