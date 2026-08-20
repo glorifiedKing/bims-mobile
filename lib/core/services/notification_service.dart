@@ -47,29 +47,36 @@ class NotificationService {
     // 1. Request notification permissions (iOS / macOS / Web).
     await _requestPermission();
 
-    // 2. Subscribe all users to the common broadcast topic.
+    // 2. Set iOS foreground notification presentation options (alert, badge, sound).
+    await _configureIosForegroundPresentation();
+
+    // 3. Subscribe all users to the common broadcast topic.
     await _subscribeToTopic('nbrb_updates');
 
-    // 3. Foreground message handler.
+    // 4. Foreground message handler.
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('[FCM] Foreground message: ${message.messageId}');
       _handleMessage(message);
     });
 
-    // 4. App opened from a notification in background state.
+    // 5. App opened from a notification in background state.
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('[FCM] Notification opened app: ${message.messageId}');
       _handleMessage(message);
     });
 
-    // 5. Check if the app was launched from a terminated-state notification.
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      debugPrint('[FCM] App launched from notification: ${initialMessage.messageId}');
-      _handleMessage(initialMessage);
+    // 6. Check if the app was launched from a terminated-state notification.
+    try {
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        debugPrint('[FCM] App launched from notification: ${initialMessage.messageId}');
+        _handleMessage(initialMessage);
+      }
+    } catch (e) {
+      debugPrint('[FCM] Error checking initial message: $e');
     }
 
-    // 6. Re-send token to authenticated portals whenever Firebase rotates it.
+    // 7. Re-send token to authenticated portals whenever Firebase rotates it.
     _messaging.onTokenRefresh.listen((newToken) async {
       debugPrint('[FCM] Token refreshed, registering with authenticated portals.');
       await _sendTokenToAllAuthenticatedPortals(newToken);
@@ -94,7 +101,7 @@ class NotificationService {
         return;
       }
 
-      final fcmToken = await _messaging.getToken();
+      final fcmToken = await _getFcmTokenSafely();
       if (fcmToken == null) {
         debugPrint('[FCM] FCM token unavailable, skipping registration for $portal.');
         return;
@@ -116,21 +123,70 @@ class NotificationService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
+  /// Safely fetches the FCM token, catering for iOS APNs token readiness.
+  Future<String?> _getFcmTokenSafely() async {
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        String? apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken == null) {
+          debugPrint('[FCM] APNs token not available immediately on iOS, waiting brief moment...');
+          await Future.delayed(const Duration(seconds: 2));
+          apnsToken = await _messaging.getAPNSToken();
+        }
+        if (apnsToken == null) {
+          debugPrint('[FCM] APNs token not set yet on iOS. Postponing FCM token retrieval.');
+          return null;
+        }
+      }
+      return await _messaging.getToken();
+    } catch (e) {
+      debugPrint('[FCM] Exception while retrieving FCM token: $e');
+      return null;
+    }
+  }
+
+  /// Sets foreground notification presentation options for iOS.
+  Future<void> _configureIosForegroundPresentation() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      try {
+        await _messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        debugPrint('[FCM] Configured iOS foreground notification presentation options.');
+      } catch (e) {
+        debugPrint('[FCM] Failed to set iOS foreground presentation options: $e');
+      }
+    }
+  }
+
   Future<void> _requestPermission() async {
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-    debugPrint('[FCM] Permission status: ${settings.authorizationStatus}');
+    try {
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+      debugPrint('[FCM] Permission status: ${settings.authorizationStatus}');
+    } catch (e) {
+      debugPrint('[FCM] Error requesting notification permissions: $e');
+    }
   }
 
   Future<void> _subscribeToTopic(String topic) async {
     try {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken == null) {
+          debugPrint('[FCM] Skipping topic subscription to $topic — APNs token not set yet.');
+          return;
+        }
+      }
       await _messaging.subscribeToTopic(topic);
       debugPrint('[FCM] Subscribed to topic: $topic');
     } catch (e) {

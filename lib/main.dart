@@ -77,15 +77,15 @@ import 'features/professional/bloc/attachments/professional_attachments_bloc.dar
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register FCM background handler before Firebase is initialized.
-  // This must be a top-level function.
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
+  bool isFirebaseInitialized = false;
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    // await FirebaseAuth.instance.signInAnonymously();
+    // Register FCM background handler after Firebase is initialized.
+    // This must be a top-level function.
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    isFirebaseInitialized = true;
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }
@@ -111,10 +111,14 @@ void main() async {
   // Trigger background sync without awaiting
   auxiliaryRepository.syncAuxiliaryData();
 
-  // Initialize Firebase Messaging (subscribe to topic, set up handlers).
-  await NotificationService.instance.initialize(
-    auxiliaryRepository: auxiliaryRepository,
-  );
+  // Initialize Firebase Messaging safely if Firebase initialized properly.
+  if (isFirebaseInitialized) {
+    NotificationService.instance.initialize(
+      auxiliaryRepository: auxiliaryRepository,
+    ).catchError((e) {
+      debugPrint('NotificationService initialization failed: $e');
+    });
+  }
 
   runApp(
     MultiRepositoryProvider(
