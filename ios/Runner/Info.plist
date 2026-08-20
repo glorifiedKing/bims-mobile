@@ -24,10 +24,18 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>BIMS Uganda requires access to your photo library to upload documents like architectural drawings, and photos like construction site photos.</string>
+        <key>NSCameraUsageDescription</key>
+        <string>BIMS Uganda requires access to your camera to scan approved permit qr codes and to capture images of construction sites.</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>BIMS Uganda uses your location to verify inspection sites and pick location of construction sites for permit application and reporting illegal construction.</string>
+        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+        <string>BIMS Uganda uses your location to verify inspection sites and pick location of construction sites for permit application and reporting illegal construction.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
-	<dict>
+       	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
