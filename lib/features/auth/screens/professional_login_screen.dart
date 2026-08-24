@@ -378,8 +378,9 @@ class _ProfessionalLoginScreenState extends State<ProfessionalLoginScreen> {
                             const SizedBox(height: 25),
 
                             // Register Link
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 const Text(
                                   "Don't have an account? ",

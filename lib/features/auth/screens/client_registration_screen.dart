@@ -429,8 +429,9 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                     },
                   ),
                   const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         'Already have an account? ',

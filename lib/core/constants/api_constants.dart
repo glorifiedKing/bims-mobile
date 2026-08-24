@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const bool isProduction = false;
+  static const bool isProduction = true;
   static const String baseUrl = isProduction
       ? 'https://mobile.bims.go.ug/v1'
       : 'https://api.test.bims.go.ug/v1';

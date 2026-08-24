@@ -555,8 +555,11 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                     const SizedBox(height: 15),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         Text(
                           'Sub: $subDate',
@@ -565,52 +568,57 @@ class _ClientApplicationsScreenState extends State<ClientApplicationsScreen> {
                             color: Colors.grey,
                           ),
                         ),
-                        OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.insert_drive_file, size: 14),
-                          label: const Text('SUMMARY PDF'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.primaryGreen,
-                            side: const BorderSide(
-                              color: AppTheme.primaryGreen,
-                              width: 1.5,
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {},
+                              icon: const Icon(Icons.insert_drive_file, size: 14),
+                              label: const Text('SUMMARY PDF'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppTheme.primaryGreen,
+                                side: const BorderSide(
+                                  color: AppTheme.primaryGreen,
+                                  width: 1.5,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                            if (showAssessPay)
+                              ElevatedButton.icon(
+                                onPressed: onAssessPayTap,
+                                icon: const Icon(Icons.payment, size: 14),
+                                label: const Text('ASSESS & PAY'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.accentGold,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        if (showAssessPay) ...[
-                          const SizedBox(width: 8),
-                          ElevatedButton.icon(
-                            onPressed: onAssessPayTap,
-                            icon: const Icon(Icons.payment, size: 14),
-                            label: const Text('ASSESS & PAY'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.accentGold,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ],
