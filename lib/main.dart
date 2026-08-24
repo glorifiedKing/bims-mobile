@@ -113,11 +113,11 @@ void main() async {
 
   // Initialize Firebase Messaging safely if Firebase initialized properly.
   if (isFirebaseInitialized) {
-    NotificationService.instance.initialize(
-      auxiliaryRepository: auxiliaryRepository,
-    ).catchError((e) {
-      debugPrint('NotificationService initialization failed: $e');
-    });
+    NotificationService.instance
+        .initialize(auxiliaryRepository: auxiliaryRepository)
+        .catchError((e) {
+          debugPrint('NotificationService initialization failed: $e');
+        });
   }
 
   runApp(
@@ -353,7 +353,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'BIMS Mobile',
+      title: 'BIMS Uganda',
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,

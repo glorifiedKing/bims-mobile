@@ -50,9 +50,9 @@ flutter:
     - assets/eps_data.json
 flutter_launcher_icons:
   android: "launcher_icon"
+  image_path_android: "assets/images/BIMS_logo_m.png"
   ios: true
-  remove_alpha_ios: true
-  image_path: "assets/images/BIMS_logo_m.png"
+  image_path: "assets/images/BIMS_logo_m_ios.png"
 flutter_native_splash:
   color: "#FFFFFF"
   #background_image: "assets/background.png" # Optional background image
