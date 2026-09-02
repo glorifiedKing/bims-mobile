@@ -92,30 +92,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     colors: [AppTheme.primaryGreen, Color(0xFF00331A)],
                   ),
                 ),
-                child: Column(
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Image.asset(
-                      'assets/images/BIMS_logo_white_m.png',
-                      height: 120, // Adjust size as needed
-                    ),
-                    const SizedBox(height: 8),
-                    // const Text(
-                    //   'NBRB Portal',
-                    //   style: TextStyle(
-                    //     color: Colors.white,
-                    //     fontSize: 16,
-                    //     fontWeight: FontWeight.bold,
-                    //   ),
-                    // ),
-                    // const SizedBox(height: 10),
-                    const Text(
-                      'Building Industry Management System',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppTheme.accentGold,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.settings, color: Colors.white),
+                        tooltip: 'Settings & Offline Data',
+                        onPressed: () => context.push('/settings'),
                       ),
+                    ),
+                    Column(
+                      children: [
+                        Image.asset(
+                          'assets/images/BIMS_logo_white_m.png',
+                          height: 120, // Adjust size as needed
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Building Industry Management System',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppTheme.accentGold,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -177,7 +182,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           context.push('/verify-permit');
                         },
                       ),
-
                       const SizedBox(height: 15),
                       _buildPortalCard(
                         context: context,

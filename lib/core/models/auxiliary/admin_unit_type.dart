@@ -6,8 +6,10 @@ class AdminUnitType {
 
   factory AdminUnitType.fromJson(Map<String, dynamic> json) {
     return AdminUnitType(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
     );
   }
 
@@ -18,3 +20,4 @@ class AdminUnitType {
     };
   }
 }
+

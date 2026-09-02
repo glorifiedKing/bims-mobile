@@ -15,11 +15,18 @@ class ExpressPenaltyOffenceType {
 
   factory ExpressPenaltyOffenceType.fromJson(Map<String, dynamic> json) {
     return ExpressPenaltyOffenceType(
-      id: json['id'],
-      enactment: json['enactment'],
-      offenceName: json['offence_name'],
-      currencyPoints: json['currency_points'],
-      chargePerSqm: json['charge_per_sqm'],
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      enactment: json['enactment']?.toString() ?? '',
+      offenceName: (json['offence_name'] ?? json['offenceName'])?.toString() ?? '',
+      currencyPoints: json['currency_points'] is int
+          ? json['currency_points'] as int
+          : int.tryParse(json['currency_points']?.toString() ?? '') ?? 0,
+      chargePerSqm: json['charge_per_sqm'] == true ||
+          json['charge_per_sqm'] == 1 ||
+          json['charge_per_sqm'] == '1' ||
+          json['charge_per_sqm'] == 'true',
     );
   }
 
@@ -33,3 +40,4 @@ class ExpressPenaltyOffenceType {
     };
   }
 }
+

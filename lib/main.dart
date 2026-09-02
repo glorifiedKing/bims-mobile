@@ -1,3 +1,5 @@
+import 'dart:io' show SecurityContext;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,6 +78,14 @@ import 'features/professional/bloc/attachments/professional_attachments_bloc.dar
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (!kIsWeb) {
+    try {
+      SecurityContext.defaultContext.allowLegacyUnsafeRenegotiation = true;
+    } catch (e) {
+      debugPrint('Could not enable legacy TLS renegotiation: $e');
+    }
+  }
 
   bool isFirebaseInitialized = false;
   try {

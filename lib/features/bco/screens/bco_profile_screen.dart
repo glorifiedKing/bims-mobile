@@ -141,7 +141,31 @@ class _BcoProfileScreenState extends State<BcoProfileScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.settings, color: AppTheme.primaryGreen),
+                    label: const Text(
+                      'Settings & Offline Data',
+                      style: TextStyle(
+                        color: AppTheme.primaryGreen,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.primaryGreen,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                      ),
+                    ),
+                    onPressed: () => context.push('/settings'),
+                  ),
+                ),
+                const SizedBox(height: 15),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(

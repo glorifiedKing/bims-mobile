@@ -438,6 +438,28 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/settings');
+                        },
+                        icon: const Icon(Icons.settings, color: AppTheme.primaryGreen),
+                        label: const Text(
+                          'Settings & Offline Data',
+                          style: TextStyle(
+                            color: AppTheme.primaryGreen,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       OutlinedButton(
                         onPressed: () {
                           context.read<ProfessionalAuthBloc>().add(

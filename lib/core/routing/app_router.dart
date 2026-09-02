@@ -52,6 +52,7 @@ import '../../features/professional/screens/professional_application_details_scr
 import '../../features/professional/screens/professional_attachments_screen.dart';
 import '../../features/professional/screens/professional_upload_attachment_screen.dart';
 import '../../features/professional/models/pro_attachment_model.dart';
+import '../../features/settings/screens/settings_screen.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> rootNavigatorKey =
@@ -349,6 +350,10 @@ class AppRouter {
           final attachment = state.extra as ProAttachmentModel?;
           return ProfessionalUploadAttachmentScreen(attachment: attachment);
         },
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
   );

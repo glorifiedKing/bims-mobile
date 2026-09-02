@@ -11,9 +11,11 @@ class PaymentMode {
 
   factory PaymentMode.fromJson(Map<String, dynamic> json) {
     return PaymentMode(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'] ?? '',
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
     );
   }
 
@@ -21,3 +23,4 @@ class PaymentMode {
     return {'id': id, 'name': name, 'description': description};
   }
 }
+

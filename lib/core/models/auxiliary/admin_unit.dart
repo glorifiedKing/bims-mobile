@@ -13,19 +13,25 @@ class AdminUnit {
 
   factory AdminUnit.fromJson(Map<String, dynamic> json, int typeId) {
     return AdminUnit(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
       typeId: typeId,
-      districtId: json['districtId'],
+      districtId: (json['districtId'] ?? json['dID'])?.toString() ?? '',
     );
   }
 
   factory AdminUnit.fromJsonFull(Map<String, dynamic> json) {
     return AdminUnit(
-      id: json['id'],
-      name: json['name'],
-      typeId: json['typeId'],
-      districtId: json['districtId'],
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+      typeId: json['typeId'] is int
+          ? json['typeId'] as int
+          : int.tryParse(json['typeId']?.toString() ?? '') ?? 0,
+      districtId: (json['districtId'] ?? json['dID'])?.toString() ?? '',
     );
   }
 
@@ -33,3 +39,4 @@ class AdminUnit {
     return {'id': id, 'name': name, 'typeId': typeId, 'districtId': districtId};
   }
 }
+

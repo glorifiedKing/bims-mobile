@@ -7,9 +7,11 @@ class ApplicationType {
 
   factory ApplicationType.fromJson(Map<String, dynamic> json) {
     return ApplicationType(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      slug: json['slug'] as String,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
     );
   }
 
@@ -17,3 +19,4 @@ class ApplicationType {
     return {'id': id, 'name': name, 'slug': slug};
   }
 }
+

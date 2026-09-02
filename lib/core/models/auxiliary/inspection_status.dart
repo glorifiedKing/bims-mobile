@@ -5,10 +5,16 @@ class InspectionStatus {
   InspectionStatus({required this.id, required this.name});
 
   factory InspectionStatus.fromJson(Map<String, dynamic> json) {
-    return InspectionStatus(id: json['id'], name: json['name']);
+    return InspectionStatus(
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+    );
   }
 
   Map<String, dynamic> toJson() {
     return {'id': id, 'name': name};
   }
 }
+

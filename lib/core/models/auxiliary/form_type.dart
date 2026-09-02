@@ -14,17 +14,24 @@ class FormType {
     String applicationTypeSlug,
   ) {
     return FormType(
-      id: json['id'] as int,
-      name: json['name'] as String,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
       applicationTypeSlug: applicationTypeSlug,
     );
   }
 
   factory FormType.fromJsonFull(Map<String, dynamic> json) {
     return FormType(
-      id: json['id'],
-      name: json['name'],
-      applicationTypeSlug: json['application_type_slug'],
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+      applicationTypeSlug:
+          (json['application_type_slug'] ?? json['applicationTypeSlug'])
+              ?.toString() ??
+          '',
     );
   }
 
@@ -36,3 +43,4 @@ class FormType {
     };
   }
 }
+
