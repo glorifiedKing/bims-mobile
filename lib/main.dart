@@ -118,8 +118,10 @@ void main() async {
     proApiClient: proApiClient,
   );
 
-  // Trigger background sync without awaiting
-  auxiliaryRepository.syncAuxiliaryData();
+  // Trigger background sync after a brief startup delay
+  Future.delayed(const Duration(milliseconds: 500), () {
+    auxiliaryRepository.syncAuxiliaryData();
+  });
 
   // Initialize Firebase Messaging safely if Firebase initialized properly.
   if (isFirebaseInitialized) {

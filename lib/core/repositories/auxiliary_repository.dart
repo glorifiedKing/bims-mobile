@@ -119,39 +119,56 @@ class AuxiliaryRepository {
 
   Future<void> clearAuxiliaryData() async {
     for (final def in syncItemDefinitions) {
-      await _box.delete(def['key']!);
+      final key = def['key']!;
+      await _box.delete(key);
+      await _box.delete('last_sync_$key');
     }
     await _box.delete('last_sync_timestamp');
+  }
+
+  bool _shouldSyncCategory(String key, bool forceSync) {
+    if (forceSync) return true;
+    final counts = getStoredCounts();
+    final count = counts[key] ?? 0;
+    // If no data is cached for this specific category, we MUST sync it
+    if (count == 0) return true;
+
+    try {
+      final lastSyncStr = _box.get('last_sync_$key');
+      if (lastSyncStr == null) return true;
+      final lastSync = DateTime.parse(lastSyncStr as String);
+      final diff = DateTime.now().difference(lastSync);
+      return diff.inDays >= 30;
+    } catch (_) {
+      return true;
+    }
   }
 
   Future<Map<String, SyncItemStatus>> syncAuxiliaryData({
     bool forceSync = false,
     void Function(Map<String, SyncItemStatus> statusMap)? onProgress,
   }) async {
+    final storedCounts = getStoredCounts();
     final Map<String, SyncItemStatus> statusMap = {};
+
     for (final def in syncItemDefinitions) {
-      statusMap[def['key']!] = SyncItemStatus(
-        key: def['key']!,
+      final key = def['key']!;
+      final count = storedCounts[key] ?? 0;
+      final shouldSync = _shouldSyncCategory(key, forceSync);
+
+      statusMap[key] = SyncItemStatus(
+        key: key,
         title: def['title']!,
-        status: SyncStatusState.pending,
-        count: getStoredCounts()[def['key']!] ?? 0,
+        status: !shouldSync && count > 0 ? SyncStatusState.success : SyncStatusState.pending,
+        count: count,
       );
     }
     onProgress?.call(Map.from(statusMap));
 
-    if (!forceSync) {
-      final lastSync = getLastSyncTimestamp();
-      if (lastSync != null) {
-        final diff = DateTime.now().difference(lastSync);
-        if (diff.inDays < 30) {
-          // Check if we actually have data stored; if empty, don't skip
-          final counts = getStoredCounts();
-          final hasData = counts.values.any((c) => c > 0);
-          if (hasData) {
-            return statusMap;
-          }
-        }
-      }
+    // If nothing needs to be synced, exit early
+    final needsAnySync = syncItemDefinitions.any((d) => _shouldSyncCategory(d['key']!, forceSync));
+    if (!needsAnySync) {
+      return statusMap;
     }
 
     void updateStatus(String key, SyncStatusState state, {int? count, String? error}) {
@@ -173,273 +190,316 @@ class AuxiliaryRepository {
     List<Map<String, dynamic>> finalApplicationTypes = [];
 
     // 1. Admin Unit Types
-    updateStatus('admin_unit_types', SyncStatusState.syncing);
-    try {
-      final typesResponse = await clientApiClient.dio.get(ApiConstants.adminUnitTypes);
-      final List<dynamic> typesData = typesResponse.data['data']?['data'] ?? [];
-      finalAdminUnitTypes = typesData.map((typeJson) => {
-        'id': typeJson['id'] is int ? typeJson['id'] : int.tryParse(typeJson['id']?.toString() ?? '') ?? 0,
-        'name': typeJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('admin_unit_types', jsonEncode(finalAdminUnitTypes));
-      updateStatus('admin_unit_types', SyncStatusState.success, count: finalAdminUnitTypes.length);
-    } catch (e) {
-      debugPrint('Error fetching admin unit types: $e');
-      updateStatus('admin_unit_types', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('admin_unit_types', forceSync)) {
+      updateStatus('admin_unit_types', SyncStatusState.syncing);
+      try {
+        final typesResponse = await clientApiClient.dio.get(ApiConstants.adminUnitTypes);
+        final List<dynamic> typesData = typesResponse.data['data']?['data'] ?? [];
+        finalAdminUnitTypes = typesData.map((typeJson) => {
+          'id': typeJson['id'] is int ? typeJson['id'] : int.tryParse(typeJson['id']?.toString() ?? '') ?? 0,
+          'name': typeJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('admin_unit_types', jsonEncode(finalAdminUnitTypes));
+        await _box.put('last_sync_admin_unit_types', DateTime.now().toIso8601String());
+        updateStatus('admin_unit_types', SyncStatusState.success, count: finalAdminUnitTypes.length);
+      } catch (e) {
+        debugPrint('Error fetching admin unit types: $e');
+        updateStatus('admin_unit_types', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 2. Admin Units
-    updateStatus('admin_units', SyncStatusState.syncing);
-    try {
-      final types = finalAdminUnitTypes.isNotEmpty
-          ? finalAdminUnitTypes
-          : getAdminUnitTypes().map((e) => e.toJson()).toList();
+    if (_shouldSyncCategory('admin_units', forceSync)) {
+      updateStatus('admin_units', SyncStatusState.syncing);
+      try {
+        final types = finalAdminUnitTypes.isNotEmpty
+            ? finalAdminUnitTypes
+            : getAdminUnitTypes().map((e) => e.toJson()).toList();
 
-      final List<Map<String, dynamic>> finalAdminUnits = [];
-      for (final typeJson in types) {
-        final typeId = typeJson['id'];
-        try {
-          final unitsResponse = await clientApiClient.dio.get(
-            '${ApiConstants.adminUnitsList}?type=$typeId',
-          );
-          final List<dynamic> unitsData = unitsResponse.data['data']?['data'] ?? [];
-          for (final unitJson in unitsData) {
-            finalAdminUnits.add({
-              'id': unitJson['id'] is int ? unitJson['id'] : int.tryParse(unitJson['id']?.toString() ?? '') ?? 0,
-              'name': unitJson['name']?.toString() ?? '',
-              'typeId': typeId,
-              'districtId': (unitJson['districtId'] ?? unitJson['dID'])?.toString() ?? '',
-            });
+        final List<Map<String, dynamic>> finalAdminUnits = [];
+        for (final typeJson in types) {
+          final typeId = typeJson['id'];
+          try {
+            final unitsResponse = await clientApiClient.dio.get(
+              '${ApiConstants.adminUnitsList}?type=$typeId',
+            );
+            final List<dynamic> unitsData = unitsResponse.data['data']?['data'] ?? [];
+            for (final unitJson in unitsData) {
+              finalAdminUnits.add({
+                'id': unitJson['id'] is int ? unitJson['id'] : int.tryParse(unitJson['id']?.toString() ?? '') ?? 0,
+                'name': unitJson['name']?.toString() ?? '',
+                'typeId': typeId,
+                'districtId': (unitJson['districtId'] ?? unitJson['dID'])?.toString() ?? '',
+              });
+            }
+          } catch (e) {
+            debugPrint('Error fetching admin units for type $typeId: $e');
           }
-        } catch (e) {
-          debugPrint('Error fetching admin units for type $typeId: $e');
         }
+        await _box.put('admin_units', jsonEncode(finalAdminUnits));
+        await _box.put('last_sync_admin_units', DateTime.now().toIso8601String());
+        updateStatus('admin_units', SyncStatusState.success, count: finalAdminUnits.length);
+      } catch (e) {
+        debugPrint('Error fetching admin units: $e');
+        updateStatus('admin_units', SyncStatusState.failed, error: e.toString());
       }
-      await _box.put('admin_units', jsonEncode(finalAdminUnits));
-      updateStatus('admin_units', SyncStatusState.success, count: finalAdminUnits.length);
-    } catch (e) {
-      debugPrint('Error fetching admin units: $e');
-      updateStatus('admin_units', SyncStatusState.failed, error: e.toString());
     }
 
     // 3. User Roles
-    updateStatus('user_roles', SyncStatusState.syncing);
-    try {
-      final rolesResponse = await bcoApiClient.dio.get(ApiConstants.userRoles);
-      final List<dynamic> rolesData = rolesResponse.data['data']?['data'] ?? [];
-      final finalUserRoles = rolesData.map((roleJson) => {
-        'id': roleJson['id'] is int ? roleJson['id'] : int.tryParse(roleJson['id']?.toString() ?? '') ?? 0,
-        'name': roleJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('user_roles', jsonEncode(finalUserRoles));
-      updateStatus('user_roles', SyncStatusState.success, count: finalUserRoles.length);
-    } catch (e) {
-      debugPrint('Error fetching user roles: $e');
-      updateStatus('user_roles', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('user_roles', forceSync)) {
+      updateStatus('user_roles', SyncStatusState.syncing);
+      try {
+        final rolesResponse = await bcoApiClient.dio.get(ApiConstants.userRoles);
+        final List<dynamic> rolesData = rolesResponse.data['data']?['data'] ?? [];
+        final finalUserRoles = rolesData.map((roleJson) => {
+          'id': roleJson['id'] is int ? roleJson['id'] : int.tryParse(roleJson['id']?.toString() ?? '') ?? 0,
+          'name': roleJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('user_roles', jsonEncode(finalUserRoles));
+        await _box.put('last_sync_user_roles', DateTime.now().toIso8601String());
+        updateStatus('user_roles', SyncStatusState.success, count: finalUserRoles.length);
+      } catch (e) {
+        debugPrint('Error fetching user roles: $e');
+        updateStatus('user_roles', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 4. Building Classifications
-    updateStatus('building_classifications', SyncStatusState.syncing);
-    try {
-      final bcResponse = await bcoApiClient.dio.get(ApiConstants.buildingClassifications);
-      final List<dynamic> bcData = bcResponse.data['data']?['data'] ?? [];
-      final finalBuildingClassifications = bcData.map((bcJson) => {
-        'id': bcJson['id'] is int ? bcJson['id'] : int.tryParse(bcJson['id']?.toString() ?? '') ?? 0,
-        'name': bcJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('building_classifications', jsonEncode(finalBuildingClassifications));
-      updateStatus('building_classifications', SyncStatusState.success, count: finalBuildingClassifications.length);
-    } catch (e) {
-      debugPrint('Error fetching building classifications: $e');
-      updateStatus('building_classifications', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('building_classifications', forceSync)) {
+      updateStatus('building_classifications', SyncStatusState.syncing);
+      try {
+        final bcResponse = await bcoApiClient.dio.get(ApiConstants.buildingClassifications);
+        final List<dynamic> bcData = bcResponse.data['data']?['data'] ?? [];
+        final finalBuildingClassifications = bcData.map((bcJson) => {
+          'id': bcJson['id'] is int ? bcJson['id'] : int.tryParse(bcJson['id']?.toString() ?? '') ?? 0,
+          'name': bcJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('building_classifications', jsonEncode(finalBuildingClassifications));
+        await _box.put('last_sync_building_classifications', DateTime.now().toIso8601String());
+        updateStatus('building_classifications', SyncStatusState.success, count: finalBuildingClassifications.length);
+      } catch (e) {
+        debugPrint('Error fetching building classifications: $e');
+        updateStatus('building_classifications', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 5. Express Penalty Offence Types
-    updateStatus('eps_types', SyncStatusState.syncing);
-    try {
-      final String response = await rootBundle.loadString('assets/eps_data.json');
-      final epsResponse = json.decode(response);
-      final List<dynamic> epsData = epsResponse['data']?['data'] ?? [];
-      final finalEpsTypes = epsData.map((epsJson) => {
-        'id': epsJson['id'] is int ? epsJson['id'] : int.tryParse(epsJson['id']?.toString() ?? '') ?? 0,
-        'enactment': epsJson['enactment']?.toString() ?? '',
-        'offence_name': (epsJson['offence_name'] ?? epsJson['offenceName'])?.toString() ?? '',
-        'currency_points': epsJson['currency_points'] is int ? epsJson['currency_points'] : int.tryParse(epsJson['currency_points']?.toString() ?? '') ?? 0,
-        'charge_per_sqm': epsJson['charge_per_sqm'] == true || epsJson['charge_per_sqm'] == 1 || epsJson['charge_per_sqm'] == '1',
-      }).toList();
-      await _box.put('eps_types', jsonEncode(finalEpsTypes));
-      updateStatus('eps_types', SyncStatusState.success, count: finalEpsTypes.length);
-    } catch (e) {
-      debugPrint('Error loading EPS types: $e');
-      updateStatus('eps_types', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('eps_types', forceSync)) {
+      updateStatus('eps_types', SyncStatusState.syncing);
+      try {
+        final String response = await rootBundle.loadString('assets/eps_data.json');
+        final epsResponse = json.decode(response);
+        final List<dynamic> epsData = epsResponse['data']?['data'] ?? [];
+        final finalEpsTypes = epsData.map((epsJson) => {
+          'id': epsJson['id'] is int ? epsJson['id'] : int.tryParse(epsJson['id']?.toString() ?? '') ?? 0,
+          'enactment': epsJson['enactment']?.toString() ?? '',
+          'offence_name': (epsJson['offence_name'] ?? epsJson['offenceName'])?.toString() ?? '',
+          'currency_points': epsJson['currency_points'] is int ? epsJson['currency_points'] : int.tryParse(epsJson['currency_points']?.toString() ?? '') ?? 0,
+          'charge_per_sqm': epsJson['charge_per_sqm'] == true || epsJson['charge_per_sqm'] == 1 || epsJson['charge_per_sqm'] == '1',
+        }).toList();
+        await _box.put('eps_types', jsonEncode(finalEpsTypes));
+        await _box.put('last_sync_eps_types', DateTime.now().toIso8601String());
+        updateStatus('eps_types', SyncStatusState.success, count: finalEpsTypes.length);
+      } catch (e) {
+        debugPrint('Error loading EPS types: $e');
+        updateStatus('eps_types', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 6. Whistleblower Categories
-    updateStatus('wb_categories', SyncStatusState.syncing);
-    try {
-      final wbResponse = await clientApiClient.dio.get(ApiConstants.wbCategories);
-      final List<dynamic> wbData = wbResponse.data['data']?['data'] ?? [];
-      final finalWbCategories = wbData.map((wbJson) => {
-        'id': wbJson['id'] is int ? wbJson['id'] : int.tryParse(wbJson['id']?.toString() ?? '') ?? 0,
-        'name': wbJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('wb_categories', jsonEncode(finalWbCategories));
-      updateStatus('wb_categories', SyncStatusState.success, count: finalWbCategories.length);
-    } catch (e) {
-      debugPrint('Error fetching whistleblower categories: $e');
-      updateStatus('wb_categories', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('wb_categories', forceSync)) {
+      updateStatus('wb_categories', SyncStatusState.syncing);
+      try {
+        final wbResponse = await clientApiClient.dio.get(ApiConstants.wbCategories);
+        final List<dynamic> wbData = wbResponse.data['data']?['data'] ?? [];
+        final finalWbCategories = wbData.map((wbJson) => {
+          'id': wbJson['id'] is int ? wbJson['id'] : int.tryParse(wbJson['id']?.toString() ?? '') ?? 0,
+          'name': wbJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('wb_categories', jsonEncode(finalWbCategories));
+        await _box.put('last_sync_wb_categories', DateTime.now().toIso8601String());
+        updateStatus('wb_categories', SyncStatusState.success, count: finalWbCategories.length);
+      } catch (e) {
+        debugPrint('Error fetching whistleblower categories: $e');
+        updateStatus('wb_categories', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 7. Building Purposes
-    updateStatus('building_purposes', SyncStatusState.syncing);
-    try {
-      final bpResponse = await clientApiClient.dio.get(ApiConstants.buildingPurposes);
-      final List<dynamic> bpData = bpResponse.data['data']?['data'] ?? [];
-      final finalBuildingPurposes = bpData.map((bpJson) => {
-        'id': bpJson['id'] is int ? bpJson['id'] : int.tryParse(bpJson['id']?.toString() ?? '') ?? 0,
-        'name': bpJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('building_purposes', jsonEncode(finalBuildingPurposes));
-      updateStatus('building_purposes', SyncStatusState.success, count: finalBuildingPurposes.length);
-    } catch (e) {
-      debugPrint('Error fetching building purposes: $e');
-      updateStatus('building_purposes', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('building_purposes', forceSync)) {
+      updateStatus('building_purposes', SyncStatusState.syncing);
+      try {
+        final bpResponse = await clientApiClient.dio.get(ApiConstants.buildingPurposes);
+        final List<dynamic> bpData = bpResponse.data['data']?['data'] ?? [];
+        final finalBuildingPurposes = bpData.map((bpJson) => {
+          'id': bpJson['id'] is int ? bpJson['id'] : int.tryParse(bpJson['id']?.toString() ?? '') ?? 0,
+          'name': bpJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('building_purposes', jsonEncode(finalBuildingPurposes));
+        await _box.put('last_sync_building_purposes', DateTime.now().toIso8601String());
+        updateStatus('building_purposes', SyncStatusState.success, count: finalBuildingPurposes.length);
+      } catch (e) {
+        debugPrint('Error fetching building purposes: $e');
+        updateStatus('building_purposes', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 8. Land Tenures
-    updateStatus('land_tenures', SyncStatusState.syncing);
-    try {
-      final ltResponse = await clientApiClient.dio.get(ApiConstants.landTenures);
-      final List<dynamic> ltData = ltResponse.data['data']?['data'] ?? [];
-      final finalLandTenures = ltData.map((ltJson) => {
-        'id': ltJson['id'] is int ? ltJson['id'] : int.tryParse(ltJson['id']?.toString() ?? '') ?? 0,
-        'name': ltJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('land_tenures', jsonEncode(finalLandTenures));
-      updateStatus('land_tenures', SyncStatusState.success, count: finalLandTenures.length);
-    } catch (e) {
-      debugPrint('Error fetching land tenures: $e');
-      updateStatus('land_tenures', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('land_tenures', forceSync)) {
+      updateStatus('land_tenures', SyncStatusState.syncing);
+      try {
+        final ltResponse = await clientApiClient.dio.get(ApiConstants.landTenures);
+        final List<dynamic> ltData = ltResponse.data['data']?['data'] ?? [];
+        final finalLandTenures = ltData.map((ltJson) => {
+          'id': ltJson['id'] is int ? ltJson['id'] : int.tryParse(ltJson['id']?.toString() ?? '') ?? 0,
+          'name': ltJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('land_tenures', jsonEncode(finalLandTenures));
+        await _box.put('last_sync_land_tenures', DateTime.now().toIso8601String());
+        updateStatus('land_tenures', SyncStatusState.success, count: finalLandTenures.length);
+      } catch (e) {
+        debugPrint('Error fetching land tenures: $e');
+        updateStatus('land_tenures', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 9. Application Types
-    updateStatus('application_types', SyncStatusState.syncing);
-    try {
-      final appResponse = await clientApiClient.dio.get(ApiConstants.applicationTypes);
-      final List<dynamic> appData = appResponse.data['data']?['data'] ?? [];
-      finalApplicationTypes = appData.map((appJson) => {
-        'id': appJson['id'] is int ? appJson['id'] : int.tryParse(appJson['id']?.toString() ?? '') ?? 0,
-        'name': appJson['name']?.toString() ?? '',
-        'slug': appJson['slug']?.toString() ?? '',
-      }).toList();
-      await _box.put('application_types', jsonEncode(finalApplicationTypes));
-      updateStatus('application_types', SyncStatusState.success, count: finalApplicationTypes.length);
-    } catch (e) {
-      debugPrint('Error fetching application types: $e');
-      updateStatus('application_types', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('application_types', forceSync)) {
+      updateStatus('application_types', SyncStatusState.syncing);
+      try {
+        final appResponse = await clientApiClient.dio.get(ApiConstants.applicationTypes);
+        final List<dynamic> appData = appResponse.data['data']?['data'] ?? [];
+        finalApplicationTypes = appData.map((appJson) => {
+          'id': appJson['id'] is int ? appJson['id'] : int.tryParse(appJson['id']?.toString() ?? '') ?? 0,
+          'name': appJson['name']?.toString() ?? '',
+          'slug': appJson['slug']?.toString() ?? '',
+        }).toList();
+        await _box.put('application_types', jsonEncode(finalApplicationTypes));
+        await _box.put('last_sync_application_types', DateTime.now().toIso8601String());
+        updateStatus('application_types', SyncStatusState.success, count: finalApplicationTypes.length);
+      } catch (e) {
+        debugPrint('Error fetching application types: $e');
+        updateStatus('application_types', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 10. Form Types
-    updateStatus('form_types', SyncStatusState.syncing);
-    try {
-      final apps = finalApplicationTypes.isNotEmpty
-          ? finalApplicationTypes
-          : getApplicationTypes().map((e) => e.toJson()).toList();
+    if (_shouldSyncCategory('form_types', forceSync)) {
+      updateStatus('form_types', SyncStatusState.syncing);
+      try {
+        final apps = finalApplicationTypes.isNotEmpty
+            ? finalApplicationTypes
+            : getApplicationTypes().map((e) => e.toJson()).toList();
 
-      final List<Map<String, dynamic>> finalFormTypes = [];
-      for (final appJson in apps) {
-        final slug = appJson['slug'];
-        try {
-          final ftResponse = await clientApiClient.dio.get(
-            '${ApiConstants.formTypes}?slug=$slug',
-          );
-          final List<dynamic> ftData = ftResponse.data['data']?['data'] ?? [];
-          for (final ftJson in ftData) {
-            finalFormTypes.add({
-              'id': ftJson['id'] is int ? ftJson['id'] : int.tryParse(ftJson['id']?.toString() ?? '') ?? 0,
-              'name': ftJson['name']?.toString() ?? '',
-              'application_type_slug': slug,
-            });
+        final List<Map<String, dynamic>> finalFormTypes = [];
+        for (final appJson in apps) {
+          final slug = appJson['slug'];
+          try {
+            final ftResponse = await clientApiClient.dio.get(
+              '${ApiConstants.formTypes}?slug=$slug',
+            );
+            final List<dynamic> ftData = ftResponse.data['data']?['data'] ?? [];
+            for (final ftJson in ftData) {
+              finalFormTypes.add({
+                'id': ftJson['id'] is int ? ftJson['id'] : int.tryParse(ftJson['id']?.toString() ?? '') ?? 0,
+                'name': ftJson['name']?.toString() ?? '',
+                'application_type_slug': slug,
+              });
+            }
+          } catch (e) {
+            debugPrint('Error fetching form types for $slug: $e');
           }
-        } catch (e) {
-          debugPrint('Error fetching form types for $slug: $e');
         }
+        await _box.put('form_types', jsonEncode(finalFormTypes));
+        await _box.put('last_sync_form_types', DateTime.now().toIso8601String());
+        updateStatus('form_types', SyncStatusState.success, count: finalFormTypes.length);
+      } catch (e) {
+        debugPrint('Error fetching form types: $e');
+        updateStatus('form_types', SyncStatusState.failed, error: e.toString());
       }
-      await _box.put('form_types', jsonEncode(finalFormTypes));
-      updateStatus('form_types', SyncStatusState.success, count: finalFormTypes.length);
-    } catch (e) {
-      debugPrint('Error fetching form types: $e');
-      updateStatus('form_types', SyncStatusState.failed, error: e.toString());
     }
 
     // 11. Building Operations
-    updateStatus('building_operations', SyncStatusState.syncing);
-    try {
-      final boResponse = await clientApiClient.dio.get(ApiConstants.buildingOperations);
-      final List<dynamic> boData = boResponse.data['data']?['data'] ?? [];
-      final finalBuildingOperations = boData.map((boJson) => {
-        'id': boJson['id'] is int ? boJson['id'] : int.tryParse(boJson['id']?.toString() ?? '') ?? 0,
-        'name': boJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('building_operations', jsonEncode(finalBuildingOperations));
-      updateStatus('building_operations', SyncStatusState.success, count: finalBuildingOperations.length);
-    } catch (e) {
-      debugPrint('Error fetching building operations: $e');
-      updateStatus('building_operations', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('building_operations', forceSync)) {
+      updateStatus('building_operations', SyncStatusState.syncing);
+      try {
+        final boResponse = await clientApiClient.dio.get(ApiConstants.buildingOperations);
+        final List<dynamic> boData = boResponse.data['data']?['data'] ?? [];
+        final finalBuildingOperations = boData.map((boJson) => {
+          'id': boJson['id'] is int ? boJson['id'] : int.tryParse(boJson['id']?.toString() ?? '') ?? 0,
+          'name': boJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('building_operations', jsonEncode(finalBuildingOperations));
+        await _box.put('last_sync_building_operations', DateTime.now().toIso8601String());
+        updateStatus('building_operations', SyncStatusState.success, count: finalBuildingOperations.length);
+      } catch (e) {
+        debugPrint('Error fetching building operations: $e');
+        updateStatus('building_operations', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 12. Inspection Types
-    updateStatus('inspection_types', SyncStatusState.syncing);
-    try {
-      final itResponse = await bcoApiClient.dio.get(ApiConstants.inspectionTypes);
-      final List<dynamic> itData = itResponse.data['data']?['data'] ?? [];
-      final finalInspectionTypes = itData.map((itJson) => {
-        'id': itJson['id'] is int ? itJson['id'] : int.tryParse(itJson['id']?.toString() ?? '') ?? 0,
-        'name': itJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('inspection_types', jsonEncode(finalInspectionTypes));
-      updateStatus('inspection_types', SyncStatusState.success, count: finalInspectionTypes.length);
-    } catch (e) {
-      debugPrint('Error fetching inspection types: $e');
-      updateStatus('inspection_types', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('inspection_types', forceSync)) {
+      updateStatus('inspection_types', SyncStatusState.syncing);
+      try {
+        final itResponse = await bcoApiClient.dio.get(ApiConstants.inspectionTypes);
+        final List<dynamic> itData = itResponse.data['data']?['data'] ?? [];
+        final finalInspectionTypes = itData.map((itJson) => {
+          'id': itJson['id'] is int ? itJson['id'] : int.tryParse(itJson['id']?.toString() ?? '') ?? 0,
+          'name': itJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('inspection_types', jsonEncode(finalInspectionTypes));
+        await _box.put('last_sync_inspection_types', DateTime.now().toIso8601String());
+        updateStatus('inspection_types', SyncStatusState.success, count: finalInspectionTypes.length);
+      } catch (e) {
+        debugPrint('Error fetching inspection types: $e');
+        updateStatus('inspection_types', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 13. Inspection Statuses
-    updateStatus('inspection_statuses', SyncStatusState.syncing);
-    try {
-      final itResponse = await bcoApiClient.dio.get(ApiConstants.inspectionStatuses);
-      final List<dynamic> itData = itResponse.data['data']?['data'] ?? [];
-      final finalInspectionStatuses = itData.map((itJson) => {
-        'id': itJson['id'] is int ? itJson['id'] : int.tryParse(itJson['id']?.toString() ?? '') ?? 0,
-        'name': itJson['name']?.toString() ?? '',
-      }).toList();
-      await _box.put('inspection_statuses', jsonEncode(finalInspectionStatuses));
-      updateStatus('inspection_statuses', SyncStatusState.success, count: finalInspectionStatuses.length);
-    } catch (e) {
-      debugPrint('Error fetching inspection statuses: $e');
-      updateStatus('inspection_statuses', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('inspection_statuses', forceSync)) {
+      updateStatus('inspection_statuses', SyncStatusState.syncing);
+      try {
+        final itResponse = await bcoApiClient.dio.get(ApiConstants.inspectionStatuses);
+        final List<dynamic> itData = itResponse.data['data']?['data'] ?? [];
+        final finalInspectionStatuses = itData.map((itJson) => {
+          'id': itJson['id'] is int ? itJson['id'] : int.tryParse(itJson['id']?.toString() ?? '') ?? 0,
+          'name': itJson['name']?.toString() ?? '',
+        }).toList();
+        await _box.put('inspection_statuses', jsonEncode(finalInspectionStatuses));
+        await _box.put('last_sync_inspection_statuses', DateTime.now().toIso8601String());
+        updateStatus('inspection_statuses', SyncStatusState.success, count: finalInspectionStatuses.length);
+      } catch (e) {
+        debugPrint('Error fetching inspection statuses: $e');
+        updateStatus('inspection_statuses', SyncStatusState.failed, error: e.toString());
+      }
     }
 
     // 14. Payment Modes
-    updateStatus('payment_modes', SyncStatusState.syncing);
-    try {
-      final pmResponse = await clientApiClient.dio.get(ApiConstants.paymentModes);
-      final List<dynamic> pmData = pmResponse.data['data']?['data'] ?? [];
-      final finalPaymentModes = pmData.map((pmJson) => {
-        'id': pmJson['id'] is int ? pmJson['id'] : int.tryParse(pmJson['id']?.toString() ?? '') ?? 0,
-        'name': pmJson['name']?.toString() ?? '',
-        'description': pmJson['description']?.toString() ?? '',
-      }).toList();
-      await _box.put('payment_modes', jsonEncode(finalPaymentModes));
-      updateStatus('payment_modes', SyncStatusState.success, count: finalPaymentModes.length);
-    } catch (e) {
-      debugPrint('Error fetching payment modes: $e');
-      updateStatus('payment_modes', SyncStatusState.failed, error: e.toString());
+    if (_shouldSyncCategory('payment_modes', forceSync)) {
+      updateStatus('payment_modes', SyncStatusState.syncing);
+      try {
+        final pmResponse = await clientApiClient.dio.get(ApiConstants.paymentModes);
+        final List<dynamic> pmData = pmResponse.data['data']?['data'] ?? [];
+        final finalPaymentModes = pmData.map((pmJson) => {
+          'id': pmJson['id'] is int ? pmJson['id'] : int.tryParse(pmJson['id']?.toString() ?? '') ?? 0,
+          'name': pmJson['name']?.toString() ?? '',
+          'description': pmJson['description']?.toString() ?? '',
+        }).toList();
+        await _box.put('payment_modes', jsonEncode(finalPaymentModes));
+        await _box.put('last_sync_payment_modes', DateTime.now().toIso8601String());
+        updateStatus('payment_modes', SyncStatusState.success, count: finalPaymentModes.length);
+      } catch (e) {
+        debugPrint('Error fetching payment modes: $e');
+        updateStatus('payment_modes', SyncStatusState.failed, error: e.toString());
+      }
     }
 
-    // Update last sync timestamp if any category succeeded
-    final anySuccess = statusMap.values.any((s) => s.status == SyncStatusState.success);
-    if (anySuccess) {
+    // Update global last sync timestamp only when all categories have successfully cached data
+    final currentStoredCounts = getStoredCounts();
+    final allHaveData = syncItemDefinitions.every((d) => (currentStoredCounts[d['key']!] ?? 0) > 0);
+    if (allHaveData) {
       await _box.put('last_sync_timestamp', DateTime.now().toIso8601String());
     }
 
