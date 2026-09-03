@@ -95,15 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: IconButton(
-                        icon: const Icon(Icons.settings, color: Colors.white),
-                        tooltip: 'Settings & Offline Data',
-                        onPressed: () => context.push('/settings'),
-                      ),
-                    ),
+                    // Positioned(
+                    //   top: 0,
+                    //   right: 0,
+                    //   child: IconButton(
+                    //     icon: const Icon(Icons.settings, color: Colors.white),
+                    //     tooltip: 'Settings & Offline Data',
+                    //     onPressed: () => context.push('/settings'),
+                    //   ),
+                    // ),
                     Column(
                       children: [
                         Image.asset(
