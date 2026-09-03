@@ -200,7 +200,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
       'phone': _phoneController.text.trim(),
       'password': _passwordController.text,
       'password_confirmation': _passwordConfirmController.text,
-      'signin_preference': 'phone',
+      'signin_preference': 'email',
     };
 
     if (_legalStatus == '1') {
