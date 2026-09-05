@@ -62,6 +62,49 @@ class PublicRepository {
     }
   }
 
+  String _extractErrorMessage(DioException e, String defaultMsg) {
+    if (e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map) {
+        if (data['message'] != null) return data['message'].toString();
+        if (data['error'] != null) return data['error'].toString();
+        if (data['errors'] != null) {
+          final errors = data['errors'];
+          if (errors is Map) {
+            return errors.values
+                .map((v) => v is List ? v.join(', ') : v.toString())
+                .join('\n');
+          }
+          return errors.toString();
+        }
+        if (data['detail'] != null) return data['detail'].toString();
+      } else if (data is String) {
+        try {
+          final decoded = jsonDecode(data);
+          if (decoded is Map) {
+            if (decoded['message'] != null) return decoded['message'].toString();
+            if (decoded['error'] != null) return decoded['error'].toString();
+            if (decoded['errors'] != null) {
+              final errors = decoded['errors'];
+              if (errors is Map) {
+                return errors.values
+                    .map((v) => v is List ? v.join(', ') : v.toString())
+                    .join('\n');
+              }
+              return errors.toString();
+            }
+            if (decoded['detail'] != null) return decoded['detail'].toString();
+          } else {
+            return data.length > 300 ? data.substring(0, 300) : data;
+          }
+        } catch (_) {
+          return data.length > 300 ? data.substring(0, 300) : data;
+        }
+      }
+    }
+    return e.message ?? defaultMsg;
+  }
+
   Future<bool> validateNin(
     String baseUrl,
     String nin,
@@ -84,9 +127,7 @@ class PublicRepository {
       }
       throw Exception('Invalid NIN');
     } on DioException catch (e) {
-      final msg =
-          e.response?.data['message'] ?? e.message ?? 'Error validating NIN';
-      throw Exception(msg);
+      throw Exception(_extractErrorMessage(e, 'Error validating NIN'));
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -103,9 +144,7 @@ class PublicRepository {
       }
       throw Exception('Invalid BRN');
     } on DioException catch (e) {
-      final msg =
-          e.response?.data['message'] ?? e.message ?? 'Error validating BRN';
-      throw Exception(msg);
+      throw Exception(_extractErrorMessage(e, 'Error validating BRN'));
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -121,15 +160,13 @@ class PublicRepository {
       }
       throw Exception('Invalid TIN');
     } on DioException catch (e) {
-      final msg =
-          e.response?.data['message'] ?? e.message ?? 'Error validating TIN';
-      throw Exception(msg);
+      throw Exception(_extractErrorMessage(e, 'Error validating TIN'));
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
-  Future<void> submitFeedback(String baseUrl, Map<String, dynamic> data) async {
+  Future<void> submitFeedback(String baseUrl, dynamic data) async {
     try {
       final response = await _dio.post(
         '$baseUrl${ApiConstants.feedback}',
@@ -139,8 +176,7 @@ class PublicRepository {
         throw Exception('Failed to submit report');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error submitting report';
-      throw Exception(msg);
+      throw Exception(_extractErrorMessage(e, 'Error submitting report'));
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

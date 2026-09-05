@@ -92,8 +92,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    // Register FCM background handler after Firebase is initialized.
-    // This must be a top-level function.
+
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     isFirebaseInitialized = true;
   } catch (e) {

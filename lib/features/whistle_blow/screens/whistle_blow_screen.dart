@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:io';
-import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme.dart';
@@ -143,13 +143,7 @@ class _WhistleBlowScreenState extends State<WhistleBlowScreen> {
     });
 
     try {
-      String base64Attachment = '';
-      if (_attachment != null) {
-        final bytes = await _attachment!.readAsBytes();
-        base64Attachment = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-      }
-
-      final payload = {
+      final Map<String, dynamic> payload = {
         "feedback_type": int.parse(_selectedViolation!),
         "name": _isAnonymous ? "Anonymous" : _nameController.text.trim(),
         "phone": _isAnonymous ? "" : _phoneController.text.trim(),
@@ -158,13 +152,27 @@ class _WhistleBlowScreenState extends State<WhistleBlowScreen> {
         "administrative_unit_type": int.parse(_selectedAdminUnitType!),
         "administrative_unit_id": int.parse(_selectedAdminUnit!),
         "description": _detailsController.text.trim(),
-        "attachment": base64Attachment,
         "latitude": _latitude ?? "",
         "longitude": _longitude ?? "",
       };
 
+      final formData = FormData.fromMap(payload);
+
+      if (_attachment != null) {
+        final fileName = _attachment!.path.split(RegExp(r'[/\\]')).last;
+        formData.files.add(
+          MapEntry(
+            'attachment',
+            await MultipartFile.fromFile(
+              _attachment!.path,
+              filename: fileName,
+            ),
+          ),
+        );
+      }
+
       final repo = PublicRepository();
-      await repo.submitFeedback(ApiConstants.clientBaseUrl, payload);
+      await repo.submitFeedback(ApiConstants.clientBaseUrl, formData);
 
       if (mounted) {
         showDialog(
@@ -191,7 +199,13 @@ class _WhistleBlowScreenState extends State<WhistleBlowScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+        String msg = e.toString();
+        if (msg.startsWith('Exception: ')) {
+          msg = msg.replaceFirst('Exception: ', '');
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
       }
     } finally {
       if (mounted) {
@@ -430,7 +444,7 @@ class _WhistleBlowScreenState extends State<WhistleBlowScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            _attachment!.path.split('/').last,
+                            _attachment!.path.split(RegExp(r'[/\\]')).last,
                             style: const TextStyle(fontSize: 12),
                             overflow: TextOverflow.ellipsis,
                           ),
