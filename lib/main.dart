@@ -118,7 +118,7 @@ void main() async {
   );
 
   // Trigger background sync after a brief startup delay
-  Future.delayed(const Duration(milliseconds: 500), () {
+  Future.delayed(const Duration(seconds: 4), () {
     auxiliaryRepository.syncAuxiliaryData();
   });
 
