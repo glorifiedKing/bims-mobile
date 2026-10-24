@@ -17,7 +17,7 @@ class _ProfessionalQuickAuditUploadScreenState
   final _repository = AiComplianceRepository();
 
   String _discipline = 'architectural';
-  String _occupancyClass = 'Class A (Residential)';
+  String _occupancyClass = 'Class B (Residential & Commercial)';
   String? _selectedFilePath;
   String? _selectedFileName;
   int? _selectedFileSize;
@@ -29,35 +29,36 @@ class _ProfessionalQuickAuditUploadScreenState
       'id': 'architectural',
       'label': 'Architectural',
       'icon': Icons.architecture,
-      'desc': 'Egress, door swing, room sizes, window/floor ventilation ratios & PWD access',
+      'desc':
+          'Egress, door swing, room sizes, window/floor ventilation ratios & PWD access',
     },
     {
       'id': 'structural',
       'label': 'Structural',
       'icon': Icons.foundation,
-      'desc': 'Column & beam schedules, grid lines, foundation & reinforcement notes',
+      'desc':
+          'Column & beam schedules, grid lines, foundation & reinforcement notes',
     },
     {
       'id': 'mechanical',
       'label': 'Mechanical',
       'icon': Icons.hvac,
-      'desc': 'HVAC, plumbing slopes, pipe sizing, storm-water & fire suppression systems',
+      'desc':
+          'HVAC, plumbing slopes, pipe sizing, storm-water & fire suppression systems',
     },
     {
       'id': 'electrical',
       'label': 'Electrical',
       'icon': Icons.electric_bolt,
-      'desc': 'Power distribution, single-line diagrams, illumination & emergency lighting',
+      'desc':
+          'Power distribution, single-line diagrams, illumination & emergency lighting',
     },
   ];
 
   final List<String> _occupancyClasses = [
-    'Class A (Residential)',
-    'Class B (Commercial)',
-    'Class C (Assembly)',
-    'Class D (Industrial)',
-    'Class E (Educational)',
-    'Class F (Institutional)',
+    'Class A (Complex & Public Buildings)',
+    'Class B (Residential & Commercial)',
+    'Class C (Minor & Temporary Buildings)',
   ];
 
   Future<void> _pickPdf() async {
@@ -76,7 +77,9 @@ class _ProfessionalQuickAuditUploadScreenState
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('File exceeds statutory 50MB limit. Please select a smaller PDF.'),
+                content: Text(
+                  'File exceeds statutory 50MB limit. Please select a smaller PDF.',
+                ),
                 backgroundColor: AppTheme.danger,
               ),
             );
@@ -141,9 +144,7 @@ class _ProfessionalQuickAuditUploadScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('New Quick Audit'),
-      ),
+      appBar: AppBar(title: const Text('New Quick Audit')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -180,7 +181,11 @@ class _ProfessionalQuickAuditUploadScreenState
                       SizedBox(height: 4),
                       Text(
                         'Audits your 2D engineering submission directly against the Uganda National Building Code (2019) and Building Control Regulations (2020).',
-                        style: TextStyle(fontSize: 12, color: AppTheme.textDark, height: 1.3),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textDark,
+                          height: 1.3,
+                        ),
                       ),
                     ],
                   ),
@@ -207,10 +212,14 @@ class _ProfessionalQuickAuditUploadScreenState
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+                color: isSelected
+                    ? Colors.white
+                    : Colors.white.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? AppTheme.primaryGreen : Colors.grey.withOpacity(0.2),
+                  color: isSelected
+                      ? AppTheme.primaryGreen
+                      : Colors.grey.withOpacity(0.2),
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: isSelected
@@ -238,15 +247,23 @@ class _ProfessionalQuickAuditUploadScreenState
                   d['label'] as String,
                   style: TextStyle(
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                    color: isSelected ? AppTheme.primaryGreen : AppTheme.textDark,
+                    color: isSelected
+                        ? AppTheme.primaryGreen
+                        : AppTheme.textDark,
                   ),
                 ),
                 subtitle: Text(
                   d['desc'] as String,
-                  style: const TextStyle(fontSize: 11, color: AppTheme.textLight),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textLight,
+                  ),
                 ),
                 trailing: isSelected
-                    ? const Icon(Icons.check_circle, color: AppTheme.primaryGreen)
+                    ? const Icon(
+                        Icons.check_circle,
+                        color: AppTheme.primaryGreen,
+                      )
                     : null,
                 onTap: () {
                   setState(() {
@@ -280,13 +297,19 @@ class _ProfessionalQuickAuditUploadScreenState
               child: DropdownButton<String>(
                 value: _occupancyClass,
                 isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.primaryGreen),
+                icon: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppTheme.primaryGreen,
+                ),
                 items: _occupancyClasses.map((item) {
                   return DropdownMenuItem<String>(
                     value: item,
                     child: Text(
                       item,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                   );
                 }).toList(),
@@ -354,7 +377,10 @@ class _ProfessionalQuickAuditUploadScreenState
                         SizedBox(height: 4),
                         Text(
                           'Must contain vector lines, explicit scale bar, and readable text',
-                          style: TextStyle(fontSize: 11, color: AppTheme.textLight),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textLight,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -431,7 +457,11 @@ class _ProfessionalQuickAuditUploadScreenState
                 SizedBox(height: 4),
                 Text(
                   '• Minimum 200 DPI resolution\n• Explicit numerical scale (e.g. 1:100, 1:50) or graphic scale bar\n• CAD-exported vector format is strongly recommended for millimetric accuracy.',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF856404), height: 1.4),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF856404),
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -448,12 +478,19 @@ class _ProfessionalQuickAuditUploadScreenState
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: AppTheme.danger, size: 20),
+                  const Icon(
+                    Icons.error_outline,
+                    color: AppTheme.danger,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.danger),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.danger,
+                      ),
                     ),
                   ),
                 ],

@@ -7,6 +7,7 @@ class AiComplianceResultModel {
   final double estimatedStatutoryFeeUgx;
   final Map<String, dynamic>? preflightMetrics;
   final Map<String, dynamic>? summaryMetrics;
+  final FloorAreaMetricsModel? floorAreaMetrics;
   final List<DiscrepancyModel> discrepancies;
   final DateTime? analyzedAt;
 
@@ -17,6 +18,7 @@ class AiComplianceResultModel {
     this.estimatedStatutoryFeeUgx = 0.0,
     this.preflightMetrics,
     this.summaryMetrics,
+    this.floorAreaMetrics,
     this.discrepancies = const [],
     this.analyzedAt,
   });
@@ -30,13 +32,21 @@ class AiComplianceResultModel {
           .toList();
     }
 
+    FloorAreaMetricsModel? floorMetrics;
+    if (json['floor_area_metrics'] is Map<String, dynamic>) {
+      floorMetrics = FloorAreaMetricsModel.fromJson(json['floor_area_metrics']);
+    }
+
     return AiComplianceResultModel(
       id: json['id']?.toString(),
       overallStatus: (json['overall_status'] ?? 'PENDING').toString().toUpperCase(),
-      grossFloorAreaSqm: (json['gross_floor_area_sqm'] as num?)?.toDouble() ?? 0.0,
+      grossFloorAreaSqm: (json['gross_floor_area_sqm'] as num?)?.toDouble() ??
+          floorMetrics?.grossFloorAreaSqm ??
+          0.0,
       estimatedStatutoryFeeUgx: (json['estimated_statutory_fee_ugx'] as num?)?.toDouble() ?? 0.0,
       preflightMetrics: json['preflight_metrics'] is Map<String, dynamic> ? json['preflight_metrics'] : null,
       summaryMetrics: json['summary_metrics'] is Map<String, dynamic> ? json['summary_metrics'] : null,
+      floorAreaMetrics: floorMetrics,
       discrepancies: discrepanciesList,
       analyzedAt: json['analyzed_at'] != null ? DateTime.tryParse(json['analyzed_at']) : null,
     );

@@ -6,6 +6,7 @@ import '../../models/quick_audit_model.dart';
 import '../../repositories/ai_compliance_repository.dart';
 import '../copilot/copilot_floating_assistant.dart';
 import '../copilot/professional_copilot_sheet.dart';
+import 'floor_area_details_sheet.dart';
 
 class ProfessionalQuickAuditResultScreen extends StatefulWidget {
   final String auditId;
@@ -85,8 +86,10 @@ class _ProfessionalQuickAuditResultScreenState
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ProfessionalCopilotSheet(
-        initialContextTitle: 'Quick Audit: ${_audit?.originalName ?? widget.auditId}',
-        initialContextDescription: 'Discipline: ${_audit?.discipline.toUpperCase() ?? ""}, Area: ${_audit?.grossFloorAreaSqm} m², Violations: ${_audit?.discrepancies.length ?? 0}',
+        initialContextTitle:
+            'Quick Audit: ${_audit?.originalName ?? widget.auditId}',
+        initialContextDescription:
+            'Discipline: ${_audit?.discipline.toUpperCase() ?? ""}, Area: ${_audit?.grossFloorAreaSqm} m²${_audit?.floorAreaMetrics?.hasFloors == true ? " (${_audit!.floorAreaMetrics!.floors.length} floors)" : ""}, Violations: ${_audit?.discrepancies.length ?? 0}',
       ),
     );
   }
@@ -100,8 +103,57 @@ class _ProfessionalQuickAuditResultScreenState
       appBar: AppBar(
         title: const Text('Compliance Audit Report'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchAudit),
+          if (_audit != null && _audit!.isProcessing)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.accentGold,
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.accentGold,
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Analysing...',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _fetchAudit,
+          ),
         ],
+        bottom: (_audit != null && _audit!.isProcessing)
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2.5),
+                child: LinearProgressIndicator(
+                  minHeight: 2.5,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentGold),
+                ),
+              )
+            : null,
       ),
       body: Stack(
         children: [
@@ -154,42 +206,112 @@ class _ProfessionalQuickAuditResultScreenState
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade800, Colors.blue.shade600],
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F3E6D), Color(0xFF1E6091)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.lightBlueAccent.withOpacity(0.4)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withOpacity(0.3),
-                  blurRadius: 10,
+                  color: const Color(0xFF1E6091).withOpacity(0.25),
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Column(
-              children: const [
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 3,
-                  ),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentGold.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppTheme.accentGold.withOpacity(0.7),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: const Text(
+                            'LIVE POLLING ACTIVE',
+                            style: TextStyle(
+                              color: AppTheme.accentGold,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        const Text(
+                          'Analysing Drawing...',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                SizedBox(height: 14),
+                const SizedBox(height: 14),
                 Text(
-                  'AI Compliance Engine Analyzing Drawing...',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                  'Running pre-flight vector geometry extraction, statutory gross floor area computation, and Uganda Building Code clause verification for ${audit.originalName}.',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    height: 1.4,
                   ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Executing Pre-flight scale detection, vector geometry measurement, and pgvector RAG clause verification.',
-                  style: TextStyle(color: Colors.white70, fontSize: 11),
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.sync, size: 12, color: Colors.white70),
+                      SizedBox(width: 6),
+                      Text(
+                        'Updating automatically until analysis is completed',
+                        style: TextStyle(color: Colors.white70, fontSize: 10),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -255,18 +377,64 @@ class _ProfessionalQuickAuditResultScreenState
             Expanded(
               child: _buildMetricBox(
                 title: 'GROSS FLOOR AREA',
-                value: '${audit.grossFloorAreaSqm} m²',
+                value: audit.isProcessing && audit.grossFloorAreaSqm <= 0
+                    ? 'Analysing...'
+                    : '${currencyFormatter.format(audit.grossFloorAreaSqm)} m²',
                 icon: Icons.square_foot,
                 color: AppTheme.primaryGreen,
+                onTap: audit.hasFloorAreaDetails
+                    ? () => FloorAreaDetailsSheet.show(context, audit)
+                    : null,
+                subtitle: audit.isProcessing && audit.grossFloorAreaSqm <= 0
+                    ? 'Computing geometry'
+                    : (audit.floorAreaMetrics?.hasFloors == true
+                        ? '${audit.floorAreaMetrics!.floors.length} Floors • Tap details'
+                        : (audit.hasFloorAreaDetails ? 'Tap for details' : null)),
+                trailingBadge: audit.hasFloorAreaDetails
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'VIEW',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryGreen,
+                              ),
+                            ),
+                            SizedBox(width: 2),
+                            Icon(
+                              Icons.open_in_new,
+                              size: 8,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ],
+                        ),
+                      )
+                    : null,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _buildMetricBox(
                 title: 'STATUTORY FEE (EST.)',
-                value: 'UGX ${audit.estimatedStatutoryFeeUgx}',
+                value: audit.isProcessing && audit.estimatedStatutoryFeeUgx <= 0
+                    ? 'Calculating...'
+                    : 'UGX ${currencyFormatter.format(audit.estimatedStatutoryFeeUgx)}',
                 icon: Icons.payments_outlined,
                 color: AppTheme.accentGold,
+                subtitle: audit.isProcessing && audit.estimatedStatutoryFeeUgx <= 0
+                    ? 'Pending GFA result'
+                    : null,
               ),
             ),
           ],
@@ -294,6 +462,105 @@ class _ProfessionalQuickAuditResultScreenState
           ],
         ),
 
+        if (audit.floorAreaMetrics?.hasFloors == true) ...[
+          const SizedBox(height: 12),
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: () => FloorAreaDetailsSheet.show(context, audit),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppTheme.primaryGreen.withOpacity(0.3),
+                    width: 1.2,
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryGreen.withOpacity(0.06),
+                      Colors.white,
+                    ],
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryGreen.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.layers,
+                        color: AppTheme.primaryGreen,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '${audit.floorAreaMetrics!.floors.length} Building Levels Measured',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryGreen,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryGreen,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '${currencyFormatter.format(audit.grossFloorAreaSqm)} m²',
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Tap to inspect floor-by-floor area schedule & room allocation details',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: AppTheme.primaryGreen,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+
         const SizedBox(height: 24),
         // Discrepancies and Findings
         Row(
@@ -311,27 +578,104 @@ class _ProfessionalQuickAuditResultScreenState
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: audit.discrepancies.isEmpty
-                    ? AppTheme.primaryGreen.withOpacity(0.1)
-                    : AppTheme.danger.withOpacity(0.1),
+                color: audit.isProcessing
+                    ? Colors.blue.withOpacity(0.12)
+                    : (audit.discrepancies.isEmpty
+                        ? AppTheme.primaryGreen.withOpacity(0.1)
+                        : AppTheme.danger.withOpacity(0.1)),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                ' DETECTED',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: audit.discrepancies.isEmpty
-                      ? AppTheme.primaryGreen
-                      : AppTheme.danger,
-                ),
-              ),
+              child: audit.isProcessing
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        SizedBox(
+                          width: 8,
+                          height: 8,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          'ANALYSING...',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      '${audit.discrepancies.length} DETECTED',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: audit.discrepancies.isEmpty
+                            ? AppTheme.primaryGreen
+                            : AppTheme.danger,
+                      ),
+                    ),
             ),
           ],
         ),
         const SizedBox(height: 10),
 
-        if (audit.discrepancies.isEmpty && !audit.isProcessing) ...[
+        if (audit.isProcessing) ...[
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.withOpacity(0.25)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: const [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.blue,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Analysing Regulatory Discrepancies...',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'Running compliance audit against Uganda Building Control Code. Violations will appear here once analysis completes.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else if (audit.discrepancies.isEmpty) ...[
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -505,8 +849,11 @@ class _ProfessionalQuickAuditResultScreenState
     required String value,
     required IconData icon,
     required Color color,
+    VoidCallback? onTap,
+    String? subtitle,
+    Widget? trailingBadge,
   }) {
-    return Container(
+    final boxContent = Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -538,6 +885,7 @@ class _ProfessionalQuickAuditResultScreenState
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (trailingBadge != null) trailingBadge,
             ],
           ),
           const SizedBox(height: 8),
@@ -551,21 +899,44 @@ class _ProfessionalQuickAuditResultScreenState
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: boxContent,
+        ),
+      );
+    }
+
+    return boxContent;
   }
 
   Widget _buildDiscrepancyCard(DiscrepancyModel d) {
     Color sevColor;
     switch (d.severity) {
-      case 'critical':
-        sevColor = Colors.purple;
-        break;
-      case 'high':
+      case 'ERROR':
         sevColor = AppTheme.danger;
         break;
-      case 'medium':
+      case 'WARNING':
         sevColor = Colors.orange;
         break;
       default:
