@@ -1,8 +1,14 @@
+import 'dart:io' show Platform;
+
 class ApiConstants {
-  static const bool isProduction = true;
+  static const bool isProduction = false;
   static const String baseUrl = isProduction
       ? 'https://mobile.bims.go.ug/v1'
       : 'https://api.test.bims.go.ug/v1';
+
+  // AI Compliance Backend Base URL (supports Android emulator 10.0.2.2 or localhost)
+  static String aiBaseUrl = "https://ai-backend.bims.go.ug/api/v1";
+
   static const String clientBaseUrl = '$baseUrl/client';
   static const String bcoBaseUrl = '$baseUrl/internal';
   static const String professionalBaseUrl = '$baseUrl/pro';
@@ -12,7 +18,7 @@ class ApiConstants {
   static const String account = '/account';
   static const String login = '/token'; // Client Token
   static const String bcoLogin = '/token'; // BCO Token
-  static const String professionalLogin = '$professionalBaseUrl/token';
+  static const String professionalLogin = '/token';
   static const String refreshToken = '/token/refresh';
 
   // Applications
@@ -52,4 +58,14 @@ class ApiConstants {
 
   // Firebase Cloud Messaging
   static const String fcmToken = '/fcm-token';
+
+  // AI Compliance Service Endpoints
+  static const String quickAudit = '/quick-audit';
+  static const String quickAudits = '/quick-audits';
+  static const String projects = '/projects';
+  static const String joinProject = '/projects/join';
+  static const String blocks = '/blocks';
+  static const String floors = '/floors';
+  static const String copilot = '/copilot/ask';
+  static const String drawingsUpload = '/drawings/upload';
 }

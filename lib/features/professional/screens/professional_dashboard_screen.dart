@@ -13,6 +13,8 @@ import '../../../core/help/help_controller.dart';
 import '../../../core/help/help_step.dart';
 import '../../../core/help/help_tour_overlay.dart';
 import '../../../core/help/help_preferences.dart';
+import 'copilot/copilot_floating_assistant.dart';
+import 'copilot/professional_copilot_sheet.dart';
 
 class ProfessionalDashboardScreen extends StatefulWidget {
   const ProfessionalDashboardScreen({super.key});
@@ -108,236 +110,250 @@ class _ProfessionalDashboardScreenState
         },
         child: Scaffold(
           backgroundColor: const Color(0xFFF8F9FA),
-          body: Column(
+          body: Stack(
             children: [
-              // Header
-              Container(
-                key: _keyHeader,
-                padding: const EdgeInsets.only(
-                  top: 60,
-                  left: 20,
-                  right: 20,
-                  bottom: 20,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF00331a), AppTheme.primaryGreen],
-                  ),
-                  border: Border(
-                    bottom: BorderSide(color: AppTheme.accentGold, width: 4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    BlocBuilder<
-                      ProfessionalProfileBloc,
-                      ProfessionalProfileState
-                    >(
-                      builder: (context, state) {
-                        String name = 'Loading...';
-                        if (state is ProfessionalProfileLoaded) {
-                          name = state.profile.name;
-                        } else if (state is ProfessionalProfileError) {
-                          name = 'Professional';
-                        }
+              Column(
+                children: [
+                  // Header
+                  Container(
+                    key: _keyHeader,
+                    padding: const EdgeInsets.only(
+                      top: 60,
+                      left: 20,
+                      right: 20,
+                      bottom: 20,
+                    ),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF00331a), AppTheme.primaryGreen],
+                      ),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppTheme.accentGold,
+                          width: 4,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        BlocBuilder<
+                          ProfessionalProfileBloc,
+                          ProfessionalProfileState
+                        >(
+                          builder: (context, state) {
+                            String name = 'Loading...';
+                            if (state is ProfessionalProfileLoaded) {
+                              name = state.profile.name;
+                            } else if (state is ProfessionalProfileError) {
+                              name = 'Professional';
+                            }
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.accentGold,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    state is ProfessionalProfileLoaded
+                                        ? '${state.profile.profession.toUpperCase()}'
+                                        : 'PROFESSIONAL',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            HelpIconButton(
+                              controller: _helpController,
+                              steps: _helpSteps,
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.accentGold,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                state is ProfessionalProfileLoaded
-                                    ? '${state.profile.profession.toUpperCase()}'
-                                    : 'PROFESSIONAL',
-                                style: const TextStyle(
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                context.read<ProfessionalAuthBloc>().add(
+                                  ProfessionalAuthLogoutRequested(),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.logout,
                                   color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
+                                  size: 24,
                                 ),
                               ),
                             ),
                           ],
-                        );
-                      },
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        HelpIconButton(
-                          controller: _helpController,
-                          steps: _helpSteps,
                         ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            context.read<ProfessionalAuthBloc>().add(
-                              ProfessionalAuthLogoutRequested(),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.logout,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                      ],
+                    ),
+                  ),
+
+                  // Main Scroll Area
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        const Text(
+                          'APPLICATION STATISTICS',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryGreen,
+                            letterSpacing: 1,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                        const SizedBox(height: 15),
 
-              // Main Scroll Area
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    const Text(
-                      'APPLICATION STATISTICS',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryGreen,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    BlocBuilder<
-                      ProfessionalCountersBloc,
-                      ProfessionalCountersState
-                    >(
-                      key: _keyStats,
-                      builder: (context, state) {
-                        if (state is ProfessionalCountersLoading ||
-                            state is ProfessionalCountersInitial) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: AppTheme.primaryGreen,
-                            ),
-                          );
-                        }
-                        if (state is ProfessionalCountersError) {
-                          return Center(child: Text('Error: ${state.message}'));
-                        }
-                        if (state is ProfessionalCountersLoaded) {
-                          final counters = state.counters;
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: _buildCounterCard(
-                                  title: 'TOTAL',
-                                  value: counters.total.toString(),
+                        BlocBuilder<
+                          ProfessionalCountersBloc,
+                          ProfessionalCountersState
+                        >(
+                          key: _keyStats,
+                          builder: (context, state) {
+                            if (state is ProfessionalCountersLoading ||
+                                state is ProfessionalCountersInitial) {
+                              return const Center(
+                                child: CircularProgressIndicator(
                                   color: AppTheme.primaryGreen,
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildCounterCard(
-                                  title: 'CONFIRMED',
-                                  value: counters.confirmed.toString(),
-                                  color: AppTheme.accentGold,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildCounterCard(
-                                  title: 'PENDING',
-                                  value: counters.unconfirmed.toString(),
-                                  color: AppTheme.danger,
-                                ),
-                              ),
-                            ],
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-
-                    const SizedBox(height: 25),
-                    const Text(
-                      'PROFESSIONAL TOOLKIT',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryGreen,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Toolkit Grid
-                    GridView.count(
-                      key: _keyToolkit,
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 15,
-                      mainAxisSpacing: 15,
-                      childAspectRatio: 1.2,
-                      children: [
-                        // _buildToolBox(
-                        //   icon: '🔗',
-                        //   label: 'LINK PROJECT',
-                        //   onTap: () {
-                        //     ScaffoldMessenger.of(context).showSnackBar(
-                        //       const SnackBar(
-                        //         content: Text(
-                        //           'Scan Client QR Code to Link Project',
-                        //         ),
-                        //       ),
-                        //     );
-                        //   },
-                        // ),
-                        _buildToolBox(
-                          icon: '📐',
-                          label: 'DOCUMENTS',
-                          onTap: () {
-                            context.push('/professional/attachments');
+                              );
+                            }
+                            if (state is ProfessionalCountersError) {
+                              return Center(
+                                child: Text('Error: ${state.message}'),
+                              );
+                            }
+                            if (state is ProfessionalCountersLoaded) {
+                              final counters = state.counters;
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildCounterCard(
+                                      title: 'TOTAL',
+                                      value: counters.total.toString(),
+                                      color: AppTheme.primaryGreen,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildCounterCard(
+                                      title: 'CONFIRMED',
+                                      value: counters.confirmed.toString(),
+                                      color: AppTheme.accentGold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildCounterCard(
+                                      title: 'PENDING',
+                                      value: counters.unconfirmed.toString(),
+                                      color: AppTheme.danger,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            return const SizedBox.shrink();
                           },
                         ),
-                        // _buildToolBox(
-                        //   icon: '📝',
-                        //   label: 'SITE LOGS',
-                        //   onTap: () {},
-                        // ),
-                        // _buildToolBox(
-                        //   icon: '💬',
-                        //   label: 'BCO QUERIES',
-                        //   onTap: () {},
-                        // ),
+
+                        const SizedBox(height: 25),
+                        const Text(
+                          'PROFESSIONAL TOOLKIT',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryGreen,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Toolkit Grid
+                        GridView.count(
+                          key: _keyToolkit,
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 15,
+                          mainAxisSpacing: 15,
+                          childAspectRatio: 1.2,
+                          children: [
+                            // _buildToolBox(
+                            //   icon: '🔗',
+                            //   label: 'LINK PROJECT',
+                            //   onTap: () {
+                            //     ScaffoldMessenger.of(context).showSnackBar(
+                            //       const SnackBar(
+                            //         content: Text(
+                            //           'Scan Client QR Code to Link Project',
+                            //         ),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
+                            _buildToolBox(
+                              icon: '📐',
+                              label: 'DOCUMENTS',
+                              onTap: () {
+                                context.push('/professional/attachments');
+                              },
+                            ),
+                            _buildToolBox(
+                              icon: '📝',
+                              label: 'FULL COMPLIANCE CHECK',
+                              onTap: () {
+                                context.push('/professional/projects');
+                              },
+                            ),
+                            _buildToolBox(
+                              icon: '📝',
+                              label: 'QUICK COMPLIANCE CHECK',
+                              onTap: () {
+                                context.push('/professional/quick-audits');
+                              },
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              const CopilotFloatingAssistant(),
             ],
           ),
           bottomNavigationBar: BottomNavigationBar(

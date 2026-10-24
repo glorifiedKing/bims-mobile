@@ -19,6 +19,11 @@ class AppTheme {
         error: danger,
       ),
       fontFamily: 'Inter',
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(fontSize: 16.0, color: textDark),
+        bodyMedium: TextStyle(fontSize: 14.0, color: textDark),
+        bodySmall: TextStyle(fontSize: 12.0, color: textLight),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: primaryGreen,
         foregroundColor: Colors.white,

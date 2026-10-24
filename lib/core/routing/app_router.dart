@@ -53,6 +53,14 @@ import '../../features/professional/screens/professional_attachments_screen.dart
 import '../../features/professional/screens/professional_upload_attachment_screen.dart';
 import '../../features/professional/models/pro_attachment_model.dart';
 import '../../features/settings/screens/settings_screen.dart';
+import '../../features/professional/screens/quick_audits/professional_quick_audits_screen.dart';
+import '../../features/professional/screens/quick_audits/professional_quick_audit_upload_screen.dart';
+import '../../features/professional/screens/quick_audits/professional_quick_audit_result_screen.dart';
+import '../../features/professional/screens/projects/professional_projects_screen.dart';
+import '../../features/professional/screens/projects/professional_project_details_screen.dart';
+import '../../features/professional/screens/projects/professional_drawing_upload_screen.dart';
+import '../../features/professional/screens/projects/professional_project_report_screen.dart';
+
 
 class AppRouter {
   static final GlobalKey<NavigatorState> rootNavigatorKey =
@@ -349,6 +357,52 @@ class AppRouter {
         builder: (context, state) {
           final attachment = state.extra as ProAttachmentModel?;
           return ProfessionalUploadAttachmentScreen(attachment: attachment);
+        },
+      ),
+            GoRoute(
+        path: '/professional/quick-audits',
+        builder: (context, state) => const ProfessionalQuickAuditsScreen(),
+      ),
+      GoRoute(
+        path: '/professional/quick-audits/upload',
+        builder: (context, state) => const ProfessionalQuickAuditUploadScreen(),
+      ),
+      GoRoute(
+        path: '/professional/quick-audits/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ProfessionalQuickAuditResultScreen(auditId: id);
+        },
+      ),
+      GoRoute(
+        path: '/professional/projects',
+        builder: (context, state) => const ProfessionalProjectsScreen(),
+      ),
+      GoRoute(
+        path: '/professional/projects/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ProfessionalProjectDetailsScreen(projectId: id);
+        },
+      ),
+      GoRoute(
+        path: '/professional/projects/:id/report',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ProfessionalProjectReportScreen(projectId: id);
+        },
+      ),
+      GoRoute(
+        path: '/professional/drawings/upload',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return ProfessionalDrawingUploadScreen(
+            floorId: extra['floorId'] as String? ?? '',
+            floorName: extra['floorName'] as String? ?? 'Floor',
+            blockName: extra['blockName'] as String? ?? 'Block',
+            discipline: extra['discipline'] as String? ?? 'architectural',
+            currentVersionNumber: extra['currentVersionNumber'] as int? ?? 0,
+          );
         },
       ),
       GoRoute(
