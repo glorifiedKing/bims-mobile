@@ -19,6 +19,21 @@ class DiscrepancyModel {
     this.roomOrGrid,
   });
 
+  static String _normalizeSeverity(dynamic value) {
+    if (value == null) return 'ERROR';
+    final s = value.toString().trim().toUpperCase();
+    if (s == 'CRITICAL' || s == 'HIGH' || s == 'ERROR') {
+      return 'ERROR';
+    }
+    if (s == 'MEDIUM' || s == 'WARN' || s == 'WARNING') {
+      return 'WARNING';
+    }
+    if (s == 'LOW' || s == 'INFO' || s == 'INFORMATION') {
+      return 'INFO';
+    }
+    return s.isNotEmpty ? s : 'ERROR';
+  }
+
   factory DiscrepancyModel.fromJson(Map<String, dynamic> json) {
     return DiscrepancyModel(
       ruleName:
@@ -32,7 +47,7 @@ class DiscrepancyModel {
           json['observed_value']?.toString() ?? json['observed']?.toString(),
       requiredValue:
           json['required_value']?.toString() ?? json['required']?.toString(),
-      severity: (json['severity'] ?? 'high').toString().toLowerCase(),
+      severity: _normalizeSeverity(json['severity']),
       description:
           json['description'] ??
           json['message'] ??

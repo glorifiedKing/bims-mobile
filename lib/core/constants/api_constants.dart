@@ -8,6 +8,7 @@ class ApiConstants {
 
   // AI Compliance Backend Base URL (supports Android emulator 10.0.2.2 or localhost)
   static String aiBaseUrl = "https://ai-backend.bims.go.ug/api/v1";
+  //static String aiBaseUrl = "http://127.0.0.1:8000/api/v1";
 
   static const String clientBaseUrl = '$baseUrl/client';
   static const String bcoBaseUrl = '$baseUrl/internal';

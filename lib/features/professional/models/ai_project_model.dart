@@ -1,180 +1,67 @@
 import 'quick_audit_model.dart';
 
-class AiComplianceResultModel {
-  final String? id;
-  final String overallStatus; // PASS, FAIL, WARNING, COMPLIANT, NON_COMPLIANT
-  final double grossFloorAreaSqm;
-  final double estimatedStatutoryFeeUgx;
-  final Map<String, dynamic>? preflightMetrics;
-  final Map<String, dynamic>? summaryMetrics;
-  final FloorAreaMetricsModel? floorAreaMetrics;
-  final List<DiscrepancyModel> discrepancies;
-  final DateTime? analyzedAt;
-
-  AiComplianceResultModel({
-    this.id,
-    required this.overallStatus,
-    this.grossFloorAreaSqm = 0.0,
-    this.estimatedStatutoryFeeUgx = 0.0,
-    this.preflightMetrics,
-    this.summaryMetrics,
-    this.floorAreaMetrics,
-    this.discrepancies = const [],
-    this.analyzedAt,
-  });
-
-  factory AiComplianceResultModel.fromJson(Map<String, dynamic> json) {
-    List<DiscrepancyModel> discrepanciesList = [];
-    if (json['discrepancies'] is List) {
-      discrepanciesList = (json['discrepancies'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((d) => DiscrepancyModel.fromJson(d))
-          .toList();
-    }
-
-    FloorAreaMetricsModel? floorMetrics;
-    if (json['floor_area_metrics'] is Map<String, dynamic>) {
-      floorMetrics = FloorAreaMetricsModel.fromJson(json['floor_area_metrics']);
-    }
-
-    return AiComplianceResultModel(
-      id: json['id']?.toString(),
-      overallStatus: (json['overall_status'] ?? 'PENDING').toString().toUpperCase(),
-      grossFloorAreaSqm: (json['gross_floor_area_sqm'] as num?)?.toDouble() ??
-          floorMetrics?.grossFloorAreaSqm ??
-          0.0,
-      estimatedStatutoryFeeUgx: (json['estimated_statutory_fee_ugx'] as num?)?.toDouble() ?? 0.0,
-      preflightMetrics: json['preflight_metrics'] is Map<String, dynamic> ? json['preflight_metrics'] : null,
-      summaryMetrics: json['summary_metrics'] is Map<String, dynamic> ? json['summary_metrics'] : null,
-      floorAreaMetrics: floorMetrics,
-      discrepancies: discrepanciesList,
-      analyzedAt: json['analyzed_at'] != null ? DateTime.tryParse(json['analyzed_at']) : null,
-    );
-  }
-
-  bool get isPass => overallStatus == 'PASS' || overallStatus == 'COMPLIANT';
-  bool get isFail => overallStatus == 'FAIL' || overallStatus == 'NON_COMPLIANT';
-  bool get isWarning => overallStatus == 'WARNING';
-}
-
-class AiDrawingVersionModel {
+class AiProjectModel {
   final String id;
-  final String drawingId;
-  final int versionNumber;
-  final String fileName;
-  final String? originalName;
-  final int? fileSizeBytes;
-  final String status; // pending, processing, completed, failed
-  final AiComplianceResultModel? complianceResult;
-  final DateTime? createdAt;
-
-  AiDrawingVersionModel({
-    required this.id,
-    required this.drawingId,
-    required this.versionNumber,
-    required this.fileName,
-    this.originalName,
-    this.fileSizeBytes,
-    required this.status,
-    this.complianceResult,
-    this.createdAt,
-  });
-
-  factory AiDrawingVersionModel.fromJson(Map<String, dynamic> json) {
-    return AiDrawingVersionModel(
-      id: (json['id'] ?? '').toString(),
-      drawingId: (json['drawing_id'] ?? '').toString(),
-      versionNumber: (json['version_number'] as num?)?.toInt() ?? 1,
-      fileName: json['file_name'] ?? '',
-      originalName: json['original_name'],
-      fileSizeBytes: (json['file_size_bytes'] as num?)?.toInt(),
-      status: (json['status'] ?? 'pending').toString().toLowerCase(),
-      complianceResult: json['compliance_result'] is Map<String, dynamic>
-          ? AiComplianceResultModel.fromJson(json['compliance_result'])
-          : null,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
-    );
-  }
-}
-
-class AiDrawingModel {
-  final String id;
-  final String floorId;
-  final String discipline; // architectural, structural, mechanical, electrical
-  final AiDrawingVersionModel? currentVersion;
-  final List<AiDrawingVersionModel> versions;
-
-  AiDrawingModel({
-    required this.id,
-    required this.floorId,
-    required this.discipline,
-    this.currentVersion,
-    this.versions = const [],
-  });
-
-  factory AiDrawingModel.fromJson(Map<String, dynamic> json) {
-    List<AiDrawingVersionModel> vList = [];
-    if (json['versions'] is List) {
-      vList = (json['versions'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((v) => AiDrawingVersionModel.fromJson(v))
-          .toList();
-    }
-
-    return AiDrawingModel(
-      id: (json['id'] ?? '').toString(),
-      floorId: (json['floor_id'] ?? '').toString(),
-      discipline: (json['discipline'] ?? '').toString().toLowerCase(),
-      currentVersion: json['current_version'] is Map<String, dynamic>
-          ? AiDrawingVersionModel.fromJson(json['current_version'])
-          : null,
-      versions: vList,
-    );
-  }
-}
-
-class AiFloorModel {
-  final String id;
-  final String blockId;
-  final int floorNumber;
   final String name;
-  final double floorAreaSqm;
-  final List<AiDrawingModel> drawings;
+  final String referenceNumber;
+  final String? occupancyClass;
+  final String status;
+  final String shareToken;
+  final bool isPublic;
+  final double totalFloorAreaSqm;
+  final double estimatedStatutoryFeeUgx;
+  final int blocksCount;
+  final List<AiBlockModel> blocks;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
-  AiFloorModel({
+  AiProjectModel({
     required this.id,
-    required this.blockId,
-    required this.floorNumber,
     required this.name,
-    this.floorAreaSqm = 0.0,
-    this.drawings = const [],
+    required this.referenceNumber,
+    this.occupancyClass,
+    required this.status,
+    required this.shareToken,
+    required this.isPublic,
+    required this.totalFloorAreaSqm,
+    required this.estimatedStatutoryFeeUgx,
+    required this.blocksCount,
+    this.blocks = const [],
+    this.createdAt,
+    this.updatedAt,
   });
 
-  factory AiFloorModel.fromJson(Map<String, dynamic> json) {
-    List<AiDrawingModel> dList = [];
-    if (json['drawings'] is List) {
-      dList = (json['drawings'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((d) => AiDrawingModel.fromJson(d))
-          .toList();
-    }
+  factory AiProjectModel.fromJson(Map<String, dynamic> json) {
+    final blocksList = (json['blocks'] as List<dynamic>?)
+            ?.map((e) => AiBlockModel.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
 
-    return AiFloorModel(
-      id: (json['id'] ?? '').toString(),
-      blockId: (json['block_id'] ?? '').toString(),
-      floorNumber: (json['floor_number'] as num?)?.toInt() ?? 0,
-      name: json['name'] ?? 'Floor',
-      floorAreaSqm: (json['floor_area_sqm'] as num?)?.toDouble() ?? 0.0,
-      drawings: dList,
+    return AiProjectModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Untitled Project',
+      referenceNumber: json['reference_number']?.toString() ?? '',
+      occupancyClass: json['occupancy_class']?.toString(),
+      status: json['status']?.toString() ?? 'draft',
+      shareToken: json['share_token']?.toString() ?? '',
+      isPublic: json['is_public'] == true || json['is_public'] == 1,
+      totalFloorAreaSqm:
+          double.tryParse(json['total_floor_area_sqm']?.toString() ?? '0') ??
+              0.0,
+      estimatedStatutoryFeeUgx: double.tryParse(
+              json['estimated_statutory_fee_ugx']?.toString() ?? '0') ??
+          0.0,
+      blocksCount: json['blocks_count'] is int
+          ? json['blocks_count'] as int
+          : blocksList.length,
+      blocks: blocksList,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString())
+          : null,
     );
-  }
-
-  AiDrawingModel? getDrawingForDiscipline(String discipline) {
-    try {
-      return drawings.firstWhere((d) => d.discipline.toLowerCase() == discipline.toLowerCase());
-    } catch (_) {
-      return null;
-    }
   }
 }
 
@@ -185,6 +72,7 @@ class AiBlockModel {
   final String? description;
   final double totalFloorAreaSqm;
   final List<AiFloorModel> floors;
+  final List<AiDrawingModel> drawings;
 
   AiBlockModel({
     required this.id,
@@ -193,93 +81,255 @@ class AiBlockModel {
     this.description,
     this.totalFloorAreaSqm = 0.0,
     this.floors = const [],
+    this.drawings = const [],
   });
 
   factory AiBlockModel.fromJson(Map<String, dynamic> json) {
-    List<AiFloorModel> fList = [];
-    if (json['floors'] is List) {
-      fList = (json['floors'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((f) => AiFloorModel.fromJson(f))
-          .toList();
+    final rawFloors = json['floors'];
+    final List<AiFloorModel> parsedFloors = [];
+    if (rawFloors is List) {
+      for (int i = 0; i < rawFloors.length; i++) {
+        final item = rawFloors[i];
+        if (item is Map<String, dynamic>) {
+          parsedFloors.add(AiFloorModel.fromJson(item, fallbackIndex: i));
+        } else if (item is Map) {
+          parsedFloors.add(AiFloorModel.fromJson(
+            Map<String, dynamic>.from(item),
+            fallbackIndex: i,
+          ));
+        }
+      }
+    }
+
+    final rawDrawings = json['drawings'];
+    final List<AiDrawingModel> parsedDrawings = [];
+    if (rawDrawings is List) {
+      for (final d in rawDrawings) {
+        if (d is Map<String, dynamic>) {
+          parsedDrawings.add(AiDrawingModel.fromJson(d));
+        } else if (d is Map) {
+          parsedDrawings
+              .add(AiDrawingModel.fromJson(Map<String, dynamic>.from(d)));
+        }
+      }
     }
 
     return AiBlockModel(
-      id: (json['id'] ?? '').toString(),
-      projectId: (json['project_id'] ?? '').toString(),
-      name: json['name'] ?? 'Main Block',
-      description: json['description'],
-      totalFloorAreaSqm: (json['total_floor_area_sqm'] as num?)?.toDouble() ?? 0.0,
-      floors: fList,
+      id: json['id']?.toString() ?? '',
+      projectId: json['project_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Block',
+      description: json['description']?.toString(),
+      totalFloorAreaSqm:
+          double.tryParse(json['total_floor_area_sqm']?.toString() ?? '0') ??
+              0.0,
+      floors: parsedFloors,
+      drawings: parsedDrawings,
+    );
+  }
+
+  /// Helper to find a drawing for a given discipline ('architectural', 'structural', 'mechanical', 'electrical')
+  AiDrawingModel? getDrawingForDiscipline(String discipline) {
+    try {
+      return drawings.firstWhere(
+        (d) => d.discipline.toLowerCase() == discipline.toLowerCase(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+class AiFloorModel {
+  final int floorNumber;
+  final String floorName;
+  final double grossFloorAreaSqm;
+  final double? netInternalAreaSqm;
+  final int? page;
+  final List<Map<String, dynamic>> roomBreakdown;
+
+  AiFloorModel({
+    required this.floorNumber,
+    required this.floorName,
+    this.grossFloorAreaSqm = 0.0,
+    this.netInternalAreaSqm,
+    this.page,
+    this.roomBreakdown = const [],
+  });
+
+  String get name => floorName;
+
+  factory AiFloorModel.fromJson(
+    Map<String, dynamic> json, {
+    int fallbackIndex = 0,
+  }) {
+    final floorNum = int.tryParse(json['floor_number']?.toString() ?? '') ??
+        fallbackIndex;
+    final rawName =
+        (json['floor_name'] ?? json['name'])?.toString().trim() ?? '';
+    final resolvedName = rawName.isNotEmpty
+        ? rawName
+        : (floorNum == 0 ? 'Ground Floor' : 'Floor $floorNum');
+
+    final gfa = double.tryParse(
+          (json['gross_floor_area_sqm'] ?? json['floor_area_sqm'])
+                  ?.toString() ??
+              '0',
+        ) ??
+        0.0;
+    final nia = json['net_internal_area_sqm'] != null
+        ? double.tryParse(json['net_internal_area_sqm'].toString())
+        : null;
+    final pageNum = json['page'] != null
+        ? int.tryParse(json['page'].toString())
+        : null;
+
+    final List<Map<String, dynamic>> rooms = [];
+    if (json['room_breakdown'] is List) {
+      for (final r in json['room_breakdown'] as List) {
+        if (r is Map<String, dynamic>) {
+          rooms.add(r);
+        } else if (r is Map) {
+          rooms.add(Map<String, dynamic>.from(r));
+        }
+      }
+    }
+
+    return AiFloorModel(
+      floorNumber: floorNum,
+      floorName: resolvedName,
+      grossFloorAreaSqm: gfa,
+      netInternalAreaSqm: nia,
+      page: pageNum,
+      roomBreakdown: rooms,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'floor_number': floorNumber,
+      'floor_name': floorName,
+      'name': floorName,
+      'gross_floor_area_sqm': grossFloorAreaSqm,
+      if (netInternalAreaSqm != null)
+        'net_internal_area_sqm': netInternalAreaSqm,
+      if (page != null) 'page': page,
+      if (roomBreakdown.isNotEmpty) 'room_breakdown': roomBreakdown,
+    };
+  }
+}
+
+class AiDrawingModel {
+  final String id;
+  final String blockId;
+  final String discipline;
+  final AiDrawingVersionModel? currentVersion;
+  final List<AiDrawingVersionModel> versions;
+
+  AiDrawingModel({
+    required this.id,
+    required this.blockId,
+    required this.discipline,
+    this.currentVersion,
+    this.versions = const [],
+  });
+
+  factory AiDrawingModel.fromJson(Map<String, dynamic> json) {
+    return AiDrawingModel(
+      id: json['id']?.toString() ?? '',
+      blockId: json['block_id']?.toString() ?? '',
+      discipline: json['discipline']?.toString() ?? 'architectural',
+      currentVersion: json['current_version'] != null
+          ? AiDrawingVersionModel.fromJson(
+              json['current_version'] as Map<String, dynamic>)
+          : null,
+      versions: (json['versions'] as List<dynamic>?)
+              ?.map((e) =>
+                  AiDrawingVersionModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 }
 
-class AiProjectModel {
+class AiDrawingVersionModel {
   final String id;
-  final String? ownerId;
-  final String name;
-  final String referenceNumber;
-  final String occupancyClass;
-  final String shareToken;
-  final String status; // draft, in_progress, compliant, non_compliant
-  final bool isPublic;
-  final double totalFloorAreaSqm;
-  final double estimatedStatutoryFeeUgx;
-  final int blocksCount;
-  final List<AiBlockModel> blocks;
-  final Map<String, dynamic>? owner;
-  final List<Map<String, dynamic>> collaborators;
+  final String drawingId;
+  final int versionNumber;
+  final String originalName;
+  final String status;
+  final String? errorMessage;
+  final AiComplianceResultModel? complianceResult;
   final DateTime? createdAt;
 
-  AiProjectModel({
+  AiDrawingVersionModel({
     required this.id,
-    this.ownerId,
-    required this.name,
-    required this.referenceNumber,
-    required this.occupancyClass,
-    required this.shareToken,
-    this.status = 'draft',
-    this.isPublic = false,
-    this.totalFloorAreaSqm = 0.0,
-    this.estimatedStatutoryFeeUgx = 0.0,
-    this.blocksCount = 0,
-    this.blocks = const [],
-    this.owner,
-    this.collaborators = const [],
+    required this.drawingId,
+    required this.versionNumber,
+    required this.originalName,
+    required this.status,
+    this.errorMessage,
+    this.complianceResult,
     this.createdAt,
   });
 
-  factory AiProjectModel.fromJson(Map<String, dynamic> json) {
-    List<AiBlockModel> bList = [];
-    if (json['blocks'] is List) {
-      bList = (json['blocks'] as List)
-          .whereType<Map<String, dynamic>>()
-          .map((b) => AiBlockModel.fromJson(b))
+  bool get isProcessing => status == 'pending' || status == 'processing';
+  bool get isCompleted => status == 'completed';
+  bool get isFailed => status == 'failed';
+
+  factory AiDrawingVersionModel.fromJson(Map<String, dynamic> json) {
+    return AiDrawingVersionModel(
+      id: json['id']?.toString() ?? '',
+      drawingId: json['drawing_id']?.toString() ?? '',
+      versionNumber:
+          int.tryParse(json['version_number']?.toString() ?? '1') ?? 1,
+      originalName: json['original_name']?.toString() ?? 'drawing.pdf',
+      status: json['status']?.toString() ?? 'pending',
+      errorMessage: json['error_message']?.toString(),
+      complianceResult: json['compliance_result'] != null
+          ? AiComplianceResultModel.fromJson(
+              json['compliance_result'] as Map<String, dynamic>)
+          : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+    );
+  }
+}
+
+class AiComplianceResultModel {
+  final String id;
+  final String overallStatus;
+  final double grossFloorAreaSqm;
+  final List<DiscrepancyModel> discrepancies;
+  final Map<String, dynamic>? rawReport;
+
+  AiComplianceResultModel({
+    required this.id,
+    required this.overallStatus,
+    required this.grossFloorAreaSqm,
+    required this.discrepancies,
+    this.rawReport,
+  });
+
+  factory AiComplianceResultModel.fromJson(Map<String, dynamic> json) {
+    List<DiscrepancyModel> parsedDiscrepancies = [];
+    if (json['discrepancies'] is List) {
+      parsedDiscrepancies = (json['discrepancies'] as List)
+          .whereType<Map>()
+          .map((e) => DiscrepancyModel.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     }
 
-    List<Map<String, dynamic>> cList = [];
-    if (json['collaborators'] is List) {
-      cList = (json['collaborators'] as List).whereType<Map<String, dynamic>>().toList();
-    }
-
-    return AiProjectModel(
-      id: (json['id'] ?? '').toString(),
-      ownerId: json['owner_id']?.toString(),
-      name: json['name'] ?? 'Untitled Project',
-      referenceNumber: json['reference_number'] ?? 'NBRB-PROJ',
-      occupancyClass: json['occupancy_class'] ?? 'Class A (Residential)',
-      shareToken: json['share_token'] ?? '',
-      status: (json['status'] ?? 'draft').toString().toLowerCase(),
-      isPublic: json['is_public'] == true,
-      totalFloorAreaSqm: (json['total_floor_area_sqm'] as num?)?.toDouble() ?? 0.0,
-      estimatedStatutoryFeeUgx: (json['estimated_statutory_fee_ugx'] as num?)?.toDouble() ?? 0.0,
-      blocksCount: (json['blocks_count'] as num?)?.toInt() ?? bList.length,
-      blocks: bList,
-      owner: json['owner'] is Map<String, dynamic> ? json['owner'] : null,
-      collaborators: cList,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
+    return AiComplianceResultModel(
+      id: json['id']?.toString() ?? '',
+      overallStatus: json['overall_status']?.toString() ?? 'PENDING',
+      grossFloorAreaSqm:
+          double.tryParse(json['gross_floor_area_sqm']?.toString() ?? '0') ??
+              0.0,
+      discrepancies: parsedDiscrepancies,
+      rawReport: json['raw_report'] is Map<String, dynamic>
+          ? json['raw_report'] as Map<String, dynamic>
+          : null,
     );
   }
 }

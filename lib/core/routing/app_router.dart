@@ -397,8 +397,8 @@ class AppRouter {
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return ProfessionalDrawingUploadScreen(
-            floorId: extra['floorId'] as String? ?? '',
-            floorName: extra['floorName'] as String? ?? 'Floor',
+            blockId: (extra['blockId'] ?? extra['floorId']) as String? ?? '',
+
             blockName: extra['blockName'] as String? ?? 'Block',
             discipline: extra['discipline'] as String? ?? 'architectural',
             currentVersionNumber: extra['currentVersionNumber'] as int? ?? 0,

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme.dart';
 import '../../models/ai_project_model.dart';
 import '../../repositories/ai_compliance_repository.dart';
 import '../copilot/copilot_floating_assistant.dart';
+import '../copilot/professional_copilot_sheet.dart';
 
 class ProfessionalProjectsScreen extends StatefulWidget {
   const ProfessionalProjectsScreen({super.key});
@@ -17,9 +18,15 @@ class ProfessionalProjectsScreen extends StatefulWidget {
 class _ProfessionalProjectsScreenState
     extends State<ProfessionalProjectsScreen> {
   final _repository = AiComplianceRepository();
+  List<AiProjectModel> _projects = [];
   bool _isLoading = true;
   String? _errorMessage;
-  List<AiProjectModel> _projects = [];
+
+  static const List<String> _buildingClasses = [
+    'Class A (Complex & Public Buildings)',
+    'Class B (Residential & Commercial)',
+    'Class C (Minor & Temporary Buildings)',
+  ];
 
   @override
   void initState() {
@@ -32,7 +39,6 @@ class _ProfessionalProjectsScreenState
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
       final list = await _repository.getProjects();
       if (mounted) {
@@ -51,181 +57,229 @@ class _ProfessionalProjectsScreenState
     }
   }
 
-  void _showCreateProjectDialog() {
-    final nameController = TextEditingController();
-    final refController = TextEditingController();
-    String occupancy = 'Class A (Residential)';
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
+  void _openCopilot() {
+    showModalBottomSheet(
       context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: const [
-              Icon(Icons.add_business, color: AppTheme.primaryGreen),
-              SizedBox(width: 8),
-              Text('Create New Project', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Registers project with automated multi-block and floor hierarchy.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.textLight),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Project Name *',
-                      hintText: 'e.g. Kampala Heights Commercial Tower',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Project name is required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: refController,
-                    decoration: const InputDecoration(
-                      labelText: 'Reference Number (Optional)',
-                      hintText: 'e.g. NBRB-KLA-2026-081',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Occupancy Class', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  DropdownButtonFormField<String>(
-                    value: occupancy,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
-                    items: const [
-                      DropdownMenuItem(value: 'Class A (Residential)', child: Text('Class A (Residential)')),
-                      DropdownMenuItem(value: 'Class B (Commercial)', child: Text('Class B (Commercial)')),
-                      DropdownMenuItem(value: 'Class C (Assembly)', child: Text('Class C (Assembly)')),
-                      DropdownMenuItem(value: 'Class D (Industrial)', child: Text('Class D (Industrial)')),
-                      DropdownMenuItem(value: 'Class E (Educational)', child: Text('Class E (Educational)')),
-                      DropdownMenuItem(value: 'Class F (Institutional)', child: Text('Class F (Institutional)')),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) setDialogState(() => occupancy = v);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState?.validate() ?? false) {
-                  Navigator.pop(dialogCtx);
-                  setState(() => _isLoading = true);
-                  try {
-                    final created = await _repository.createProject(
-                      name: nameController.text.trim(),
-                      referenceNumber: refController.text.trim().isNotEmpty ? refController.text.trim() : null,
-                      occupancyClass: occupancy,
-                    );
-                    _loadProjects();
-                    if (mounted) {
-                      context.push('/professional/projects/');
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed: '), backgroundColor: AppTheme.danger),
-                      );
-                      setState(() => _isLoading = false);
-                    }
-                  }
-                }
-              },
-              child: const Text('CREATE'),
-            ),
-          ],
-        ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const ProfessionalCopilotSheet(
+        initialContextTitle: 'Collaborative Building Projects',
+        initialContextDescription:
+            'Multi-discipline project compliance, block & floor structures, and NBRB statutory rules.',
       ),
     );
   }
 
-  void _showJoinProjectDialog() {
-    final tokenController = TextEditingController();
+  Future<void> _showCreateProjectDialog() async {
+    final nameCtrl = TextEditingController();
+    final refCtrl = TextEditingController();
+    String occupancy = _buildingClasses[1]; // Class B default
+    bool isPublic = false;
 
-    showDialog(
+    final created = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: const [
-            Icon(Icons.link, color: AppTheme.accentGold),
-            SizedBox(width: 8),
-            Text('Join Project via Token', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Create New Building Project',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Project Name *',
+                    hintText: 'e.g. Acacia Mall Extension',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: refCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Reference Number (Optional)',
+                    hintText: 'Auto-generated if left blank',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: occupancy,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Building Class (Uganda Building Control Act)',
+                  ),
+                  items: _buildingClasses
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setDialogState(() => occupancy = v);
+                  },
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Publicly Joinable via Token',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  value: isPublic,
+                  activeColor: AppTheme.primaryGreen,
+                  onChanged: (v) => setDialogState(() => isPublic = v),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameCtrl.text.trim().isEmpty) return;
+                try {
+                  final project = await _repository.createProject(
+                    name: nameCtrl.text.trim(),
+                    referenceNumber: refCtrl.text.trim(),
+                    occupancyClass: occupancy,
+                    isPublic: isPublic,
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(context, true);
+                    context.push('/professional/projects/${project.id}');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          e.toString().replaceAll('Exception:', '').trim(),
+                        ),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Create'),
+            ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Enter the secure 32-character anti-duplication token generated by the Project Lead:',
-              style: TextStyle(fontSize: 12, color: AppTheme.textLight),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: tokenController,
-              decoration: const InputDecoration(
-                labelText: 'Share Token',
-                hintText: 'Paste token here',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final token = tokenController.text.trim();
-              if (token.isEmpty) return;
-              Navigator.pop(dialogCtx);
-              setState(() => _isLoading = true);
-              try {
-                final project = await _repository.joinProject(token);
-                _loadProjects();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Successfully joined !'), backgroundColor: AppTheme.primaryGreen),
-                  );
-                  context.push('/professional/projects/');
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Join failed: '), backgroundColor: AppTheme.danger),
-                  );
-                  setState(() => _isLoading = false);
-                }
-              }
-            },
-            child: const Text('JOIN'),
-          ),
-        ],
       ),
     );
+
+    if (created == true) {
+      _loadProjects();
+    }
+  }
+
+  Future<void> _showJoinByTokenDialog() async {
+    final tokenCtrl = TextEditingController();
+    String selectedRole = 'architect';
+
+    final joined = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Join Existing Project',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Avoid duplicate submissions! Enter the project share token provided by the project owner or lead consultant.',
+                style: TextStyle(fontSize: 12, color: AppTheme.textLight),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: tokenCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Project Share Token *',
+                  prefixIcon: Icon(Icons.vpn_key_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedRole,
+                decoration:
+                    const InputDecoration(labelText: 'Your Discipline Role'),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'architect',
+                    child: Text('Architect'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'structural_eng',
+                    child: Text('Structural Engineer'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'mep_eng',
+                    child: Text('MEP Engineer'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'reviewer',
+                    child: Text('Compliance Reviewer'),
+                  ),
+                ],
+                onChanged: (v) {
+                  if (v != null) setDialogState(() => selectedRole = v);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (tokenCtrl.text.trim().isEmpty) return;
+                try {
+                  final project = await _repository.joinProjectByToken(
+                    tokenCtrl.text.trim(),
+                    role: selectedRole,
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(context, true);
+                    context.push('/professional/projects/${project.id}');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          e.toString().replaceAll('Exception:', '').trim(),
+                        ),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Join Project'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (joined == true) {
+      _loadProjects();
+    }
   }
 
   @override
@@ -233,12 +287,12 @@ class _ProfessionalProjectsScreenState
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('AI Compliance Projects'),
+        title: const Text('Building Projects'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.link),
-            tooltip: 'Join Project via Token',
-            onPressed: _showJoinProjectDialog,
+            icon: const Icon(Icons.group_add_outlined),
+            tooltip: 'Join via Share Token',
+            onPressed: _showJoinByTokenDialog,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -246,28 +300,30 @@ class _ProfessionalProjectsScreenState
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: _loadProjects,
-            color: AppTheme.primaryGreen,
-            child: _buildBody(),
-          ),
-          const CopilotFloatingAssistant(),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppTheme.primaryGreen,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('NEW PROJECT', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        foregroundColor: Colors.white,
         onPressed: _showCreateProjectDialog,
+        icon: const Icon(Icons.add_business),
+        label: const Text(
+          'New Project',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Stack(
+        children: [
+          _buildBody(),
+          CopilotFloatingAssistant(onTap: _openCopilot),
+        ],
       ),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+      return const Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+      );
     }
 
     if (_errorMessage != null) {
@@ -280,220 +336,280 @@ class _ProfessionalProjectsScreenState
               const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
               const SizedBox(height: 12),
               Text(
-                'Unable to load projects\n',
+                _errorMessage!,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _loadProjects, child: const Text('Retry')),
+              ElevatedButton(
+                onPressed: _loadProjects,
+                child: const Text('Retry'),
+              ),
             ],
           ),
         ),
       );
     }
 
-    if (_projects.isEmpty) {
-      return ListView(
-        padding: const EdgeInsets.all(24),
+    return RefreshIndicator(
+      onRefresh: _loadProjects,
+      color: AppTheme.primaryGreen,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
-          const SizedBox(height: 40),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.apartment_outlined, size: 64, color: AppTheme.primaryGreen),
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'No Projects Registered',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Register a multi-tier project estate with blocks, dynamic floors, and 4-discipline CAD drawing management (Architectural, Structural, Mechanical, Electrical).',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.textLight, height: 1.4),
-          ),
-          const SizedBox(height: 30),
+          // Top action bar: Create vs Join
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Create Project'),
-                onPressed: _showCreateProjectDialog,
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showJoinByTokenDialog,
+                  icon: const Icon(Icons.vpn_key_outlined, size: 18),
+                  label: const Text('Join via Token'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryGreen,
+                    side: const BorderSide(color: AppTheme.primaryGreen),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.link),
-                label: const Text('Join via Token'),
-                onPressed: _showJoinProjectDialog,
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _showCreateProjectDialog,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Create Project'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 20),
+          if (_projects.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: const [
+                  Icon(
+                    Icons.apartment,
+                    size: 56,
+                    color: AppTheme.primaryGreen,
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'No Collaborative Projects Yet',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Create a multi-block project or join an existing team using a share token to manage Architectural, Structural, Mechanical, and Electrical drawings together.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: AppTheme.textLight),
+                  ),
+                ],
+              ),
+            )
+          else
+            ..._projects.map((p) => _buildProjectCard(p)),
         ],
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
-      itemCount: _projects.length,
-      itemBuilder: (context, index) {
-        final project = _projects[index];
-        return _buildProjectCard(project);
-      },
+      ),
     );
   }
 
   Widget _buildProjectCard(AiProjectModel project) {
-    Color statusColor;
-    String statusLabel;
-    switch (project.status.toLowerCase()) {
-      case 'compliant':
-        statusColor = AppTheme.primaryGreen;
-        statusLabel = 'COMPLIANT';
-        break;
-      case 'non_compliant':
-        statusColor = AppTheme.danger;
-        statusLabel = 'NON-COMPLIANT';
-        break;
-      case 'in_progress':
-        statusColor = Colors.blue;
-        statusLabel = 'IN PROGRESS';
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusLabel = 'DRAFT';
-    }
+    final currencyFmt = NumberFormat('#,##0', 'en_US');
+    final isCompliant = project.status == 'compliant';
+    final statusColor = isCompliant
+        ? AppTheme.primaryGreen
+        : (project.status == 'non_compliant' ? AppTheme.danger : Colors.orange);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            context.push('/professional/projects/');
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        project.name,
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () async {
+          await context.push('/professional/projects/${project.id}');
+          _loadProjects();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      project.referenceNumber,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryGreen,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      project.status.toUpperCase().replaceAll('_', ' '),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                project.name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                project.occupancyClass ?? 'General Building',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textLight,
+                ),
+              ),
+              if (project.totalFloorAreaSqm > 0 ||
+                  project.estimatedStatutoryFeeUgx > 0) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.background,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.square_foot,
+                        size: 14,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${currencyFmt.format(project.totalFloorAreaSqm)} m²',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.textDark,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withOpacity(0.4)),
+                      const Spacer(),
+                      const Icon(
+                        Icons.payments_outlined,
+                        size: 14,
+                        color: AppTheme.accentGold,
                       ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  project.referenceNumber,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blueGrey),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.accentGold.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        project.occupancyClass,
+                      const SizedBox(width: 4),
+                      Text(
+                        'UGX ${currencyFmt.format(project.estimatedStatutoryFeeUgx)}',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF996500),
+                          color: AppTheme.primaryGreen,
                         ),
                       ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(Icons.corporate_fare, size: 14, color: AppTheme.primaryGreen),
-                        const SizedBox(width: 4),
-                        Text(
-                          ' Block',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textDark),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const Divider(height: 20),
-                Row(
-                  children: [
-                    const Icon(Icons.key, size: 13, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'Token: ',
-                        style: const TextStyle(fontSize: 10, color: Colors.grey, fontFamily: 'monospace'),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.copy, size: 14, color: AppTheme.primaryGreen),
-                      tooltip: 'Copy Share Token',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: project.shareToken));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Project share token copied to clipboard!')),
-                        );
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
-            ),
+              const Divider(height: 22),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.domain,
+                        size: 15,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${project.blocksCount} ${project.blocksCount == 1 ? "Block" : "Blocks"}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () {
+                          context.push(
+                            '/professional/projects/${project.id}/report',
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.analytics_outlined,
+                          size: 14,
+                          color: AppTheme.primaryGreen,
+                        ),
+                        label: const Text(
+                          'Report',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryGreen,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 13,
+                        color: Colors.grey,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

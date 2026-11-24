@@ -10,8 +10,13 @@ import 'floor_area_details_sheet.dart';
 
 class ProfessionalQuickAuditResultScreen extends StatefulWidget {
   final String auditId;
+  final QuickAuditModel? initialAudit;
 
-  const ProfessionalQuickAuditResultScreen({super.key, required this.auditId});
+  const ProfessionalQuickAuditResultScreen({
+    super.key,
+    required this.auditId,
+    this.initialAudit,
+  });
 
   @override
   State<ProfessionalQuickAuditResultScreen> createState() =>
@@ -29,7 +34,15 @@ class _ProfessionalQuickAuditResultScreenState
   @override
   void initState() {
     super.initState();
-    _fetchAudit();
+    if (widget.initialAudit != null) {
+      _audit = widget.initialAudit;
+      _isLoading = false;
+      if (widget.initialAudit!.isProcessing) {
+        _startPolling();
+      }
+    } else {
+      _fetchAudit();
+    }
   }
 
   @override
@@ -931,16 +944,30 @@ class _ProfessionalQuickAuditResultScreenState
   }
 
   Widget _buildDiscrepancyCard(DiscrepancyModel d) {
+    final String normSeverity = () {
+      final s = d.severity.trim().toUpperCase();
+      if (s == 'ERROR' || s == 'HIGH' || s == 'CRITICAL') return 'ERROR';
+      if (s == 'WARNING' || s == 'WARN' || s == 'MEDIUM') return 'WARNING';
+      if (s == 'INFO' || s == 'LOW' || s == 'INFORMATION') return 'INFO';
+      return s.isNotEmpty ? s : 'INFO';
+    }();
+
     Color sevColor;
-    switch (d.severity) {
+    IconData sevIcon;
+    switch (normSeverity) {
       case 'ERROR':
         sevColor = AppTheme.danger;
+        sevIcon = Icons.error_outline;
         break;
       case 'WARNING':
-        sevColor = Colors.orange;
+        sevColor = Colors.orange.shade800;
+        sevIcon = Icons.warning_amber_rounded;
         break;
+      case 'INFO':
       default:
-        sevColor = Colors.blue;
+        sevColor = Colors.blue.shade700;
+        sevIcon = Icons.info_outline;
+        break;
     }
 
     return Container(
@@ -975,19 +1002,26 @@ class _ProfessionalQuickAuditResultScreenState
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: sevColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: sevColor.withOpacity(0.3)),
                 ),
-                child: Text(
-                  d.severity.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: sevColor,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(sevIcon, size: 11, color: sevColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      normSeverity,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: sevColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -1012,7 +1046,13 @@ class _ProfessionalQuickAuditResultScreenState
           ],
           const SizedBox(height: 8),
           Text(
-            d.roomOrGrid ?? "",
+            (d.roomOrGrid != null && d.roomOrGrid!.isNotEmpty)
+                ? (d.description.isNotEmpty && d.description != d.roomOrGrid
+                    ? '${d.roomOrGrid}: ${d.description}'
+                    : d.roomOrGrid!)
+                : (d.description.isNotEmpty
+                    ? d.description
+                    : 'Non-compliance detected against Uganda Building Regulations'),
             style: const TextStyle(
               fontSize: 12,
               color: AppTheme.textDark,

@@ -354,7 +354,7 @@ class _ProfessionalQuickAuditsScreenState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          ' m²',
+                          '${currencyFormatter.format(audit.grossFloorAreaSqm)} m²',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -376,7 +376,7 @@ class _ProfessionalQuickAuditsScreenState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'UGX ',
+                          'UGX ${currencyFormatter.format(audit.estimatedStatutoryFeeUgx)}',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -398,7 +398,7 @@ class _ProfessionalQuickAuditsScreenState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '',
+                          '${audit.discrepancies.length}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,

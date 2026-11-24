@@ -29,7 +29,8 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
 
-  CopilotPersona _activePersona = CopilotPersona.personas.first; // Inspector Okello by default
+  CopilotPersona _activePersona =
+      CopilotPersona.personas.first; // Inspector Okello by default
   bool _isSending = false;
 
   final List<CopilotMessage> _messages = [];
@@ -57,7 +58,8 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
     _messages.add(
       CopilotMessage(
         id: 'welcome',
-        text: 'Hello! I am **${_activePersona.name}**, ${_activePersona.title}.\n\n'
+        text:
+            'Hello! I am **${_activePersona.name}**, ${_activePersona.title}.\n\n'
             'Ask me any regulatory questions regarding statutory **Uganda Building Control Regulations (2020)**, '
             'the **Uganda National Building Code (2019)**, or drawing compliance.',
         isUser: false,
@@ -82,7 +84,8 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
       _messages.add(
         CopilotMessage(
           id: 'switch_${DateTime.now().millisecondsSinceEpoch}',
-          text: 'Switched to **${persona.name}** (${persona.title}).\n\n_${persona.description}_',
+          text:
+              'Switched to **${persona.name}** (${persona.title}).\n\n_${persona.description}_',
           isUser: false,
           persona: persona,
           timestamp: DateTime.now(),
@@ -117,26 +120,34 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
       final res = await _repository.askCopilot(
         query: query,
         persona: _activePersona.id,
-        drawingVersionId: widget.drawingVersionId,
+        //drawingVersionId: widget.drawingVersionId,
       );
 
       // Safe extraction across multiple backend conventions
       String responseText = '';
-      if (res['response'] != null && res['response'].toString().trim().isNotEmpty) {
+      if (res['response'] != null &&
+          res['response'].toString().trim().isNotEmpty) {
         responseText = res['response'].toString().trim();
-      } else if (res['answer'] != null && res['answer'].toString().trim().isNotEmpty) {
+      } else if (res['answer'] != null &&
+          res['answer'].toString().trim().isNotEmpty) {
         responseText = res['answer'].toString().trim();
-      } else if (res['reply'] != null && res['reply'].toString().trim().isNotEmpty) {
+      } else if (res['reply'] != null &&
+          res['reply'].toString().trim().isNotEmpty) {
         responseText = res['reply'].toString().trim();
-      } else if (res['content'] != null && res['content'].toString().trim().isNotEmpty) {
+      } else if (res['content'] != null &&
+          res['content'].toString().trim().isNotEmpty) {
         responseText = res['content'].toString().trim();
-      } else if (res['message'] != null && res['message'].toString().trim().isNotEmpty) {
+      } else if (res['message'] != null &&
+          res['message'].toString().trim().isNotEmpty) {
         responseText = res['message'].toString().trim();
-      } else if (res['text'] != null && res['text'].toString().trim().isNotEmpty) {
+      } else if (res['text'] != null &&
+          res['text'].toString().trim().isNotEmpty) {
         responseText = res['text'].toString().trim();
-      } else if (res['result'] != null && res['result'].toString().trim().isNotEmpty) {
+      } else if (res['result'] != null &&
+          res['result'].toString().trim().isNotEmpty) {
         responseText = res['result'].toString().trim();
-      } else if (res['markdown'] != null && res['markdown'].toString().trim().isNotEmpty) {
+      } else if (res['markdown'] != null &&
+          res['markdown'].toString().trim().isNotEmpty) {
         responseText = res['markdown'].toString().trim();
       }
 
@@ -177,7 +188,8 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
       if (mounted) {
         final errorMsg = CopilotMessage(
           id: 'err_${DateTime.now().millisecondsSinceEpoch}',
-          text: 'Apologies, could not connect to Uganda Building Code AI Engine: $e',
+          text:
+              'Apologies, could not connect to Uganda Building Code AI Engine: $e',
           isUser: false,
           persona: _activePersona,
           timestamp: DateTime.now(),
@@ -245,7 +257,10 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
 
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       Container(
@@ -254,7 +269,10 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                           color: AppTheme.primaryGreen.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: Text(_activePersona.emoji, style: const TextStyle(fontSize: 22)),
+                        child: Text(
+                          _activePersona.emoji,
+                          style: const TextStyle(fontSize: 22),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -274,9 +292,14 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                                      color: AppTheme.primaryGreen.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -294,7 +317,10 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                             ),
                             const Text(
                               'Uganda National Building Code & Regulations Assistant',
-                              style: TextStyle(fontSize: 11, color: AppTheme.textLight),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textLight,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -311,16 +337,28 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                 // Active Context Card (if provided and keyboard not obscuring)
                 if (widget.initialContextTitle != null && !isKeyboardOpen) ...[
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.accentGold.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: AppTheme.accentGold.withValues(alpha: 0.4),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.pin_drop, size: 16, color: Color(0xFF996500)),
+                        const Icon(
+                          Icons.pin_drop,
+                          size: 16,
+                          color: Color(0xFF996500),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -328,15 +366,24 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                             children: [
                               Text(
                                 'Grounded on: ${widget.initialContextTitle}',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF996500)),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF996500),
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                               if (widget.initialContextDescription != null &&
-                                  widget.initialContextDescription!.trim().isNotEmpty) ...[
+                                  widget.initialContextDescription!
+                                      .trim()
+                                      .isNotEmpty) ...[
                                 const SizedBox(height: 2),
                                 Text(
                                   widget.initialContextDescription!,
-                                  style: const TextStyle(fontSize: 10, color: Color(0xFF805500)),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF805500),
+                                  ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -360,17 +407,26 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                           onTap: () => _switchPersona(p),
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: 3),
-                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 6,
+                              horizontal: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.primaryGreen : Colors.white,
+                              color: isSelected
+                                  ? AppTheme.primaryGreen
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isSelected ? AppTheme.primaryGreen : Colors.grey.withValues(alpha: 0.2),
+                                color: isSelected
+                                    ? AppTheme.primaryGreen
+                                    : Colors.grey.withValues(alpha: 0.2),
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppTheme.primaryGreen.withValues(alpha: 0.25),
+                                        color: AppTheme.primaryGreen.withValues(
+                                          alpha: 0.25,
+                                        ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -379,14 +435,19 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                             ),
                             child: Column(
                               children: [
-                                Text(p.emoji, style: const TextStyle(fontSize: 16)),
+                                Text(
+                                  p.emoji,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
                                   p.name,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: isSelected ? Colors.white : AppTheme.textDark,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppTheme.textDark,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -409,7 +470,8 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                     behavior: HitTestBehavior.opaque,
                     child: ListView.builder(
                       controller: _scrollController,
-                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       padding: const EdgeInsets.all(16),
                       itemCount: _messages.length,
                       itemBuilder: (context, idx) {
@@ -434,7 +496,10 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                           padding: const EdgeInsets.only(right: 8),
                           child: ActionChip(
                             backgroundColor: Colors.white,
-                            labelStyle: const TextStyle(fontSize: 11, color: AppTheme.primaryGreen),
+                            labelStyle: const TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.primaryGreen,
+                            ),
                             label: Text(prompt),
                             onPressed: () => _sendMessage(prompt),
                           ),
@@ -462,20 +527,34 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                           maxLines: 4,
                           textInputAction: TextInputAction.send,
                           decoration: InputDecoration(
-                            hintText: 'Ask ${_activePersona.name} a code query...',
-                            hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            hintText:
+                                'Ask ${_activePersona.name} a code query...',
+                            hintStyle: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
-                              borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                              borderSide: const BorderSide(
+                                color: AppTheme.primaryGreen,
+                                width: 1.5,
+                              ),
                             ),
                             filled: true,
                             fillColor: AppTheme.background,
@@ -491,10 +570,17 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : IconButton(
-                                icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                                icon: const Icon(
+                                  Icons.send,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                                 onPressed: () => _sendMessage(),
                               ),
                       ),
@@ -529,7 +615,11 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
           ),
           child: Text(
             msg.text,
-            style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.3),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              height: 1.3,
+            ),
           ),
         ),
       );
@@ -576,14 +666,21 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                 ),
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.accentGold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     persona.title,
-                    style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Color(0xFF996500)),
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF996500),
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -602,7 +699,11 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.copy_outlined, size: 14, color: Colors.grey.shade600),
+                    child: Icon(
+                      Icons.copy_outlined,
+                      size: 14,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
               ],
@@ -632,31 +733,47 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
               const SizedBox(height: 12),
               const Text(
                 'UGANDAN STATUTORY CITATIONS:',
-                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.blueGrey),
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.blueGrey,
+                ),
               ),
               const SizedBox(height: 4),
-              ...msg.referencedClauses.map((clause) => Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
+              ...msg.referencedClauses.map(
+                (clause) => Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.2),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.bookmark_added, size: 14, color: AppTheme.primaryGreen),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            '${clause.document} — Clause ${clause.clauseNumber}: ${clause.clauseTitle}',
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.primaryGreen),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.bookmark_added,
+                        size: 14,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${clause.document} — Clause ${clause.clauseNumber}: ${clause.clauseTitle}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryGreen,
                           ),
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ],
         ),
@@ -670,20 +787,14 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
     final effectiveTheme = (theme.textTheme.bodyMedium?.fontSize == null)
         ? theme.copyWith(
             textTheme: theme.textTheme.copyWith(
-              bodyMedium: (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-                fontSize: 14.0,
-                color: AppTheme.textDark,
-              ),
+              bodyMedium: (theme.textTheme.bodyMedium ?? const TextStyle())
+                  .copyWith(fontSize: 14.0, color: AppTheme.textDark),
             ),
           )
         : theme;
 
     return MarkdownStyleSheet.fromTheme(effectiveTheme).copyWith(
-      p: const TextStyle(
-        fontSize: 13,
-        color: AppTheme.textDark,
-        height: 1.45,
-      ),
+      p: const TextStyle(fontSize: 13, color: AppTheme.textDark, height: 1.45),
       h1: const TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.bold,
@@ -741,10 +852,7 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
       ),
       horizontalRuleDecoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            width: 1.0,
-            color: Colors.grey.shade300,
-          ),
+          top: BorderSide(width: 1.0, color: Colors.grey.shade300),
         ),
       ),
       tableHead: const TextStyle(
@@ -752,14 +860,8 @@ class _ProfessionalCopilotSheetState extends State<ProfessionalCopilotSheet> {
         fontWeight: FontWeight.bold,
         color: AppTheme.primaryGreen,
       ),
-      tableBody: const TextStyle(
-        fontSize: 12,
-        color: AppTheme.textDark,
-      ),
-      tableBorder: TableBorder.all(
-        color: Colors.grey.shade300,
-        width: 1,
-      ),
+      tableBody: const TextStyle(fontSize: 12, color: AppTheme.textDark),
+      tableBorder: TableBorder.all(color: Colors.grey.shade300, width: 1),
       blockSpacing: 8.0,
       listIndent: 18.0,
     );

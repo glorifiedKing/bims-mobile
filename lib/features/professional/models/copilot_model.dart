@@ -18,11 +18,7 @@ class ReferencedClause {
   }
 }
 
-enum CopilotPersonaType {
-  engineerKigozi,
-  architectNamubiru,
-  inspectorOkello,
-}
+enum CopilotPersonaType { engineerKigozi, architectNamubiru, inspectorOkello }
 
 class CopilotPersona {
   final CopilotPersonaType type;
@@ -45,34 +41,32 @@ class CopilotPersona {
     CopilotPersona(
       type: CopilotPersonaType.inspectorOkello,
       id: 'inspector_okello',
-      name: 'Inspector Okello',
-      title: 'Chief Building Control Officer',
-      description: 'Strict statutory interpretations & NBRB compliance enforcement under Uganda Building Control Regulations.',
+      name: 'NBRB Officer',
+      title: 'Chief Compliance Officer',
+      description:
+          'Strict statutory interpretations & NBRB compliance enforcement under Uganda Building Control Regulations.',
       emoji: '👮‍♂️',
     ),
-    CopilotPersona(
-      type: CopilotPersonaType.engineerKigozi,
-      id: 'engineer_kigozi',
-      name: 'Eng. Kigozi',
-      title: 'Senior Structural & Site Engineer',
-      description: 'Practical, safety-first guidance on structural schedules, concrete grades, and on-site engineering.',
-      emoji: '👷‍♂️',
-    ),
-    CopilotPersona(
-      type: CopilotPersonaType.architectNamubiru,
-      id: 'architect_namubiru',
-      name: 'Arch. Namubiru',
-      title: 'Chartered Architect',
-      description: 'Spatial ergonomics, natural ventilation, lighting ratios & PWD accessibility standards.',
-      emoji: '👩‍💼',
-    ),
+    // CopilotPersona(
+    //   type: CopilotPersonaType.engineerKigozi,
+    //   id: 'engineer_kigozi',
+    //   name: 'Eng. Kigozi',
+    //   title: 'Senior Structural & Site Engineer',
+    //   description: 'Practical, safety-first guidance on structural schedules, concrete grades, and on-site engineering.',
+    //   emoji: '👷‍♂️',
+    // ),
+    // CopilotPersona(
+    //   type: CopilotPersonaType.architectNamubiru,
+    //   id: 'architect_namubiru',
+    //   name: 'Arch. Namubiru',
+    //   title: 'Chartered Architect',
+    //   description: 'Spatial ergonomics, natural ventilation, lighting ratios & PWD accessibility standards.',
+    //   emoji: '👩‍💼',
+    // ),
   ];
 
   static CopilotPersona fromId(String id) {
-    return personas.firstWhere(
-      (p) => p.id == id,
-      orElse: () => personas.first,
-    );
+    return personas.firstWhere((p) => p.id == id, orElse: () => personas.first);
   }
 }
 
